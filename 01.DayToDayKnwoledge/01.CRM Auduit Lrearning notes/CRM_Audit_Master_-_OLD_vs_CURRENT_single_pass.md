@@ -6,7 +6,7 @@ Status: Stable (Try 2.6)
 Last updated: 2025-08-14
 
 ### Files in this note
-- `01.DayToDayKnwoledge/Try 2.6 - Interghated with full lresolved working scrtipt.sql` — canonical, working SQL script
+- `01.DayToDayKnwoledge/01.CRM Auduit Lrearning notes/Try 2.6 - Interghated with full lresolved working scrtipt.sql` — canonical, working SQL script
 
 ### Purpose in one line
 Produce a human-readable audit trail for specific fields across entities, mapping raw values to labels/names and comparing OLD-at-change vs CURRENT-now.
