@@ -119,7 +119,65 @@ function renderDetails(node){
   `);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+async function augmentFromIndex(cy, fuse) {
+  try {
+    const res = await fetch('../Confluence-space-export-205412.html/index.html');
+    const html = await res.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const anchors = Array.from(doc.querySelectorAll('div.pageSection a[href]'));
+    const seen = new Set();
+    const addedNodes = [];
+
+    const guessTags = (label, href) => {
+      const l = (label||'').toLowerCase();
+      const h = (href||'').toLowerCase();
+      const tags = [];
+      if (/power\s*bi|dax|measure|subscription/.test(l)) tags.push('powerbi');
+      if (/devops|synapse|workspace|arm|dacpac/.test(l)) tags.push('devops','synapse');
+      if (/ace|orders|holdings|chelmer/.test(l)) tags.push('ace');
+      if (/crm|audit/.test(l)) tags.push('crm','audit');
+      if (/nzxwt/.test(l)) tags.push('nzxwt');
+      if (/circuit|servicelevels|fum/.test(l)) tags.push('circuit');
+      if (/aloha|rds/.test(l)) tags.push('aloha','rds');
+      if (/fatca|crs|ides|tin|usp/.test(l)) tags.push('fatca','crs');
+      if (/ssrs/.test(l)) tags.push('ssrs');
+      if (tags.length === 0) tags.push('misc');
+      return tags;
+    };
+
+    anchors.forEach(a => {
+      const href = a.getAttribute('href');
+      if (!href || href.includes('attachments/') || href.includes('styles/') || href.includes('images/')) return;
+      const id = `html-${href.replace(/[^a-zA-Z0-9_-]/g,'_')}`;
+      if (seen.has(id)) return; seen.add(id);
+      const label = a.textContent.trim() || href;
+      const url = `../Confluence-space-export-205412.html/${href}`;
+      const tags = guessTags(label, href);
+
+      cy.add({ data: { id, label, url, type: 'html', tags: tags.join(',') } });
+      cy.add({ data: { id: `topic-all__${id}`, source: 'topic-all', target: id } });
+      // Attach to heuristic topic hubs as well
+      if (tags.includes('devops')) cy.add({ data: { id: `topic-devops__${id}`, source: 'topic-devops', target: id } });
+      if (tags.includes('powerbi')) cy.add({ data: { id: `topic-powerbi__${id}`, source: 'topic-powerbi', target: id } });
+      if (tags.includes('ace')) cy.add({ data: { id: `topic-ace__${id}`, source: 'topic-ace', target: id } });
+      if (tags.includes('crm')) cy.add({ data: { id: `topic-crm__${id}`, source: 'topic-crm', target: id } });
+      if (tags.includes('nzxwt')) cy.add({ data: { id: `topic-nzxwt__${id}`, source: 'topic-nzxwt', target: id } });
+      if (tags.includes('circuit')) cy.add({ data: { id: `topic-circuit__${id}`, source: 'topic-circuit', target: id } });
+      if (tags.includes('aloha')) cy.add({ data: { id: `topic-aloha__${id}`, source: 'topic-aloha', target: id } });
+
+      addedNodes.push({ id, label, tags: tags.join(' ') });
+    });
+
+    // Update search index
+    fuse.addDocuments(addedNodes);
+    cy.layout(layoutOptions('fcose')).run();
+  } catch (e) {
+    console.warn('Index ingestion failed', e);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
   const elements = buildElements(NODES, EDGES);
   const cy = cytoscape({
     container: document.getElementById('cy'),
@@ -218,5 +276,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const n = evt.target; const url = n.data('url');
     if (url) window.open(url, '_blank', 'noopener');
   });
+
+  // Ingest all pages dynamically from Confluence export index
+  await augmentFromIndex(cy, fuse);
 });
 

@@ -9,6 +9,7 @@ const NODES = [
   { id: 'topic-nzxwt', label: 'NZXWT', type: 'topic', tags: ['nzxwt'] },
   { id: 'topic-circuit', label: 'Circuit Breaker', type: 'topic', tags: ['circuit','fum'] },
   { id: 'topic-aloha', label: 'ALOHA RDS', type: 'topic', tags: ['aloha','rds'] },
+  { id: 'topic-all', label: 'All Pages', type: 'topic', tags: ['all'] },
 
   // DevOps HTML/MD
   { id: 'html-devops-1', label: 'Workshop Day1 Part 1 (HTML)', type: 'html', url: '../Confluence-space-export-205412.html/Data-platform-DevOps-Workshop-Day-1---part-1_3255730205.html', tags: ['synapse','workshop','devops'] },
