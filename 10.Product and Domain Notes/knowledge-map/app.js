@@ -128,6 +128,10 @@ async function augmentFromIndex(cy, fuse) {
     const anchors = Array.from(doc.querySelectorAll('div.pageSection a[href]'));
     const seen = new Set();
     const addedNodes = [];
+    const progress = document.getElementById('progress');
+    const bar = document.getElementById('progressBar');
+    const label = document.getElementById('progressLabel');
+    progress.hidden = false; bar.style.width = '0%'; label.textContent = 'Ingesting pages…';
 
     const guessTags = (label, href) => {
       const l = (label||'').toLowerCase();
@@ -146,7 +150,7 @@ async function augmentFromIndex(cy, fuse) {
       return tags;
     };
 
-    anchors.forEach(a => {
+    anchors.forEach((a, i) => {
       const href = a.getAttribute('href');
       if (!href || href.includes('attachments/') || href.includes('styles/') || href.includes('images/')) return;
       const id = `html-${href.replace(/[^a-zA-Z0-9_-]/g,'_')}`;
@@ -167,11 +171,14 @@ async function augmentFromIndex(cy, fuse) {
       if (tags.includes('aloha')) cy.add({ data: { id: `topic-aloha__${id}`, source: 'topic-aloha', target: id } });
 
       addedNodes.push({ id, label, tags: tags.join(' ') });
+      if (i % 20 === 0) { bar.style.width = `${Math.round((i/anchors.length)*100)}%`; }
     });
 
     // Update search index
     fuse.addDocuments(addedNodes);
     cy.layout(layoutOptions('fcose')).run();
+    bar.style.width = '100%'; label.textContent = `Ingested ${addedNodes.length} pages.`;
+    setTimeout(() => { progress.hidden = true; }, 1200);
   } catch (e) {
     console.warn('Index ingestion failed', e);
   }
@@ -203,6 +210,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const toggleMd = document.getElementById('toggleMd');
   const topicSelect = document.getElementById('topicSelect');
   const layoutSelect = document.getElementById('layoutSelect');
+  const enrichBtn = document.getElementById('enrichBtn');
+  const linkBtn = document.getElementById('linkBtn');
 
   function applyVisibility(){
     const showHtml = toggleHtml.checked; const showMd = toggleMd.checked;
@@ -256,6 +265,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     const png64 = cy.png({ full: true, scale: 2, bg: '#0b0f14' });
     const a = document.createElement('a');
     a.href = png64; a.download = 'knowledge-map.png'; a.click();
+  });
+
+  // Enrich tags using quick heuristics across all nodes
+  enrichBtn.addEventListener('click', () => {
+    cy.nodes().forEach(n => {
+      if (n.data('type') === 'topic') return;
+      const cur = (n.data('tags')||'').split(',').filter(Boolean);
+      const extra = [];
+      const L = (n.data('label')||'').toLowerCase();
+      if (/sql|proc|usp|merge|table|view/.test(L)) extra.push('sql');
+      if (/etl|pipeline|metadata|framework/.test(L)) extra.push('etl');
+      if (/aml|napier/.test(L)) extra.push('aml');
+      const tags = Array.from(new Set([...cur, ...extra])).filter(Boolean);
+      n.data('tags', tags.join(','));
+    });
+  });
+
+  // Link similar nodes (cosine on Fuse scores; simplistic pairing)
+  linkBtn.addEventListener('click', () => {
+    // Build a simple index: for each node, find top-1 similar other node and link with dotted edge
+    const items = cy.nodes().map(n => ({ id: n.id(), label: n.data('label'), tags: (n.data('tags')||'').replace(/,/g,' ') }));
+    const idx = new Fuse(items, { keys: ['label','tags'], threshold: 0.25, ignoreLocation: true });
+    const made = new Set();
+    items.forEach(it => {
+      const hits = idx.search(it.label).filter(h => h.item.id !== it.id).slice(0,1);
+      hits.forEach(h => {
+        const eid = `sim_${it.id}__${h.item.id}`;
+        if (made.has(eid)) return; made.add(eid);
+        cy.add({ data: { id: eid, source: it.id, target: h.item.id }, classes: 'sim' });
+      });
+    });
+    cy.style().selector('edge.sim').style({ 'line-style': 'dotted', 'opacity': 0.5 }).update();
+    cy.layout(layoutOptions(layoutSelect.value || 'fcose')).run();
   });
 
   toggleHtml.addEventListener('change', applyVisibility);

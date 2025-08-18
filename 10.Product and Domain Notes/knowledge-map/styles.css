@@ -48,6 +48,9 @@ body{
 .details .hint{color:var(--muted)}
 .canvas{position:relative;min-height:70vh}
 #cy{position:absolute;inset:0;border:1px solid var(--border);border-radius:12px;background:radial-gradient(1200px 800px at 20% 0%,rgba(96,165,250,0.06),transparent),radial-gradient(1000px 800px at 80% 100%,rgba(52,211,153,0.06),transparent)}
+.progress{position:absolute;left:16px;bottom:16px;right:16px;background:#0d141c;border:1px solid var(--border);border-radius:10px;padding:8px;display:flex;align-items:center;gap:12px}
+.progress .bar{height:6px;background:linear-gradient(90deg,#60a5fa,#34d399);border-radius:999px;transition:width .25s}
+.progress .label{color:#cbd6e2;font-size:12px;margin-left:auto}
 .footer{padding:10px 16px;color:var(--muted);border-top:1px solid var(--border)}
 .footer a{color:#9cc2ff;text-decoration:none}
 .footer a:hover{text-decoration:underline}
