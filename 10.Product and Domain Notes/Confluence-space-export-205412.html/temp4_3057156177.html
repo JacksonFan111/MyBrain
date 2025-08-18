@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : temp4</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : temp4
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 04-03-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below, I’ll rewrite the logical flow and SQL scripts for each issue (I01, I03, I06, I08, I09) without relying on the <code>#Base</code> temp table from the provided script. Instead, I’ll build each query from scratch, starting with the <code>Portfolio</code> table as the anchor and using only the joins and tables explicitly mentioned in the provided script or the original document. This ensures no precomputed temp tables are used, and all joins are constructed fresh for each issue. The goal remains to provide client lists for Jude’s team to manually fix discrepancies between CIP and MT environments.</p><hr/><h3 id="temp4-I01:QuayStreetAssetNamesinCIPandMTDon’tMatch">I01: QuayStreet Asset Names in CIP and MT Don’t Match</h3><p><strong>Objective</strong>: Provide a list of clients with portfolios holding QuayStreet assets where the CIP <code>ProductName</code> doesn’t match the MT naming convention (e.g., ending with &quot;Units PIE&quot;).</p><h4 id="temp4-LogicalFlow">Logical Flow</h4><ol start="1"><li><p><strong>Start with Portfolio</strong>:</p><ul><li><p>Begin with <code>Portfolio</code> as the central table since it links to clients.</p></li></ul></li><li><p><strong>Join to Entity</strong>:</p><ul><li><p>Join <code>Portfolio</code> to <code>Entity</code> using <code>Portfolio.Client_Id = Entity.Id</code> to access client details.</p></li></ul></li><li><p><strong>Link to Asset</strong>:</p><ul><li><p>The provided script doesn’t explicitly join <code>Portfolio</code> to <code>Asset</code>, but the document’s <code>Asset</code> table (with <code>PieFundID</code> and <code>ProductName</code>) is critical. Without an explicit linking table (e.g., <code>PortfolioAsset</code>), I’ll assume <code>Asset</code> data is standalone and filter for QuayStreet funds, then loosely associate with portfolios via client relationships.</p></li></ul></li><li><p><strong>Identify Mismatches</strong>:</p><ul><li><p>Filter <code>Asset</code> where <code>ProductName LIKE '%Quaystreet%'</code> and <code>ProductName NOT LIKE '%Units PIE'</code> (MT standard per fund list).</p></li><li><p>Restrict to <code>PieFundID</code> values from the document (330001–330012).</p></li></ul></li><li><p><strong>Output Client List</strong>:</p><ul><li><p>Select distinct <code>Entity.Id</code>, <code>EntityName</code>, <code>Portfolio.Id</code>, <code>PortfolioReference</code>, and mismatch details.</p></li></ul></li></ol><h4 id="temp4-SQLScript">SQL Script</h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT
+    &#39;I01 - QuayStreet Asset Name Mismatch&#39; AS Issue,
+    e.Id AS EntityId,
+    e.EntityName AS ClientName,
+    p.Id AS PortfolioId,
+    p.PortfolioReference AS PortfolioCode,
+    a.PieFundID,
+    a.ProductName AS CIP_ProductName,
+    CASE 
+        WHEN a.ProductName NOT LIKE &#39;%Units PIE&#39; THEN CONCAT(a.ProductName, &#39; Units PIE&#39;)
+        ELSE a.ProductName
+    END AS Expected_MT_ProductName
+FROM 
+    dbo.Portfolio p
+    INNER JOIN Entity e ON e.Id = p.Client_Id
+    CROSS JOIN Asset a -- No direct join available; cross join with filter
+WHERE 
+    a.ProductName LIKE &#39;%Quaystreet%&#39;
+    AND a.PieFundID IN (330001, 330002, 330003, 330004, 330005, 330006, 330007, 330008, 330009, 330010, 330011, 330012)
+    AND a.ProductName NOT LIKE &#39;%Units PIE&#39; -- Mismatch condition
+ORDER BY 
+    e.Id, p.Id;</pre>
+</div></div><h4 id="temp4-FlowExplanation">Flow Explanation</h4><ul><li><p><strong>Data Source</strong>: <code>Portfolio</code> starts the query, linked to <code>Entity</code> for clients.</p></li><li><p><strong>Mismatch Logic</strong>: <code>Asset</code> is filtered for QuayStreet funds with naming mismatches. A <code>CROSS JOIN</code> is used due to no explicit <code>Portfolio-to-Asset</code> link, assuming all portfolios might hold these assets (refine with actual linkage if available).</p></li><li><p><strong>Portfolio Link</strong>: Direct from <code>Portfolio</code>.</p></li><li><p><strong>Client Link</strong>: <code>Entity</code> via <code>Client_Id</code>.</p></li><li><p><strong>Result</strong>: Lists clients potentially impacted by mismatched QuayStreet asset names.</p></li></ul><hr/><h3 id="temp4-I03:IncorrectCountryCityinCIP(SydneyasNZCity)">I03: Incorrect CountryCity in CIP (Sydney as NZ City)</h3><p><strong>Objective</strong>: Provide a list of clients with portfolios where Sydney is incorrectly logged as a New Zealand city in CIP’s <code>ContactDetail</code>.</p><h4 id="temp4-LogicalFlow.1">Logical Flow</h4><ol start="1"><li><p><strong>Start with Portfolio</strong>:</p><ul><li><p>Use <code>Portfolio</code> as the base table.</p></li></ul></li><li><p><strong>Join to Entity</strong>:</p><ul><li><p>Join <code>Portfolio</code> to <code>Entity</code> (<code>Portfolio.Client_Id = Entity.Id</code>).</p></li></ul></li><li><p><strong>Join to ContactDetail</strong>:</p><ul><li><p>Join <code>Entity</code> to <code>ContactDetail</code> using <code>Entity.PostalAddress_Id = ContactDetail.Id</code> (or <code>PhysicalAddress_Id</code>, but I’ll use postal as primary per the script).</p></li></ul></li><li><p><strong>Join to Country</strong>:</p><ul><li><p>Join <code>ContactDetail</code> to <code>Country</code> (<code>ContactDetail.Country_Id = Country.Id</code>) to check country mapping.</p></li></ul></li><li><p><strong>Identify Mismatches</strong>:</p><ul><li><p>Filter where <code>ContactDetail.City = 'Sydney'</code> and <code>Country.Id = 2071</code> (NZ, per document).</p></li></ul></li><li><p><strong>Output Client List</strong>:</p><ul><li><p>Select distinct clients with mismatched Sydney records.</p></li></ul></li></ol><h4 id="temp4-SQLScript.1">SQL Script</h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT
+    &#39;I03 - Incorrect CountryCity (Sydney as NZ)&#39; AS Issue,
+    e.Id AS EntityId,
+    e.EntityName AS ClientName,
+    p.Id AS PortfolioId,
+    p.PortfolioReference AS PortfolioCode,
+    cd.City AS ContactDetailCity,
+    c.CountryName AS ContactDetailCountry
+FROM 
+    dbo.Portfolio p
+    INNER JOIN Entity e ON e.Id = p.Client_Id
+    INNER JOIN ContactDetail cd ON cd.Id = e.PostalAddress_Id
+    INNER JOIN Country c ON c.Id = cd.Country_Id
+WHERE 
+    cd.City = &#39;Sydney&#39;
+    AND c.Id = 2071 -- NZ country ID
+ORDER BY 
+    e.Id, p.Id;</pre>
+</div></div><h4 id="temp4-FlowExplanation.1">Flow Explanation</h4><ul><li><p><strong>Data Source</strong>: <code>Portfolio</code> anchors the query.</p></li><li><p><strong>Mismatch Logic</strong>: Filters <code>ContactDetail</code> for Sydney tied to NZ (2071).</p></li><li><p><strong>Portfolio Link</strong>: Direct from <code>Portfolio</code>.</p></li><li><p><strong>Client Link</strong>: <code>Entity</code> via <code>Client_Id</code>, then <code>ContactDetail</code> via <code>PostalAddress_Id</code>.</p></li><li><p><strong>Result</strong>: Lists clients with portfolios linked to incorrect Sydney mappings.</p></li></ul><hr/><h3 id="temp4-I06:HistoricalFeeTransactionsLinkedtoMyStartFeePackageNoLongerinUse">I06: Historical Fee Transactions Linked to MyStart Fee Package No Longer in Use</h3><p><strong>Objective</strong>: Provide a list of clients with portfolios having historical fee transactions linked to an obsolete MyStart fee package.</p><h4 id="temp4-LogicalFlow.2">Logical Flow</h4><ol start="1"><li><p><strong>Start with Portfolio</strong>:</p><ul><li><p>Begin with <code>Portfolio</code>.</p></li></ul></li><li><p><strong>Join to Fee Tables</strong>:</p><ul><li><p>Join <code>Portfolio</code> to <code>FeeIncomeAndExpenseDetail</code> (<code>Portfolio.Id = FeeIncomeAndExpenseDetail.Portfolio_Id</code>).</p></li><li><p>Join <code>FeeIncomeAndExpenseDetail</code> to <code>PortfolioManualFee</code> (<code>PortfolioManualFee.Id = FeeIncomeAndExpenseDetail.PortfolioManualFeeItem_Id</code>).</p></li></ul></li><li><p><strong>Join to Entity</strong>:</p><ul><li><p>Join <code>Portfolio</code> to <code>Entity</code> (<code>Portfolio.Client_Id = Entity.Id</code>).</p></li></ul></li><li><p><strong>Identify Obsolete Packages</strong>:</p><ul><li><p>Filter <code>PortfolioManualFee.RecordStatus = 2</code> (obsolete, per I08 precedent).</p></li><li><p>Restrict to <code>Portfolio.Id</code> in <code>ReplicationSelectedPortfolio</code>.</p></li></ul></li><li><p><strong>Output Client List</strong>:</p><ul><li><p>Select distinct clients with affected portfolios.</p></li></ul></li></ol><h4 id="temp4-SQLScript.2">SQL Script</h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT
+    &#39;I06 - Obsolete MyStart Fee Transactions&#39; AS Issue,
+    e.Id AS EntityId,
+    e.EntityName AS ClientName,
+    p.Id AS PortfolioId,
+    p.PortfolioReference AS PortfolioCode,
+    pmf.Description AS FeeDescription
+FROM 
+    dbo.Portfolio p
+    INNER JOIN FeeIncomeAndExpenseDetail fied ON fied.Portfolio_Id = p.Id
+    INNER JOIN PortfolioManualFee pmf ON pmf.Id = fied.PortfolioManualFeeItem_Id
+    INNER JOIN Entity e ON e.Id = p.Client_Id
+WHERE 
+    fied.Portfolio_Id IN (SELECT Id FROM ReplicationSelectedPortfolio)
+    AND pmf.RecordStatus = 2 -- Obsolete package
+ORDER BY 
+    e.Id, p.Id;</pre>
+</div></div><h4 id="temp4-FlowExplanation.2">Flow Explanation</h4><ul><li><p><strong>Data Source</strong>: <code>Portfolio</code> as the starting point.</p></li><li><p><strong>Mismatch Logic</strong>: Joins to fee tables, filters for obsolete fees in selected portfolios.</p></li><li><p><strong>Portfolio Link</strong>: Direct via <code>Portfolio_Id</code>.</p></li><li><p><strong>Client Link</strong>: <code>Entity</code> via <code>Client_Id</code>.</p></li><li><p><strong>Result</strong>: Lists clients with portfolios tied to obsolete MyStart fees.</p></li></ul><hr/><h3 id="temp4-I08:DuplicateBranchNumberinMT">I08: Duplicate BranchNumber in MT</h3><p><strong>Objective</strong>: Provide a list of clients with portfolios tied to duplicate <code>BranchNumber</code> '0936' in MT.</p><h4 id="temp4-LogicalFlow.3">Logical Flow</h4><ol start="1"><li><p><strong>Start with Portfolio</strong>:</p><ul><li><p>Use <code>Portfolio</code> as the base.</p></li></ul></li><li><p><strong>Join to OrganisationBranch</strong>:</p><ul><li><p>Join <code>Portfolio</code> to <code>OrganisationBranch</code> (<code>Portfolio.OrganisationBranch_Id = OrganisationBranch.Id</code>).</p></li></ul></li><li><p><strong>Join to BankBranch</strong>:</p><ul><li><p>Join <code>OrganisationBranch</code> to <code>BankBranch</code> (<code>OrganisationBranch.Id = BankBranch.BranchID</code>, per document).</p></li></ul></li><li><p><strong>Join to Entity</strong>:</p><ul><li><p>Join <code>Portfolio</code> to <code>Entity</code> (<code>Portfolio.Client_Id = Entity.Id</code>).</p></li></ul></li><li><p><strong>Identify Duplicates</strong>:</p><ul><li><p>Filter <code>BankBranch.BranchNumber = '0936'</code>, <code>RecordStatus = 1</code>, and exclude ID 28262.</p></li></ul></li><li><p><strong>Output Client List</strong>:</p><ul><li><p>Select distinct clients with duplicate branches.</p></li></ul></li></ol><h4 id="temp4-SQLScript.3">SQL Script</h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT
+    &#39;I08 - Duplicate BranchNumber&#39; AS Issue,
+    e.Id AS EntityId,
+    e.EntityName AS ClientName,
+    p.Id AS PortfolioId,
+    p.PortfolioReference AS PortfolioCode,
+    bb.BranchNumber,
+    bb.BranchName
+FROM 
+    dbo.Portfolio p
+    INNER JOIN dbo.OrganisationBranch ob ON ob.Id = p.OrganisationBranch_Id
+    INNER JOIN BankBranch bb ON bb.BranchID = ob.Id
+    INNER JOIN Entity e ON e.Id = p.Client_Id
+WHERE 
+    bb.BranchNumber = &#39;0936&#39;
+    AND bb.RecordStatus = 1 -- Active records
+    AND bb.Id != 28262 -- Exclude workaround
+ORDER BY 
+    e.Id, p.Id;</pre>
+</div></div><h4 id="temp4-FlowExplanation.3">Flow Explanation</h4><ul><li><p><strong>Data Source</strong>: <code>Portfolio</code> starts the query.</p></li><li><p><strong>Mismatch Logic</strong>: Joins to <code>BankBranch</code> via <code>OrganisationBranch</code>, filters for active '0936' duplicates.</p></li><li><p><strong>Portfolio Link</strong>: Via <code>OrganisationBranch_Id</code>.</p></li><li><p><strong>Client Link</strong>: <code>Entity</code> via <code>Client_Id</code>.</p></li><li><p><strong>Result</strong>: Lists clients with portfolios tied to duplicate branches.</p></li></ul><hr/><h3 id="temp4-I09:EntityPrimaryContactwithNon-CraigsOrganisationID">I09: Entity Primary Contact with Non-Craigs Organisation ID</h3><p><strong>Objective</strong>: Provide a list of clients (entities) with primary contacts tied to non-Craigs Organisation IDs.</p><h4 id="temp4-LogicalFlow.4">Logical Flow</h4><ol start="1"><li><p><strong>Start with Portfolio</strong>:</p><ul><li><p>Begin with <code>Portfolio</code>.</p></li></ul></li><li><p><strong>Join to Entity</strong>:</p><ul><li><p>Join <code>Portfolio</code> to <code>Entity</code> (<code>Portfolio.Client_Id = Entity.Id</code>).</p></li></ul></li><li><p><strong>Identify Non-Craigs</strong>:</p><ul><li><p>Filter <code>Entity.Organisation_Id != 1</code> (Craigs assumed as 1) for IDs (49189, 45162, 45553, 37838, 43051, 31682).</p></li></ul></li><li><p><strong>Output Client List</strong>:</p><ul><li><p>Select distinct clients with non-Craigs IDs.</p></li></ul></li></ol><h4 id="temp4-SQLScript.4">SQL Script</h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT
+    &#39;I09 - Non-Craigs Organisation ID&#39; AS Issue,
+    e.Id AS EntityId,
+    e.EntityName AS ClientName,
+    p.Id AS PortfolioId,
+    p.PortfolioReference AS PortfolioCode,
+    e.Organisation_Id
+FROM 
+    dbo.Portfolio p
+    INNER JOIN Entity e ON e.Id = p.Client_Id
+WHERE 
+    e.Id IN (49189, 45162, 45553, 37838, 43051, 31682)
+    AND e.Organisation_Id != 1 -- Non-Craigs
+ORDER BY 
+    e.Id, p.Id;</pre>
+</div></div><h4 id="temp4-FlowExplanation.4">Flow Explanation</h4><ul><li><p><strong>Data Source</strong>: <code>Portfolio</code> as the base.</p></li><li><p><strong>Mismatch Logic</strong>: Filters <code>Entity</code> for non-Craigs IDs.</p></li><li><p><strong>Portfolio Link</strong>: Direct from <code>Portfolio</code>.</p></li><li><p><strong>Client Link</strong>: <code>Entity</code> via <code>Client_Id</code>.</p></li><li><p><strong>Result</strong>: Lists clients with non-Craigs Organisation IDs and their portfolios.</p></li></ul><hr/><h3 id="temp4-GeneralWorkflowforJF">General Workflow for JF</h3><ol start="1"><li><p><strong>Execute Queries</strong>:</p><ul><li><p>Run each script in a CIP test environment, starting fresh with <code>Portfolio</code>.</p></li></ul></li><li><p><strong>Compile Client Lists</strong>:</p><ul><li><p>Export as CSVs (e.g., <code>I01_Client_List.csv</code>) with columns: <code>Issue</code>, <code>EntityId</code>, <code>ClientName</code>, <code>PortfolioId</code>, <code>PortfolioCode</code>, [Issue-Specific Columns].</p></li></ul></li><li><p><strong>Share with Jude’s Team</strong>:</p><ul><li><p>Send via email or shared drive: &quot;Client lists for I01, I03, I06, I08, I09 built from Portfolio table joins.&quot;</p></li></ul></li></ol><h4 id="temp4-Notes">Notes</h4><ul><li><p><strong>No #Base</strong>: Each query is standalone, unwrapping the temp table logic.</p></li><li><p><strong>No Assumed Tables</strong>: Avoided tables like <code>PortfolioAsset</code> not in the script or document, using <code>CROSS JOIN</code> for I01 where linkage is unclear.</p></li><li><p><strong>Limitations</strong>: I01’s lack of a direct <code>Portfolio-to-Asset</code> join may over-report; refine with actual relationships if provided.</p></li></ul><p>These scripts provide JF with a clean, from-scratch approach using <code>Portfolio</code> as the anchor, aligned with the provided context. Let me know if further adjustments are needed!</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

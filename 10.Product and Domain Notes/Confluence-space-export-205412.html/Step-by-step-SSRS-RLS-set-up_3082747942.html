@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Step-by-step SSRS RLS set up</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Step-by-step SSRS RLS set up
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 18-03-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is a <strong>step-by-step “beginner’s guide”</strong> to setting up <strong>role-level (row-level) security</strong> in SSRS using <strong>multiple parameters</strong> (UserName → Branch → Adviser → AdviserCode). The idea is that each parameter restricts the next one, and ultimately filters your main dataset so a user only sees rows they’re allowed to see.</p><hr/><h1 id="Step-by-stepSSRSRLSsetup-1.Create&amp;ConfigureParametersinSSRS">1. <strong>Create &amp; Configure Parameters in SSRS</strong></h1><h3 id="Step-by-stepSSRSRLSsetup-a)@UserName">a) <strong>@UserName</strong></h3><ul><li><p>Typically <strong>hidden</strong> or <strong>internal</strong>.</p></li><li><p>Often set to an expression like <code>=User!UserID</code> so it picks up the logged-in user.</p></li><li><p>This parameter is at the <strong>top</strong> of the parameter list (so the next parameters can filter by it).</p></li></ul><h3 id="Step-by-stepSSRSRLSsetup-b)@Branch">b) <strong>@Branch</strong></h3><ul><li><p><strong>Allow multiple values</strong> (so the user can select one or more branches).</p></li><li><p>Populated by a dataset (let’s call it <code>ds_Branch</code>).</p></li></ul><h3 id="Step-by-stepSSRSRLSsetup-c)@Adviser">c) <strong>@Adviser</strong></h3><ul><li><p><strong>Allow multiple values</strong>.</p></li><li><p>Populated by another dataset (e.g., <code>ds_Adviser</code>) that is filtered by <strong>@UserName</strong> and <strong>@Branch</strong>.</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">--Adviser(Security) Sahred datasets Logics
+
+SELECT distinct AdviserName [Adviser_Adviser_Name_] FROM ReferenceBI.dbo.vw_BISecurityTables
+where ADUserName=@UserName
+and BranchName in (SELECT value FROM string_split(@Branch,&#39;|&#39;))
+</pre>
+</div></div><h3 id="Step-by-stepSSRSRLSsetup-d)@AdviserCode">d) <strong>@AdviserCode</strong></h3><ul><li><p><strong>Allow multiple values</strong>.</p></li><li><p>Populated by a dataset (e.g., <code>ds_AdviserCode</code>) that is filtered by <strong>@UserName</strong> and <strong>@Adviser</strong>.</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">--Advisor Code logics
+
+SELECT DISTINCT [AdviserCode] FROM ReferenceBI.dbo.vw_BISecurityTables
+where ADUserName=@UserName
+--and BranchName in (SELECT item FROM BIFramework.[Core].[String_Split] (@Branch,&#39;|&#39;))
+and AdviserName in (SELECT value FROM string_split (@Adviser,&#39;|&#39;))
+</pre>
+</div></div><blockquote><p><strong>Order matters</strong>: In <strong>Report Data</strong> → <strong>Parameters</strong>, make sure it’s <strong>UserName</strong> → <strong>Branch</strong> → <strong>Adviser</strong> → <strong>AdviserCode</strong>. SSRS evaluates them top to bottom.</p></blockquote><hr/><h1 id="Step-by-stepSSRSRLSsetup-2.CreateOneDataset(ThisisinShareddatasets)perParameter">2. <strong>Create One Dataset (This is in Shared datasets) per Parameter</strong></h1><p /><h2 id="Step-by-stepSSRSRLSsetup-DatasetforBranch(@Branch)">Dataset for Branch (@Branch)</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT BranchName
+FROM ReferenceBI.dbo.vw_BISecurityTables
+WHERE ADUserName = @UserName
+ORDER BY BranchName
+</pre>
+</div></div><ul><li><p>This ensures the <strong>Branch</strong> list only shows branches the logged-in user is allowed to see.</p></li><li><p>Map the dataset parameter <code>@UserName</code> to <code>Parameters!UserName.Value</code>.</p></li></ul><h2 id="Step-by-stepSSRSRLSsetup-DatasetforAdviser(@Adviser)">Dataset for Adviser (@Adviser)</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT AdviserName
+FROM ReferenceBI.dbo.vw_BISecurityTables
+WHERE ADUserName = @UserName
+  AND BranchName IN (@Branch)  -- multi-value filter
+ORDER BY AdviserName
+</pre>
+</div></div><ul><li><p>This filters advisers by the <strong>selected branches</strong> plus the user’s AD username.</p></li><li><p>Make sure “Allow multiple values” is checked for @Branch and @Adviser.</p></li><li><p>Map both dataset parameters:</p><ul><li><p><code>@UserName = Parameters!UserName.Value</code></p></li><li><p><code>@Branch = Parameters!Branch.Value</code></p></li></ul></li></ul><h2 id="Step-by-stepSSRSRLSsetup-DatasetforAdviserCode(@AdviserCode)">Dataset for AdviserCode (@AdviserCode)</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT AdviserCode
+FROM ReferenceBI.dbo.vw_BISecurityTables
+WHERE ADUserName = @UserName
+  AND AdviserName IN (@Adviser)  -- multi-value filter
+ORDER BY AdviserCode
+</pre>
+</div></div><ul><li><p>This filters adviser codes by the <strong>selected advisers</strong> plus the user’s AD username.</p></li><li><p>Map the dataset parameters:</p><ul><li><p><code>@UserName = Parameters!UserName.Value</code></p></li><li><p><code>@Adviser = Parameters!Adviser.Value</code></p></li></ul></li></ul><hr/><h1 id="Step-by-stepSSRSRLSsetup-3.Main(Body)Dataset">3. <strong>Main (Body) Dataset</strong></h1><p>Finally, in your <strong>main dataset</strong> that returns the actual report rows, filter by <strong>all</strong> the parameters:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT ...
+FROM YourMainTable a
+WHERE 
+    a.ADUserName = @UserName
+    AND a.BranchName IN (@Branch)
+    AND a.dsl_PrimaryAdviserIdName IN (@Adviser)
+    AND a.AdviserID IN (@AdviserCode)
+</pre>
+</div></div><ol start="1"><li><p><strong>Map each parameter</strong> in <strong>Dataset Properties</strong> → <strong>Parameters</strong>:</p><ul><li><p><code>@UserName = Parameters!UserName.Value</code></p></li><li><p><code>@Branch = Parameters!Branch.Value</code></p></li><li><p><code>@Adviser = Parameters!Adviser.Value</code></p></li><li><p><code>@AdviserCode = Parameters!AdviserCode.Value</code></p></li></ul></li><li><p><strong>Multi-value Magic</strong>:</p><ul><li><p>Because you checked “Allow multiple values,” SSRS will expand <code>(@Branch)</code> into something like <code>('Branch1','Branch2')</code>.</p></li><li><p>Same for <code>(@Adviser)</code> and <code>(@AdviserCode)</code>.</p></li></ul></li><li><p><strong>Result</strong>: Users see only the rows matching the selected branches, advisers, and codes—<strong>and</strong> those lists themselves are restricted by the user’s own AD name.</p></li></ol><hr/><h1 id="Step-by-stepSSRSRLSsetup-4.CommonPitfalls&amp;Tips">4. <strong>Common Pitfalls &amp; Tips</strong></h1><ol start="1"><li><p><strong>Parameter Order</strong></p><ul><li><p>Must be <strong>UserName</strong> → <strong>Branch</strong> → <strong>Adviser</strong> → <strong>AdviserCode</strong> in the <strong>Report Data</strong> pane, or you’ll get “forward dependency” errors.</p></li></ul></li><li><p><strong>Check “Allow multiple values”</strong></p><ul><li><p>If you forget to enable this for @Branch/@Adviser/@AdviserCode, SSRS will pass a single string instead of a list, causing “query execution failed” or unexpected filtering.</p></li></ul></li><li><p><strong>Hidden vs. Visible</strong></p><ul><li><p>Often, <code>@UserName</code> is hidden/internal. Branch/Adviser/AdviserCode can be visible if you want the user to choose from the valid lists.</p></li></ul></li><li><p><strong>Data Type Consistency</strong></p><ul><li><p>Make sure the columns (<code>BranchName</code>, <code>AdviserName</code>, <code>AdviserCode</code>) match the parameter data type (usually <code>NVARCHAR</code> or <code>VARCHAR</code>).</p></li></ul></li><li><p><strong>“All” Selection</strong></p><ul><li><p>If you want an “All” option, you can add a special row like <code>'&lt;All&gt;'</code> in each dataset and then adjust your <code>WHERE</code> logic to skip filtering if <code>'&lt;All&gt;' IN (@Branch)</code> (or <code>@Adviser</code>, etc.). That’s an optional enhancement.</p></li></ul></li><li><p><strong>Enable Remote Errors for Debugging</strong></p><ul><li><p>If you get “An error has occurred during report processing,” enable remote errors in SSRS or check the SSRS logs on the server to see the real SQL error message.</p></li></ul></li></ol><hr/><h1 id="Step-by-stepSSRSRLSsetup-5.PuttingItAllTogether">5. <strong>Putting It All Together</strong></h1><ol start="1"><li><p><strong>Create </strong><code>@UserName</code> parameter (hidden) → fed by <code>=User!UserID</code> or something similar.</p></li><li><p><strong>Create dataset </strong><code>ds_Branch</code> that selects branches for that user → bind it to <code>@Branch</code> (multi-value).</p></li><li><p><strong>Create dataset </strong><code>ds_Adviser</code> that selects advisers for the chosen branches → bind it to <code>@Adviser</code> (multi-value).</p></li><li><p><strong>Create dataset </strong><code>ds_AdviserCode</code> that selects adviser codes for the chosen advisers → bind it to <code>@AdviserCode</code> (multi-value).</p></li><li><p><strong>Create the main dataset</strong> that uses all four parameters in the <code>WHERE</code> clause to enforce row-level security.</p></li><li><p><strong>Order the parameters</strong> top-to-bottom in the correct dependency sequence.</p></li><li><p><strong>Test</strong> by selecting multiple branches, multiple advisers, etc. to confirm the data filters correctly.</p></li></ol><p>That’s the <strong>basic template</strong> for implementing multi-parameter role-level security in SSRS. By following these steps, new users can <strong>avoid forward dependency errors</strong> and ensure each parameter properly restricts the next, giving you a secure, flexible reporting experience.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : CIP0254956 -Data Request SSB - Potentially data from Power BI report SSB DashBoard</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : CIP0254956 -Data Request SSB - Potentially data from Power BI report SSB DashBoard
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 30-01-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p><strong>Action Plan for Jackson: Addressing Remaining Data Requests</strong></p><hr/><h3 id="CIP0254956-DataRequestSSB-PotentiallydatafromPowerBIreportSSBDashBoard-1.OutstandingDataRequirements:"><strong>1. Outstanding Data Requirements:</strong></h3><h4 id="CIP0254956-DataRequestSSB-PotentiallydatafromPowerBIreportSSBDashBoard-SSD(NZXWTSystem)"><strong>SSD (NZXWT System)</strong></h4><ul><li><p><strong>Transfer Value In &amp; Out</strong>: Total $ value transferred into/out of SSD accounts (FY24).</p></li><li><p><strong>Top 3 Holdings</strong>: Assets with highest $ value held in SSD portfolios (NZXWT).</p></li><li><p><strong>Top 3 Buys/Sells</strong>: Assets with highest $ value traded (buys/sells separately) in NZXWT.</p></li><li><p><strong>Number of Trades</strong>: Total count of NZXWT trades (FY24).</p></li></ul><h4 id="CIP0254956-DataRequestSSB-PotentiallydatafromPowerBIreportSSBDashBoard-RBD(FusionSystem)"><strong>RBD (Fusion System)</strong></h4><ul><li><p><strong>Top 3 Buys/Sells</strong>: Assets with highest $ value traded in Fusion (FY24).</p></li></ul><hr/><h3 id="CIP0254956-DataRequestSSB-PotentiallydatafromPowerBIreportSSBDashBoard-2.DataSources&amp;Approach:"><strong>2. Data Sources &amp; Approach:</strong></h3><h4 id="CIP0254956-DataRequestSSB-PotentiallydatafromPowerBIreportSSBDashBoard-SSD(NZXWTData)"><strong>SSD (NZXWT Data)</strong></h4><ul><li><p><strong>Source</strong>: Direct querying of <strong>NZXWT databases/APIs</strong> (not available in Power BI).</p></li><li><p><strong>Steps</strong>:</p><ol start="1"><li><p><strong>Transfer Values</strong>:</p><ul><li><p>Query NZXWT transaction logs for FY24:</p><ul><li><p><code>Transfer Type = &quot;In&quot;</code> (external inflows to SSD).</p></li><li><p><code>Transfer Type = &quot;Out&quot;</code> (outflows from SSD to other groups/providers).</p></li></ul></li><li><p>Sum total $ amounts for each category.</p></li></ul></li><li><p><strong>Top 3 Holdings</strong>:</p><ul><li><p>SQL query to aggregate holdings by asset value:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT Asset, SUM(Current_Value) AS Total_Holdings
+FROM NZXWT_Holdings
+WHERE Portfolio IN (SSD_GEORGE, SSD_IAINW, ..., SSD_TOMW)
+  AND Date BETWEEN &#39;2024-01-01&#39; AND &#39;2024-12-31&#39;
+GROUP BY Asset
+ORDER BY Total_Holdings DESC
+LIMIT 3;</pre>
+</div></div></li></ul></li><li><p><strong>Top 3 Buys/Sells</strong>:</p><ul><li><p>Separate queries for buys and sells:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Buys
+SELECT Asset, SUM(Transaction_Value) AS Total_Buys
+FROM NZXWT_Trades
+WHERE Trade_Type = &#39;Buy&#39;
+  AND Portfolio IN (SSD_GEORGE, ..., SSD_TOMW)
+  AND Date BETWEEN &#39;2024-01-01&#39; AND &#39;2024-12-31&#39;
+GROUP BY Asset
+ORDER BY Total_Buys DESC
+LIMIT 3;
+
+-- Repeat for Sells</pre>
+</div></div></li></ul></li><li><p><strong>Number of Trades</strong>:</p><ul><li><p>Count all NZXWT trades in FY24:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT COUNT(*) AS Total_Trades
+FROM NZXWT_Trades
+WHERE Portfolio IN (SSD_GEORGE, ..., SSD_TOMW)
+  AND Date BETWEEN &#39;2024-01-01&#39; AND &#39;2024-12-31&#39;;</pre>
+</div></div></li></ul></li></ol></li></ul><h4 id="CIP0254956-DataRequestSSB-PotentiallydatafromPowerBIreportSSBDashBoard-RBD(FusionData)"><strong>RBD (Fusion Data)</strong></h4><ul><li><p><strong>Source</strong>: Power BI or direct Fusion system access.</p></li><li><p><strong>Steps</strong>:</p><ol start="1"><li><p><strong>Top 3 Buys/Sells</strong>:</p><ul><li><p>Export Fusion transaction data for RBD portfolios (e.g., RBT, TGARBT, etc.).</p></li><li><p>Filter for FY24, group by asset, sum $ values for buys/sells, and rank top 3:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: py; gutter: false; theme: Confluence" data-theme="Confluence"># Example using Pandas
+import pandas as pd
+fusion_data = pd.read_csv(&quot;fusion_transactions.csv&quot;)
+fusion_fy24 = fusion_data[(fusion_data[&quot;Date&quot;] &gt;= &quot;2024-01-01&quot;) &amp; (fusion_data[&quot;Date&quot;] &lt;= &quot;2024-12-31&quot;)]
+
+# Top 3 Buys
+top_buys = fusion_fy24[fusion_fy24[&quot;Trade_Type&quot;] == &quot;Buy&quot;].groupby(&quot;Asset&quot;)[&quot;Value&quot;].sum().nlargest(3)
+
+# Top 3 Sells
+top_sells = fusion_fy24[fusion_fy24[&quot;Trade_Type&quot;] == &quot;Sell&quot;].groupby(&quot;Asset&quot;)[&quot;Value&quot;].sum().nlargest(3)</pre>
+</div></div></li></ul></li></ol></li></ul><hr/><h3 id="CIP0254956-DataRequestSSB-PotentiallydatafromPowerBIreportSSBDashBoard-3.Validation&amp;Delivery:"><strong>3. Validation &amp; Delivery</strong>:</h3><ul><li><p><strong>Confirm Definitions with Luke</strong>:</p><ul><li><p>Ensure &quot;Top 3&quot; is based on <strong>total $ value</strong> (not client count or volume).</p></li><li><p>Verify FY24 date alignment (Jan 1, 2024 – Dec 31, 2024).</p></li></ul></li><li><p><strong>Sample Output</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: py; gutter: false; theme: Confluence" data-theme="Confluence"># SSD (NZXWT)
+ssd_output = {
+    &quot;Transfer In (FY24)&quot;: &quot;$12.5M&quot;,
+    &quot;Transfer Out (FY24)&quot;: &quot;$8.3M&quot;,
+    &quot;Top 3 Holdings&quot;: [&quot;NVIDIA ($5.2M)&quot;, &quot;Apple ($4.8M)&quot;, &quot;Microsoft ($3.7M)&quot;],
+    &quot;Top 3 Buys&quot;: [&quot;Amazon ($1.5M)&quot;, &quot;Tesla ($1.2M)&quot;, &quot;Meta ($1.0M)&quot;],
+    &quot;Top 3 Sells&quot;: [&quot;Bonds ($900K)&quot;, &quot;ETF X ($750K)&quot;, &quot;Stock Y ($600K)&quot;],
+    &quot;Total NZXWT Trades&quot;: 2,450
+}
+
+# RBD (Fusion)
+rbd_output = {
+    &quot;Top 3 Buys&quot;: [&quot;Asset A ($2.1M)&quot;, &quot;Asset B ($1.8M)&quot;, &quot;Asset C ($1.5M)&quot;],
+    &quot;Top 3 Sells&quot;: [&quot;Asset D ($1.3M)&quot;, &quot;Asset E ($1.1M)&quot;, &quot;Asset F ($950K)&quot;]
+}</pre>
+</div></div></li><li><p><strong>Final Deliverable</strong>: A structured report (Excel/PDF) with tables for SSD and RBD metrics.</p></li></ul><hr/><h3 id="CIP0254956-DataRequestSSB-PotentiallydatafromPowerBIreportSSBDashBoard-4.Risks&amp;Mitigations:"><strong>4. Risks &amp; Mitigations</strong>:</h3><ul><li><p><strong>Data Access</strong>: If NZXWT access is restricted, escalate to IT/data teams.</p></li><li><p><strong>Data Consistency</strong>: Cross-check totals with Luke’s Power BI data for Fusion trades.</p></li><li><p><strong>Time Constraints</strong>: Prioritize SSD metrics first (NZXWT is manual), then RBD.</p></li></ul><hr/><h3 id="CIP0254956-DataRequestSSB-PotentiallydatafromPowerBIreportSSBDashBoard-5.ProactiveSteps:"><strong>5. Proactive Steps</strong>:</h3><ul><li><p>Document queries/scripts for future use (Luke has no prior tickets).</p></li><li><p>Schedule a 15-minute call with Luke to review sample outputs before finalizing.</p></li></ul><p>By following this plan, Jackson will efficiently resolve the gaps and ensure alignment with Luke’s needs. 🚀</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

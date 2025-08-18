@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Chelmer/ACE → Fusion → AXYS → AACPR</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Chelmer/ACE → Fusion → AXYS → AACPR
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 23-04-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Thought for a couple of seconds</p><p>Below is a consolidated, end-to-end BA-style dossier on the legacy “Chelmer/ACE → Fusion → AXYS → AACPR” ecosystem, each of the key reconciliation scripts we’ve annotated, the data flows between systems, the pain points we’ve uncovered, and recommended next steps. This is meant to serve as your master reference for understanding, troubleshooting, and evolving this convoluted stack.</p><hr/><h2 id="Chelmer/ACE→Fusion→AXYS→AACPR-1.Ecosystem&amp;Data-FlowOverview">1. Ecosystem &amp; Data-Flow Overview</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">     ┌──────────┐          ┌──────────┐           ┌────────┐          ┌─────────┐
+     │  ACE /   │  Trades  │  Fusion  │  BizTalk  │ AACPR  │  Reporting  │  AP   │
+     │ Chelmer  │─────────▶│  (ARM)   │──────────▶│  DB    │────────────▶│ AXYS  │
+     │ (ace DB) │ Orders   │ Price &amp;  │           │        │             │       │
+     │          │ Holdings │ Asset    │           │        │             │       │
+     └──────────┘          └──────────┘           └────────┘             └───────┘
+</pre>
+</div></div><ul><li><p><strong>ACE/Chelmer (</strong><code>ace</code><strong> database)</strong></p><ul><li><p>The original trade/order/contract engine.</p></li><li><p>Tables: <code>EqTradesIn</code>, <code>EqTradesQueue</code>, <code>EqMatchQueue</code>, <code>EqOrders</code>, <code>EqContracts</code>, <code>AccountHoldings</code>, <code>Transaction</code>, etc.</p></li></ul></li><li><p><strong>Fusion (ARM)</strong></p><ul><li><p>New interface built atop ACE for securities data.</p></li><li><p>Tables: <code>Asset</code>, <code>Issue</code>, <code>Exchange</code>, <code>Price</code>, <code>PriceHistory</code>, <code>Trn</code> (transactions), <code>Portfolio</code>, <code>Currency</code>, <code>Glt</code> (lookup codes).</p></li><li><p>Source of truth for security metadata and pricing.</p></li></ul></li><li><p><strong>AXYS/Portfolio Reporting (AP)</strong></p><ul><li><p>Older in-house system that pre-dated Fusion.</p></li><li><p>Data flows from AXYS → AACPR via <strong>BizTalk</strong> integration.</p></li><li><p>AXYS code is heavily customized; sector codes and asset codes can be non-unique.</p></li></ul></li><li><p><strong>AACPR</strong></p><ul><li><p>Central reporting database combining data from Fusion, AXYS, and other systems.</p></li><li><p>Daily feeds to SSRS/Power BI for portfolio reporting.</p></li></ul></li></ul><hr/><h2 id="Chelmer/ACE→Fusion→AXYS→AACPR-2.KeyBusiness-Objects&amp;Relationships">2. Key Business-Objects &amp; Relationships</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="cd841a6d-5115-403c-82dc-fa2a9f563e14" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Concept</p></th><th class="confluenceTh"><p>ACE Table(s)</p></th><th class="confluenceTh"><p>Fusion Table(s)</p></th><th class="confluenceTh"><p>Notes</p></th></tr><tr><td class="confluenceTd"><p><strong>Trade Lifecycle</strong></p></td><td class="confluenceTd"><p>EqTradesIn, EqTradesQueue,</p></td><td class="confluenceTd"><p>Trn</p></td><td class="confluenceTd"><p>Trades move from “In” → “Queue” → “Match”</p></td></tr><tr><td class="confluenceTd"><p /></td><td class="confluenceTd"><p>EqMatchQueue, EqAllocateQueue,</p></td><td class="confluenceTd"><p /></td><td class="confluenceTd"><p>→ final settled trades in <code>Trn</code></p></td></tr><tr><td class="confluenceTd"><p /></td><td class="confluenceTd"><p>EqTrades</p></td><td class="confluenceTd"><p /></td><td class="confluenceTd"><p /></td></tr><tr><td class="confluenceTd"><p><strong>Orders</strong></p></td><td class="confluenceTd"><p>EqOrders</p></td><td class="confluenceTd"><p /></td><td class="confluenceTd"><p>Self-joins detect duplicates on key fields</p></td></tr><tr><td class="confluenceTd"><p><strong>Contracts</strong></p></td><td class="confluenceTd"><p>EqContracts</p></td><td class="confluenceTd"><p /></td><td class="confluenceTd"><p><code>ConditionsOfSale</code> bitmask for disclosures</p></td></tr><tr><td class="confluenceTd"><p><strong>Holdings</strong></p></td><td class="confluenceTd"><p>AccountHoldings, Transaction</p></td><td class="confluenceTd"><p /></td><td class="confluenceTd"><p>Positions snapshot at <code>AsAtDate</code></p></td></tr><tr><td class="confluenceTd"><p><strong>Assets/Securities</strong></p></td><td class="confluenceTd"><p>EqSecurities, EqExchSec</p></td><td class="confluenceTd"><p>Asset, Issue, Exchange</p></td><td class="confluenceTd"><p>Fusion normalized asset meta-data</p></td></tr><tr><td class="confluenceTd"><p><strong>Pricing</strong></p></td><td class="confluenceTd"><p>(none)</p></td><td class="confluenceTd"><p>Price, PriceHistory</p></td><td class="confluenceTd"><p>Fusion holds latest and historical prices</p></td></tr><tr><td class="confluenceTd"><p><strong>Portfolios</strong></p></td><td class="confluenceTd"><p>PortfolioAccountMaster,</p></td><td class="confluenceTd"><p>Portfolio</p></td><td class="confluenceTd"><p>Client vs internal segment suffixes (<code>_CS</code>)</p></td></tr><tr><td class="confluenceTd"><p /></td><td class="confluenceTd"><p>AccountHoldings</p></td><td class="confluenceTd"><p /></td><td class="confluenceTd"><p /></td></tr></tbody></table></div><hr/><h2 id="Chelmer/ACE→Fusion→AXYS→AACPR-3.ScriptSummaries&amp;BAInsights">3. Script Summaries &amp; BA Insights</h2><h3 id="Chelmer/ACE→Fusion→AXYS→AACPR-3.1MonitorTradeProcessing(MonitorTradeProcessing.sql)">3.1 Monitor Trade Processing (<code>Monitor Trade Processing.sql</code>)</h3><ul><li><p><strong>Purpose</strong>: Snapshot counts of equity trades in each pipeline stage for a given date.</p></li><li><p><strong>Key Fields</strong>:</p><ul><li><p><code>Status = 'P'</code> and <code>AsAtDate = @runDate</code> in <code>EqTradesIn</code> → in-flight trades.</p></li><li><p><code>TradeDate = @runDate</code> in <code>EqTradesQueue</code> → queued trades.</p></li><li><p><code>SuspendMatch = 'N'</code> in <code>EqMatchQueue</code> → ready-to-match.</p></li></ul></li><li><p><strong>Pain Points</strong>:</p><ul><li><p>Hard-coded date and status flags—needs parameterization.</p></li><li><p>No definitions for status codes—requires lookup documentation.</p></li></ul></li><li><p><strong>Next Steps</strong>:</p><ul><li><p>Parameterize in SSRS.</p></li><li><p>Document <code>Status</code> values with business definitions.</p></li></ul></li></ul><h3 id="Chelmer/ACE→Fusion→AXYS→AACPR-3.2IdentifyACEvsFusionMismatches(IdentifytransactionsinACEbutnotinChelmer.sql)">3.2 Identify ACE vs Fusion Mismatches (<code>Identify transactions in ACE but not in Chelmer.sql</code>)</h3><ul><li><p><strong>Purpose</strong>: Surface closed ACE transactions not found in Fusion’s <code>TransactionHolding</code>.</p></li><li><p><strong>Key Joins</strong>:</p><ul><li><p><code>EqExchSec</code> → <code>EqSecurities</code> for security mapping.</p></li><li><p><code>StClientMaster</code> for client type segmentation.</p></li><li><p>Left-join to Fusion <code>TransactionHolding</code> via linked server.</p></li></ul></li><li><p><strong>Pain Points</strong>:</p><ul><li><p>Reliance on non-unique keys (may miss near-matches).</p></li><li><p>Hard-coded filters on OpenStatus/TrnStatusID—requires mapping table.</p></li></ul></li><li><p><strong>Next Steps</strong>:</p><ul><li><p>Build mapping table for ACE OpenStatus ↔ Fusion TrnStatusID.</p></li><li><p>Add fuzzy-match logic for security/exchange codes.</p></li></ul></li></ul><h3 id="Chelmer/ACE→Fusion→AXYS→AACPR-3.3ConditionsofSaleFlags(ConditionsofSalesrelatedtoEqContracts.sql)">3.3 Conditions of Sale Flags (<code>Conditions of Sales related to EqContracts.sql</code>)</h3><ul><li><p><strong>Purpose</strong>: Decode the bitmask field <code>ConditionsOfSale</code> in <code>EqContracts</code>.</p></li><li><p><strong>Decoded Flags</strong>:</p><ul><li><p><code>2097152</code> = MI (Margin Instruction)</p></li><li><p><code>16777216</code> = XT (Extra Trading)</p></li><li><p><code>67108864</code> = CS (Contract Statement)</p></li><li><p><code>268435456</code> = SO (Settlement Obligation)</p></li><li><p>Combinations represented by sums of these powers of two.</p></li></ul></li><li><p><strong>Pain Points</strong>:</p><ul><li><p>Integer values not self-describing.</p></li><li><p>Difficult to report “which flag” without a lookup table.</p></li></ul></li><li><p><strong>Next Steps</strong>:</p><ul><li><p>Create <code>ConditionsOfSaleFlags</code> lookup and a view using bitwise AND.</p></li><li><p>Surface human-readable flag names in compliance reports.</p></li></ul></li></ul><h3 id="Chelmer/ACE→Fusion→AXYS→AACPR-3.4CustodialReconciliation(ReconciliationTransactions-fusion.sql)">3.4 Custodial Reconciliation (<code>Reconciliation Transactions - fusion.sql</code>)</h3><ul><li><p><strong>Purpose</strong>: Pull a denormalized feed of <code>Trn</code> records for custodial reconciliation (via <code>DataProvider='REGISTRY'</code>).</p></li><li><p><strong>Key Joins</strong>:</p><ul><li><p><code>Glt</code> for TrnType, HoldingType, TrnStatus.</p></li><li><p><code>Asset</code> → <code>Exchange</code>, <code>Currency</code>, <code>Portfolio</code>.</p></li><li><p>Calculations: gross vs net local values.</p></li></ul></li><li><p><strong>Pain Points</strong>:</p><ul><li><p>Fixed data provider name and portfolio code suffix (<code>_CS</code>).</p></li><li><p>Hard-coded date filters.</p></li></ul></li><li><p><strong>Next Steps</strong>:</p><ul><li><p>Parameterize filters.</p></li><li><p>Build SSRS dataset &amp; index common joins for performance.</p></li></ul></li></ul><h3 id="Chelmer/ACE→Fusion→AXYS→AACPR-3.5DuplicateOrders(FindduplicateordersinACE.sql)">3.5 Duplicate Orders (<code>Find duplicate orders in ACE.sql</code>)</h3><ul><li><p><strong>Purpose</strong>: Detect orders with identical <code>LedgerID, EqSecurityID, OrderTime, Quantity, AdvisorID</code>.</p></li><li><p><strong>Key Logic</strong>:</p><ul><li><p>Self-join on these columns, <code>a.ID &lt;&gt; b.ID AND b.ID &gt; a.ID</code> to avoid dups.</p></li><li><p>Filter recent window (last 150 days).</p></li></ul></li><li><p><strong>Pain Points</strong>:</p><ul><li><p>No real-time detection.</p></li><li><p>Advisors excluded via hard-coded list.</p></li></ul></li><li><p><strong>Next Steps</strong>:</p><ul><li><p>Persist results to an audit table.</p></li><li><p>Trigger alerts for near-duplicate submissions.</p></li></ul></li></ul><h3 id="Chelmer/ACE→Fusion→AXYS→AACPR-3.6PortfolioHoldingsReconciliation(24.04.2025-AcePortfolioAccHoldingscomapredwithfusion.sql)">3.6 Portfolio Holdings Reconciliation (<code>24.04.2025 - Ace Portfolio Acc Holdings comapred with fusion.sql</code>)</h3><ul><li><p><strong>Purpose</strong>: Build temp tables of ACE holdings and Fusion prices, then compute market values.</p></li><li><p><strong>Workflow</strong>:</p><ol start="1"><li><p><strong>#AccountIDs</strong>: Active client portfolios.</p></li><li><p><strong>#RelevantSecurities</strong>: Securities with settled trades ≤ AsAtDate.</p></li><li><p><strong>#aceAccountHolding</strong>: Snapshot of quantity &amp; cost basis.</p></li><li><p><strong>#FilteredPriceData</strong>: Latest price per security from Fusion.</p></li><li><p><strong>Final SELECT</strong>: <code>CASE</code> logic to pick bid/ask/lastPrice, multiply by quantity.</p></li></ol></li><li><p><strong>Pain Points</strong>:</p><ul><li><p>Date window logic manually coded.</p></li><li><p>Collation mismatches on security codes.</p></li></ul></li><li><p><strong>Next Steps</strong>:</p><ul><li><p>Parameterize report date and account filters.</p></li><li><p>Add a “Missing Price” flag for null joins.</p></li></ul></li></ul><h3 id="Chelmer/ACE→Fusion→AXYS→AACPR-3.7FusionPrice-LoadError(24.04.2025-FusionAssetpriceloadingerror.sql)">3.7 Fusion Price-Load Error (<code>24.04.2025 - Fusion Asset price loading error.sql</code>)</h3><ul><li><p><strong>Purpose</strong>: Determine why new prices didn’t overwrite <code>Price.prevPrice</code> or weren’t loaded.</p></li><li><p><strong>Core Logic</strong>:</p><ul><li><p>Subquery picks <code>MAX(priceDate)</code> per <code>(assetID, dataProviderID=10)</code> then joins back.</p></li></ul></li><li><p><strong>Pain Points</strong>:</p><ul><li><p><strong>Hard-coded </strong><code>dataProviderID=10</code>: brittle if mappings change.</p></li><li><p><strong>Time-stamp granularity</strong>: comparing full datetime may miss same-day loads.</p></li><li><p><strong>ETL atomicity</strong>: <code>prevPriceDate</code> may not update if load fails mid-run.</p></li></ul></li><li><p><strong>Next Steps</strong>:</p><ul><li><p>Validate ETL job logs around that date.</p></li><li><p>Introduce a provider lookup and DATE-only grouping.</p></li><li><p>Alert on asset rows without a matching latest price.</p></li></ul></li></ul><hr/><h2 id="Chelmer/ACE→Fusion→AXYS→AACPR-4.Cross-SystemPainPoints&amp;Recommendations">4. Cross-System Pain Points &amp; Recommendations</h2><ol start="1"><li><p><strong>Hard-Coded Constants Everywhere</strong></p><ul><li><p>Dates, status codes, provider IDs, portfolio suffixes—move to parameter tables or SSRS report parameters.</p></li></ul></li><li><p><strong>Lack of Lookup Tables / Data Dictionary</strong></p><ul><li><p>Many GLT tables, bitmasks, and magic numbers need a centralized metadata catalog.</p></li></ul></li><li><p><strong>Non-Unique Keys &amp; Name Collisions</strong></p><ul><li><p>AXYS allows duplicate security+exchange combos; implement surrogate keys or stricter constraints.</p></li></ul></li><li><p><strong>ETL Fragility</strong></p><ul><li><p>Price loads, BizTalk syncs, and manual sector fixes in AXYS all break atomicity.</p></li><li><p>Build end-to-end monitoring: compare row counts, hash sums, or sanity checks after each load.</p></li></ul></li><li><p><strong>Manual Corrections Required</strong></p><ul><li><p>The sector discrepancy for CCP.ASX → CCP.LSE still relies on Daily Report Editor manual fixes.</p></li><li><p>Automate the unwind/retry logic in BizTalk or in a follow-up stored procedure.</p></li></ul></li></ol><hr/><h2 id="Chelmer/ACE→Fusion→AXYS→AACPR-5.ImmediateNextSteps">5. Immediate Next Steps</h2><ol start="1"><li><p><strong>Data Dictionary Sprint</strong> (2 weeks)</p><ul><li><p>Inventory all tables, columns, codes (GLT, ConditionsOfSale, Status, ProviderIDs).</p></li><li><p>Publish as a living Confluence page or data catalog.</p></li></ul></li><li><p><strong>Parameterize Reports</strong> (1 month)</p><ul><li><p>Refactor key scripts to accept date, account list, status and provider parameters.</p></li><li><p>Replace hard-coded filters.</p></li></ul></li><li><p><strong>Automated Alerts &amp; Audits</strong> (1 month)</p><ul><li><p>Duplicate-order audit table + scheduled job.</p></li><li><p>Price-load health check job.</p></li></ul></li><li><p><strong>ETL &amp; Integration Review</strong> (2 weeks)</p><ul><li><p>Work with integration team to confirm BizTalk retry logic on sync failures.</p></li><li><p>Ensure <code>prevPriceDate</code> and <code>prevPrice</code> are updated in tandem.</p></li></ul></li><li><p><strong>Pilot Dashboard</strong> (6 weeks)</p><ul><li><p>Build a Power BI dashboard visualizing ACE vs Fusion vs AACPR counts, open mismatches, price-load gaps.</p></li><li><p>Embed alerts for sector discrepancies and missing prices.</p></li></ul></li></ol><hr/><p>This comprehensive dossier should arm you (and anyone else stepping into this codebase) with a clear mental model of:</p><ul><li><p><strong>Where</strong> each piece of data originates</p></li><li><p><strong>How</strong> it flows between ACE/Chelmer, Fusion/ARM, AXYS, and AACPR</p></li><li><p><strong>Why</strong> past discrepancies happened</p></li><li><p><strong>Which</strong> scripts verify each reconciliation point</p></li><li><p><strong>What</strong> the highest-impact fixes and automations are</p></li></ul><p>Feel free to pull any section into your Confluence, refine the parameter lists, or build next-step tickets from the recommendations above.</p><p /><p>Thought for 5 seconds</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- Legacy System Full Annotated Code Report (Fully Inline-Commented, Revised Sections 6 &amp; 7)
+-- ==============================================================
+-- Consolidated BA-style annotations for the ACE/Chelmer → Fusion → AXYS/AACPR pipeline.
+
+--------------------------------------------------------------------------------
+SECTION 1: Monitor Trade Processing Counts
+Script: ace.dbo.EqTradesIn, EqTradesQueue, EqMatchQueue, EqAllocateQueue
+Purpose: Snapshot count of trades in each processing stage for a given date.
+--------------------------------------------------------------------------------
+
+USE ace;                                      -- Switch to the ACE/Chelmer database
+GO
+
+-- Declare the reporting date parameter (to be replaced with a runtime parameter)
+DECLARE @runDate AS SMALLDATETIME = &#39;2025-04-24&#39;;
+-- Declare the status code indicating &quot;Processing&quot; for in-flight trades
+DECLARE @processingStatus AS CHAR(1) = &#39;P&#39;;
+
+-- Query 1: Count trades that have entered the system and are still processing
+SELECT
+    &#39;EqTradesIn(P)&#39;      AS [Stage],          -- Label for this metric
+    COUNT(*)             AS [TradeCount]      -- Total number of records in processing
+FROM EqTradesIn                                -- Table of incoming equity trades
+WHERE Status   = @processingStatus            -- Only include trades marked &#39;P&#39; (Processing)
+  AND AsAtDate = @runDate;                     -- Only trades for the specified run date
+
+UNION
+
+-- Query 2: Count trades waiting in the match queue
+SELECT
+    &#39;EqTradesQueue&#39;      AS [Stage],
+    COUNT(*)             AS [TradeCount]
+FROM EqTradesQueue                              -- Table of trades queued for matching
+WHERE TradeDate = @runDate;                     -- Only include trades dated on run date
+
+UNION
+
+-- Query 3: Count trades ready to be matched (exclude suspended)
+SELECT
+    &#39;EqMatchQueue&#39;       AS [Stage],
+    COUNT(*)             AS [TradeCount]
+FROM EqMatchQueue                               -- Table of trade-match requests
+WHERE SuspendMatch = &#39;N&#39;;                       -- Only include those not suspended
+
+UNION
+
+-- Query 4: Count trades awaiting allocation
+SELECT
+    &#39;EqAllocateQueue&#39;    AS [Stage],
+    COUNT(*)             AS [TradeCount]
+FROM EqAllocateQueue;                           -- Table of trades queued for allocation
+
+
+--------------------------------------------------------------------------------
+SECTION 2: Identify ACE Transactions Missing in Fusion
+Script: ACE Transaction join to fusion.dbo.TransactionHolding
+Purpose: Expose closed ACE trades not reflected in Fusion holdings.
+--------------------------------------------------------------------------------
+
+USE ace;                                      -- Switch to ACE database
+GO
+
+;WITH CTE_ACE_Transactions AS (
+    SELECT DISTINCT
+        at.ID               AS ACE_TransactionID,      -- Primary key in ACE
+        at.BatchID          AS ACE_BatchID,            -- Batch identifier
+        at.AccID            AS ACE_AccountID,          -- Account identifier
+        aees.SecCode        AS ACE_SecurityCode,       -- Security code from exchange lookup
+        aes.Name            AS ACE_SecurityName,       -- Readable security name
+        at.TranType         AS ACE_TransactionType,    -- Type (e.g., &#39;XPSN&#39;, &#39;BPAY&#39;)
+        at.DrCr             AS ACE_DebitCredit,        -- &#39;D&#39; or &#39;C&#39;
+        at.Amount           AS ACE_Amount,             -- Amount in transaction currency
+        at.BaseAmount       AS ACE_BaseAmount,         -- Amount in base currency
+        at.OpenStatus       AS ACE_OpenStatus,         -- &#39;C&#39;=Closed, &#39;O&#39;=Open
+        at.ActivityDate     AS ACE_ActivityDate,       -- Posted date
+        stcm.BranchID       AS Client_BranchID,        -- Origin branch
+        stcm.ClientTypeID   AS Client_TypeID,          -- Client classification
+        accy.ShortName      AS CurrencyCode,           -- Currency code (e.g., &#39;USD&#39;)
+        t.settleDate        AS Fusion_SettleDate       -- Matched settle date in Fusion
+    FROM dbo.[Transaction] at                       -- ACE transaction table
+    LEFT JOIN dbo.EqExchSec aees                    -- Map to exchange-specific security table
+        ON aees.ID         = at.EqExchSecID
+    LEFT JOIN dbo.EqSecurities aes                  -- Master security lookup
+        ON aes.ID          = aees.SecurityID
+    LEFT JOIN dbo.StClientMaster stcm               -- Map to client master data
+        ON stcm.LedgerID   = at.LedgerID
+    LEFT JOIN dbo.Currency accy                     -- Currency metadata
+        ON accy.ID         = at.CurrencyID
+    LEFT JOIN fusion.dbo.TransactionHolding t       -- Link to Fusion holding record
+        ON t.TranID       = at.ID
+    WHERE at.OpenStatus = &#39;C&#39;                       -- Only closed ACE transactions
+      AND ISNULL(t.TrnStatusID, &#39;999&#39;) &lt;&gt; &#39;502&#39;     -- Exclude ones canceled in Fusion
+),
+CTE_Fusion_Holdings AS (
+    SELECT DISTINCT
+        a.AssetCode       AS Fusion_SecurityCode,   -- Security code in Fusion
+        a.ExchangeCode    AS Fusion_ExchangeCode,   -- Exchange code in Fusion
+        ass.code          AS Fusion_SectorCode,     -- Sector code from AssetSector
+        ass.Description   AS Fusion_SectorName      -- Sector name from AssetSector
+    FROM [svsqlcrm\sqlcrm].dbo.Asset a              -- Fusion asset master
+    JOIN [svsqlcrm\sqlcrm].dbo.AssetSector ass      -- Sector classification
+        ON ass.AssetSectorID = a.AssetSectorID
+    WHERE a.StatusID = 1                            -- Only active Fusion assets
+),
+CTE_Mismatches AS (
+    SELECT
+        A.*,                                        -- All ACE transaction fields
+        F.Fusion_SectorCode,                        -- Matched Fusion sector code
+        F.Fusion_SectorName                         -- Matched Fusion sector name
+    FROM CTE_ACE_Transactions A
+    LEFT JOIN CTE_Fusion_Holdings F                -- Identify missing matches
+        ON A.ACE_SecurityCode = F.Fusion_SecurityCode
+       AND A.Fusion_SettleDate = F.Fusion_ExchangeCode
+    WHERE F.Fusion_SecurityCode IS NULL            -- No matching record in Fusion
+)
+-- Final output: ACE trades not found in Fusion
+SELECT *
+FROM CTE_Mismatches
+ORDER BY ACE_ActivityDate DESC;
+
+
+--------------------------------------------------------------------------------
+SECTION 3: Decode ConditionsOfSale Bitmask in EqContracts
+Script: ace.dbo.EqContracts
+Purpose: Extract contracts with specific disclosure flags.
+--------------------------------------------------------------------------------
+
+USE ace;
+GO
+
+SELECT
+    ID,                                             -- Contract ID
+    ConditionsOfSale                                -- Bitmask field combining flags
+FROM dbo.EqContracts
+WHERE ConditionsOfSale IN (
+    2097152,    -- 2^21 = MI (Margin Instruction)
+    16777216,   -- 2^24 = XT (Extra Trading)
+    67108864,   -- 2^26 = CS (Contract Statement)
+    268435456,  -- 2^28 = SO (Settlement Obligation)
+    354418688,  -- MI + XT + CS + SO
+    69206016,   -- MI + CS
+    270532608,  -- MI + SO
+    337641472,  -- MI + CS + SO
+    335544320   -- CS + SO
+);
+
+-- Recommend: Create a lookup table `ConditionsOfSaleFlags`:
+-- FlagValue, FlagName, then use bitwise AND to decode combinations.
+
+
+--------------------------------------------------------------------------------
+SECTION 4: Custodial Reconciliation Data Export
+Script: fusion.dbo.Trn and related lookup tables
+Purpose: Flatten transaction data for reconciliation.
+--------------------------------------------------------------------------------
+
+USE fusion;
+GO
+
+SELECT
+    t.trnID                   AS TransactionID,       -- Unique transaction record
+    t.trnGroupID              AS BatchGroupID,        -- Grouping for related trades
+    dp.name                   AS DataProvider,        -- Source feed name (e.g., &#39;REGISTRY&#39;)
+    g3.code                   AS StatusCode,          -- Status code (e.g., &#39;S&#39;)
+    g3.name                   AS StatusName,          -- Human-readable status
+    g.code                    AS TypeCode,            -- Transaction type (Buy/Sell)
+    ptf.code                  AS PortfolioCode,       -- Client portfolio identifier
+    a.code                    AS AssetCode,           -- Security code
+    e.code                    AS ExchangeCode,        -- Market exchange
+    ccy.isoCode               AS TradeCurrency,       -- Currency of trade
+    sccy.isoCode              AS SettlementCurrency,  -- Currency of settlement cash
+    t.cashEffect              AS CashDirection,       -- +1 or -1 for cash in/out
+    ABS(t.trnAmount)          AS AbsoluteAmount,      -- Magnitude in trade currency
+    t.brokerage               AS Brokerage,           -- Broker fee
+    t.fxBrokerage             AS ForexFee,            -- FX conversion fee
+    ABS(t.trnAmount) + t.brokerage AS GrossValue,   -- Gross trade value
+    (ABS(t.trnAmount)/t.fxRate) + t.brokerage AS NetLocalValue, -- Net local currency value
+    t.tradeDate               AS TradeDate,           -- Execution date
+    t.settleDate              AS SettleDate,          -- Settlement date
+    t.postedDate              AS PostedDate,          -- Posting date in system
+    t.nominal                 AS Quantity,            -- Number of units
+    t.price                   AS UnitPrice,           -- Price per unit
+    g2.code                   AS HoldingCategory      -- Long/Short etc.
+FROM dbo.Trn t
+JOIN dbo.Glt g               ON g.gltID        = t.trnTypeID      -- Transaction type lookup
+JOIN dbo.Glt g2              ON g2.gltID       = t.holdingTypeID  -- Holding type lookup
+JOIN dbo.Glt g3              ON g3.gltID       = t.trnStatusID    -- Status lookup
+JOIN dbo.DataProvider dp     ON dp.dataProviderID = t.dataProviderID-- Source feed lookup
+JOIN dbo.Currency ccy        ON ccy.currencyID = t.currencyID      -- Trade currency lookup
+JOIN dbo.Portfolio ptf       ON ptf.portfolioID = t.portfolioID    -- Portfolio lookup
+JOIN dbo.Asset a             ON a.assetID      = t.assetID          -- Asset lookup
+JOIN dbo.Exchange e          ON e.exchangeID   = a.exchangeID       -- Exchange via asset
+JOIN dbo.Asset ca            ON ca.assetID     = t.cashAssetID      -- Cash asset for settlement
+JOIN dbo.Currency sccy       ON sccy.currencyID = ca.currencyID      -- Settlement currency lookup
+WHERE
+    dp.name           = &#39;REGISTRY&#39;                      -- Only custodian feed
+  AND t.tradeDate     BETWEEN &#39;2020-08-16&#39; AND &#39;2020-08-16&#39; -- Specific date or parameterize
+  AND RIGHT(ptf.code,3) = &#39;_CS&#39;                         -- Client-segregated portfolios
+ORDER BY t.tradeDate DESC;
+
+
+--------------------------------------------------------------------------------
+SECTION 5: Detect Duplicate Orders (EqOrders)
+Purpose: Find identical orders placed twice by the same advisor
+--------------------------------------------------------------------------------
+
+USE ace;
+GO
+
+-- Find pairs of duplicate order IDs
+SELECT
+    a.OrderTime         AS OrderTime,                   -- Timestamp of order
+    a.EqAdvisorID       AS Advisor,                     -- Advisor placing the order
+    a.ID                AS DuplicateOrderID1,          -- First order in the pair
+    b.ID                AS DuplicateOrderID2           -- Second matching order
+FROM dbo.EqOrders a
+INNER JOIN dbo.EqOrders b
+  ON a.LedgerID      = b.LedgerID                       -- Same client account
+ AND a.EqSecurityID = b.EqSecurityID                    -- Same security
+ AND a.OrderTime    = b.OrderTime                       -- Same timestamp
+ AND a.Quantity     = b.Quantity                        -- Same quantity
+ AND a.EqAdvisorID  = b.EqAdvisorID                     -- Same advisor
+ AND a.ID &lt;&gt; b.ID                                        -- Exclude self-match
+ AND b.ID &gt; a.ID                                        -- Report each pair once
+WHERE
+    a.OrderTime &gt;= DATEADD(day, -150, GETDATE())         -- Only recent orders
+  AND a.EqAdvisorID NOT IN(&#39;HEADOFFICE&#39;,&#39;WHOLESALE&#39;);   -- Exclude internal advisors
+
+
+--------------------------------------------------------------------------------
+SECTION 6: Portfolio Holdings Reconciliation (ACE vs Fusion Prices)
+Script: AccountHoldings, Transactions, Price, Asset
+Purpose: Compute and reconcile market value of holdings for client accounts
+--------------------------------------------------------------------------------
+
+-- 6.0 Cleanup: Remove any leftover temp tables from prior runs
+IF OBJECT_ID(&#39;tempdb..#AccountIDs&#39;)         IS NOT NULL DROP TABLE #AccountIDs;         -- List of portfolios
+IF OBJECT_ID(&#39;tempdb..#RelevantSecurities&#39;) IS NOT NULL DROP TABLE #RelevantSecurities; -- Securities with recent settled trades
+IF OBJECT_ID(&#39;tempdb..#aceAccountHolding&#39;)  IS NOT NULL DROP TABLE #aceAccountHolding;  -- Final holdings snapshot
+IF OBJECT_ID(&#39;tempdb..#FilteredPriceData&#39;)  IS NOT NULL DROP TABLE #FilteredPriceData;  -- Fusion price lookup
+
+-- 6.1 Parameterize the reconciliation date
+DECLARE @AsAtDate DATE = &#39;2025-04-24&#39;;          -- Date for which holdings are valued
+
+-- 6.2 Identify active client portfolios eligible for reconciliation
+SELECT
+    portfolioID,                               -- Unique portfolio internal ID
+    portfolioCode                              -- Business-facing portfolio code
+INTO #AccountIDs
+FROM ace.dbo.PortfolioAccountMaster
+WHERE IsActive = 1                             -- Only active accounts
+  AND AccountType IN(&#39;Client&#39;,&#39;Segregated&#39;);    -- Exclude internal/test ledgers
+
+-- 6.3 Determine which securities to include: those with a non-zero position settled on or before AsAtDate
+SELECT DISTINCT
+    h.AccountID AS AccountID,                  -- Client account
+    t.SecCode   AS SecCode,                    -- Security code from transaction
+    t.ExchangeID                             -- Exchange identifier
+INTO #RelevantSecurities
+FROM ace.dbo.AccountHoldings h                  -- Snapshot table of holdings by AsAtDate
+INNER JOIN ace.dbo.Transaction t                 -- Historical trade table
+    ON h.AccountID  = t.AccID                    -- Link position to trades
+   AND h.SecCode    = t.SecCode                  -- Ensure matching security
+   AND t.SettleDate &lt;= @AsAtDate                 -- Only include fully settled trades up to our date
+   AND t.SettleDate &gt;= DATEADD(month,-1,@AsAtDate) -- Trades within last month
+WHERE h.AsAtDate  = @AsAtDate                    -- Holdings snapshot on the target date
+  AND h.Quantity  &lt;&gt; 0;                         -- Exclude zero-balance positions
+
+-- 6.4 Build the holdings snapshot table with cost basis
+SELECT
+    rs.AccountID,                              -- Client account
+    ai.PortfolioCode,                          -- Portfolio business code
+    rs.SecCode,                                -- Security code
+    rs.ExchangeID,                             -- Exchange identifier
+    h.Quantity,                                -- Number of units held
+    h.CostBase     AS CostBaseLocal,           -- Cost basis in local currency
+    h.CostBaseCCY  AS CostBaseCurrency,        -- Cost basis in original currency
+    h.AsAtDate                                  -- Snapshot date for reference
+INTO #aceAccountHolding
+FROM #RelevantSecurities rs
+JOIN #AccountIDs ai                             -- Filter only our target portfolios
+    ON ai.portfolioID = rs.AccountID
+JOIN ace.dbo.AccountHoldings h                  -- Pull detailed position record
+    ON h.AccountID   = rs.AccountID
+   AND h.SecCode     = rs.SecCode
+   AND h.AsAtDate    = @AsAtDate
+
+-- 6.5 Retrieve the latest market prices from Fusion for our securities
+SELECT
+    p.assetID        AS AssetID,               -- Fusion internal ID for the asset
+    a.code           AS FusionSecCode,         -- Fusion security code
+    e.code           AS FusionExchange,        -- Fusion exchange code
+    p.lastPrice,                               -- Most recent closing price
+    p.askPrice,                                -- Current ask price
+    p.bidPrice,                                -- Current bid price
+    p.priceDate                                -- Date of price record
+INTO #FilteredPriceData
+FROM fusion.dbo.Price p                        -- Price history table
+JOIN fusion.dbo.Asset a                        -- Asset master
+    ON a.assetID   = p.assetID
+JOIN fusion.dbo.Exchange e                     -- Exchange master
+    ON e.exchangeID = a.exchangeID
+WHERE p.priceDate = @AsAtDate                  -- Only the snapshot for our AsAtDate
+  AND a.code IN (SELECT SecCode FROM #aceAccountHolding); -- Only our relevant securities
+
+-- 6.6 Calculate the market value for each holding and compare to cost basis
+SELECT
+    ah.AccountID,                              -- Client account
+    ah.PortfolioCode,                          -- Portfolio code
+    ah.SecCode,                                -- Security code
+    ah.ExchangeID,                             -- Exchange code
+    ah.Quantity,                               -- Position quantity
+    ah.CostBaseLocal,                          -- Local currency cost basis
+    ah.CostBaseCurrency,                       -- Original currency cost basis
+    -- Determine per-unit market price using bid/ask spread logic:
+    CASE
+      WHEN fp.lastPrice BETWEEN fp.bidPrice AND fp.askPrice THEN fp.lastPrice
+      WHEN ah.Quantity &gt; 0 THEN fp.bidPrice
+      WHEN ah.Quantity &lt; 0 THEN COALESCE(fp.askPrice, fp.lastPrice)
+      ELSE NULL
+    END AS MarketPricePerUnit,
+    -- Compute total market value
+    (CASE
+      WHEN fp.lastPrice BETWEEN fp.bidPrice AND fp.askPrice THEN fp.lastPrice
+      WHEN ah.Quantity &gt; 0 THEN fp.bidPrice
+      WHEN ah.Quantity &lt; 0 THEN COALESCE(fp.askPrice, fp.lastPrice)
+      ELSE NULL
+    END) * ah.Quantity AS TotalMarketValue,
+    CONVERT(VARCHAR(10), @AsAtDate, 101)       AS HoldingsSnapshotDate,  -- Formatted AsAtDate
+    CONVERT(VARCHAR(10), GETDATE(), 101)       AS ReportGeneratedDate   -- When this report was run
+FROM #aceAccountHolding ah
+LEFT JOIN #FilteredPriceData fp
+    ON ah.SecCode    = fp.FusionSecCode COLLATE DATABASE_DEFAULT
+   AND ah.ExchangeID = fp.FusionExchange    COLLATE DATABASE_DEFAULT
+ORDER BY ah.PortfolioCode, ah.SecCode;       -- Group results for easy review
+
+--------------------------------------------------------------------------------
+SECTION 7: Fusion Asset Price Load Error Investigation
+Script: fusion.dbo.Price, fusion.dbo.PriceHistory
+Purpose: Diagnose missing or stale prices from the ACE feed (dataProviderID=10)
+--------------------------------------------------------------------------------
+
+USE fusion;                                   -- Context: Fusion database
+GO
+
+-- 7.1 Compare the stored &#39;prevPrice&#39; against newly loaded historical prices:
+SELECT
+    a.code                 AS AssetCode,       -- Security code for reference
+    p.prevPrice            AS PrevPriceInFusion,  -- Last run&#39;s closing price in Fusion
+    p.prevPriceDate        AS PrevPriceDateInFusion, -- Date of storedPrevPrice
+    ph.priceDate           AS NewPriceDate,    -- Date of new historical price
+    ph.closePrice          AS NewClosePrice    -- Closing price from history
+FROM dbo.Asset a                               -- Asset master list
+INNER JOIN dbo.Price p                          -- Fusion Price table with current snapshot fields
+    ON p.assetID = a.assetID
+LEFT JOIN dbo.PriceHistory ph                   -- Detailed historical prices
+    ON ph.assetID         = a.assetID           -- Link by asset
+   AND ph.priceDate     &gt; p.prevPriceDate       -- Only prices newer than storedPrevDate
+   AND ph.dataProviderID = 10                   -- Only consider ACE feed rows
+;
+
+-- 7.2 Extract the single most recent ACE feed price per asset:
+SELECT
+    a.assetID,
+    a.code                 AS AssetCode,
+    p2.lastPrice           AS LatestPrice,     -- Price from the most recent load
+    p2.priceDate           AS LatestPriceDate  -- Date of that load
+FROM dbo.Asset a
+INNER JOIN (
+    -- Subquery: find max(priceDate) grouped by assetID for provider 10
+    SELECT
+        assetID,
+        dataProviderID,
+        MAX(priceDate)    AS priceDate         -- Latest date per asset/provider
+    FROM dbo.Price
+    WHERE dataProviderID = 10                   -- ACE feed
+    GROUP BY assetID, dataProviderID
+) mpr ON mpr.assetID        = a.assetID
+     AND mpr.dataProviderID = 10
+INNER JOIN dbo.Price p2      -- Join back to get price details
+    ON p2.assetID   = mpr.assetID
+   AND p2.priceDate = mpr.priceDate
+   AND p2.dataProviderID = mpr.dataProviderID
+-- Ensure only valid assets are included:
+JOIN dbo.Exchange e ON e.exchangeID = a.exchangeID AND e.status = 1  -- Active exchange
+JOIN dbo.Currency c ON c.currencyID = a.currencyID   AND c.status = 1  -- Active currency
+;
+
+-- End of fully revised, fully annotated report
+</pre>
+</div></div>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

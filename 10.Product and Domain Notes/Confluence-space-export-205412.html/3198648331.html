@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 1.Funds Flow — One-Page Table Brief</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="Circuit-Breaker-notes_3198779447.html">Circuit Breaker notes</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 1.Funds Flow — One-Page Table Brief
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 08-06-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h2 id="id-1.FundsFlow—One-PageTableBrief-1Whythistableexists">1 Why this table exists</h2><p><em>Tracks the<span style="background-color: rgb(211,241,167);"> </span><strong><span style="background-color: rgb(211,241,167);">money moving in and out of each client account over a reporting period</span></strong> (Usually one Quarter) so advisers, branch managers, and Finance can answer:</em></p><ul><li><p>“How much net cash did we raise (or lose) this month?” – (Net Flow)</p></li><li><p>“Which branches or advisers are driving flows?” – (Who is contributing?)</p></li><li><p>“What portion of performance came from market gains vs. client activity?”</p></li></ul><p>The table underpins FUM-flow dashboards (Power BI) and feeds KPI scorecards tied to adviser remuneration.</p><hr/><h2 id="id-1.FundsFlow—One-PageTableBrief-2Source&amp;Refresh">2 Source &amp; Refresh</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="0ec45263-fc7f-419e-81fb-3c8d1e7faf4d" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Item</p></th><th class="confluenceTh"><p>Detail</p></th></tr><tr><td class="confluenceTd"><p><strong>Landing view</strong></p></td><td class="confluenceTd"><p><code>Trading.F_FundsFlow_v</code><span style="background-color: rgb(211,241,167);"> (Synapse)</span></p><p>We do not have Visibility to Synapse</p></td></tr><tr><td class="confluenceTd"><p><strong>Load method</strong></p></td><td class="confluenceTd"><p>Direct SQL query in the tabular partition (full refresh)</p></td></tr><tr><td class="confluenceTd"><p><strong>Model location</strong></p></td><td class="confluenceTd"><p>Database <strong>“CIP Tabular Model”</strong>, table <strong>“Funds Flow”</strong></p></td></tr><tr><td class="confluenceTd"><p><strong>Schedule</strong></p></td><td class="confluenceTd"><p>Daily after overnight valuation batch (same timing as FUM snapshots)</p></td></tr></tbody></table></div><hr/><h2 id="id-1.FundsFlow—One-PageTableBrief-3Rowgrain(veryimportant)">3 Row grain (very important)</h2><p><strong>One row per </strong><code>(AccountKey, DateKey)</code>, Each Clients acccount and each date</p><ul><li><p>DateKey = period identifier returned by the view (usually calendar month end).</p></li><li><p>Financial columns (Opening MV, Net Contributions, Gains, Fees …) are already <em>period totals</em>; they should <strong>not</strong> be re-aggregated across DateKey without a time filter.</p></li></ul><hr/><h2 id="id-1.FundsFlow—One-PageTableBrief-4Keycolumns">4 Key columns</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="bacc03d2-70a7-4454-b005-1052d47e9c43" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Type</p></th><th class="confluenceTh"><p>Examples</p></th><th class="confluenceTh"><p>Comment</p></th></tr><tr><td class="confluenceTd"><p><strong>Identities</strong></p></td><td class="confluenceTd"><p><code>AccountKey</code> (hidden surrogate), <code>Account Number</code></p></td><td class="confluenceTd"><p>Join to Account / Client dimension.</p></td></tr><tr><td class="confluenceTd"><p><strong>Slice attributes</strong></p></td><td class="confluenceTd"><p><code>Branch</code>, <code>Adviser</code>, <code>Service Level</code>, <code>Is Portfolio Lending</code>, <code>Funds Source</code></p></td><td class="confluenceTd"><p>Filter &amp; grouping.</p></td></tr><tr><td class="confluenceTd"><p><strong>Dates</strong></p></td><td class="confluenceTd"><p><code>DateKey</code> (text YYYYMMDD), <code>Period Start</code>, <code>Period End</code>, <code>Run Date</code>, <code>Service Level Change Date</code>, <code>Exit Date</code></p></td><td class="confluenceTd"><p>Join <code>DateKey</code> to <code>Dates[Date]</code> in model.</p></td></tr><tr><td class="confluenceTd"><p><strong>Money facts</strong> <em>(hidden)</em></p></td><td class="confluenceTd"><p>Opening MV, Net Contributions, Income, Fees, Gains, Closing MV (all <code>decimal</code>)</p></td><td class="confluenceTd"><p>Used by DAX measures.</p></td></tr><tr><td class="confluenceTd"><p><strong>Performance flags</strong></p></td><td class="confluenceTd"><p><code>IRR</code>, <code>Account Open/Closed In Period</code>, <code>Open At Period End</code>, <code>Is Resettled</code></p></td><td class="confluenceTd"><p>Operational analytics.</p></td></tr></tbody></table></div><p>All numeric columns are pre-formatted as NZD currency; percentages use 4-dp formats for adviser reporting accuracy.</p><hr/><h2 id="id-1.FundsFlow—One-PageTableBrief-5Built-inDAXmeasures">5 Built-in DAX measures</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="d12872c3-a716-42fe-a3be-ea00cb4ae9e3" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Measure</p></th><th class="confluenceTh"><p>Logic (simplified)</p></th><th class="confluenceTh"><p>Use</p></th></tr><tr><td class="confluenceTd"><p><strong>FUM In / Out</strong></p></td><td class="confluenceTd"><p>Sum of Net Contributions Excl Transfers filtered &gt; 0 or &lt; 0</p></td><td class="confluenceTd"><p>Gross inflows vs. withdrawals.</p></td></tr><tr><td class="confluenceTd"><p><strong>Total X</strong> (Income, Fees, Gains…)</p></td><td class="confluenceTd"><p>Straight sums</p></td><td class="confluenceTd"><p>Period totals.</p></td></tr><tr><td class="confluenceTd"><p><strong>Total Funds Flow</strong></p></td><td class="confluenceTd"><p>Contributions + Income + Fees + Gains + Closing MV</p></td><td class="confluenceTd"><p>Overall movement driver analysis.</p></td></tr><tr><td class="confluenceTd"><p><strong>Total % Gain</strong></p></td><td class="confluenceTd"><p>Total Funds Flow ÷ Opening MV</p></td><td class="confluenceTd"><p>Performance ratio.</p></td></tr><tr><td class="confluenceTd"><p><strong>Latest-period KPIs</strong></p></td><td class="confluenceTd"><p>Measures scoped to <code>MAX(DateKey)</code></p></td><td class="confluenceTd"><p>Dashboard headline cards.</p></td></tr><tr><td class="confluenceTd"><p><strong>Period-on-period comps</strong></p></td><td class="confluenceTd"><p>Uses <code>DATESBETWEEN</code> and helper dates table placeholders (<code>FirstDayofPreviousPeriod</code>, <code>LastDay…</code>)</p></td><td class="confluenceTd"><p>Trend arrows &amp; YoY charts.</p></td></tr></tbody></table></div><hr/><h2 id="id-1.FundsFlow—One-PageTableBrief-6Designconsiderations&amp;risks">6 Design considerations &amp; risks</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="ad46a1c1-140a-40da-aa5d-e9ba5ea9c85a" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Observation</p></th><th class="confluenceTh"><p>Why it matters</p></th><th class="confluenceTh"><p>Suggested practice</p></th></tr><tr><td class="confluenceTd"><p><strong>Money stored as decimal but sourced from </strong><code>double</code></p></td><td class="confluenceTd"><p>Avoids floating-point drift once inside model.</p></td><td class="confluenceTd"><p>Keep <code>decimal</code> in ETL too.</p></td></tr><tr><td class="confluenceTd"><p><strong>DateKey is string</strong></p></td><td class="confluenceTd"><p>Requires explicit relationship to <code>Dates</code> table.</p></td><td class="confluenceTd"><p>Create calculated column <code>Date = DATEVALUE(DateKey)</code>.</p></td></tr><tr><td class="confluenceTd"><p><strong>Many hidden base columns</strong></p></td><td class="confluenceTd"><p>Reduces report clutter.</p></td><td class="confluenceTd"><p>Expose only curated measures to self-service users.</p></td></tr><tr><td class="confluenceTd"><p><strong>Full-table refresh</strong></p></td><td class="confluenceTd"><p>View scans entire fact; heavy at FY close.</p></td><td class="confluenceTd"><p>Optionally switch to incremental partitions on <code>Run Date</code>.</p></td></tr></tbody></table></div><hr/><h2 id="id-1.FundsFlow—One-PageTableBrief-7TL;DR">7 TL;DR</h2><p><strong>Funds Flow</strong> is the <em>account-period fact</em> that reconciles opening market value to closing value by showing every dollar of client cash movement, income, fees and market performance—making it the backbone for FUM growth, retention, and adviser performance reporting.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

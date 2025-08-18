@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 3.2 Holdings Tabular — Technical One-Pager</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="Circuit-Breaker-notes_3198779447.html">Circuit Breaker notes</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 3.2 Holdings Tabular — Technical One-Pager
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 08-06-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p /><h4 id="id-3.2HoldingsTabular—TechnicalOne-Pager-1High-LevelRole">1 High-Level Role</h4><p>A <strong>hidden, aggregate table</strong> inside the <em>Circuit Breaker</em> Power BI model that holds the <strong>latest holdings snapshot</strong> (Account × Asset) and feeds FUM analytics plus reconciliation.</p><hr/><h4 id="id-3.2HoldingsTabular—TechnicalOne-Pager-2Up-StreamObjects&amp;SourceFlow">2 Up-Stream Objects &amp; Source Flow</h4><div class="table-wrap"><table data-table-width="994" data-layout="center" data-local-id="4734a58e-2011-4a96-afcf-22d32c2b7860" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Stage</p></th><th class="confluenceTh"><p>Object</p></th><th class="confluenceTh"><p>Purpose</p></th></tr><tr><td class="confluenceTd"><p>① Fact</p></td><td class="confluenceTd"><p><code>Funds Under Management</code> (already imported to model)</p></td><td class="confluenceTd"><p>Detailed lot-level positions incl. <code>Quantity</code>, <code>Value NZD</code>.</p></td></tr><tr><td class="confluenceTd"><p>② Date dim</p></td><td class="confluenceTd"><p><code>Account Holdings Date</code></p></td><td class="confluenceTd"><p>Column <strong>Last Holding Date = &quot;Yes&quot;</strong> flags yesterday’s valuation.</p></td></tr><tr><td class="confluenceTd"><p>③ Lookup dims</p></td><td class="confluenceTd"><p><code>Account</code>, <code>Asset</code>, <code>Fixed Interest Asset</code></p></td><td class="confluenceTd"><p>Provide business &amp; surrogate keys.</p></td></tr><tr><td class="confluenceTd"><p>④ DAX query (see partition)</p></td><td class="confluenceTd"><p><code>CALCULATETABLE</code> → <code>SUMMARIZE</code></p></td><td class="confluenceTd"><p>Filters fact to ① day, groups by keys, sums metrics.</p></td></tr><tr><td class="confluenceTd"><p>⑤ Output</p></td><td class="confluenceTd"><p><strong>Holdings Tabular</strong></p></td><td class="confluenceTd"><p>Stored in VertiPaq; hidden from report UI.</p></td></tr></tbody></table></div><hr/><h4 id="id-3.2HoldingsTabular—TechnicalOne-Pager-3TableSchema(ColumnsSection)">3 Table Schema (Columns Section)</h4><div class="table-wrap"><table data-table-width="1068" data-layout="center" data-local-id="e9d862bc-368e-49ef-956e-8e1ca2a43299" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Column</p></th><th class="confluenceTh"><p>DAX lineage / source field</p></th><th class="confluenceTh"><p>Data type</p></th><th class="confluenceTh"><p>Notes</p></th></tr><tr><td class="confluenceTd"><p><code>AccountNumber</code></p></td><td class="confluenceTd"><p><code>Account[Account Number]</code></p></td><td class="confluenceTd"><p>string</p></td><td class="confluenceTd"><p>Business key</p></td></tr><tr><td class="confluenceTd"><p><code>PortfolioServiceID</code></p></td><td class="confluenceTd"><p><code>Account[Portfolio Service ID]</code></p></td><td class="confluenceTd"><p>string</p></td><td class="confluenceTd"><p>RLS &amp; adviser grouping</p></td></tr><tr><td class="confluenceTd"><p><code>AccountKey</code></p></td><td class="confluenceTd"><p><code>Account[AccountKey]</code></p></td><td class="confluenceTd"><p>Int64</p></td><td class="confluenceTd"><p>Surrogate</p></td></tr><tr><td class="confluenceTd"><p><code>AssetID</code>, <code>AssetKey</code></p></td><td class="confluenceTd"><p><code>Asset[...]</code></p></td><td class="confluenceTd"><p>Int64</p></td><td class="confluenceTd"><p>Asset identifiers</p></td></tr><tr><td class="confluenceTd"><p><code>SecurityCode</code>, <code>TickerCode</code></p></td><td class="confluenceTd"><p><code>Asset[...]</code></p></td><td class="confluenceTd"><p>string</p></td><td class="confluenceTd"><p>Display / corporate actions</p></td></tr><tr><td class="confluenceTd"><p><code>MarketCode</code></p></td><td class="confluenceTd"><p><code>Asset[Market Code]</code></p></td><td class="confluenceTd"><p>string</p></td><td class="confluenceTd"><p>Used by deny-list in measure</p></td></tr><tr><td class="confluenceTd"><p><code>FixedInterestAssetID</code></p></td><td class="confluenceTd"><p><code>Fixed Interest Asset[FixedInterestAssetID]</code></p></td><td class="confluenceTd"><p>Int64</p></td><td class="confluenceTd"><p>Nullable bond link</p></td></tr><tr><td class="confluenceTd"><p><code>Quantity</code>, <code>ValueNZD</code></p></td><td class="confluenceTd"><p>post-SUM fields from fact</p></td><td class="confluenceTd"><p>double</p></td><td class="confluenceTd"><p><strong>Only numeric facts in table</strong></p></td></tr></tbody></table></div><p>The XML sets <code>isHidden=true</code> for the table, so users access it only through measures or calc-tables.</p><hr/><h4 id="id-3.2HoldingsTabular—TechnicalOne-Pager-4PartitionDefinition(Query)–CoreAlgorithm">4 Partition Definition (<code>Query</code>) – Core Algorithm</h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">EVALUATE
+SUMMARIZE (
+    CALCULATETABLE (                        -- step #1 filter date
+        &#39;Funds Under Management&#39;,
+        &#39;Account Holdings Date&#39;[Last Holding Date] = &quot;Yes&quot;
+    ),
+    &#39;Account&#39;[Account Number],              -- step #2 group-by keys
+    &#39;Account&#39;[Portfolio Service ID],
+    &#39;Account&#39;[AccountKey],
+    &#39;Asset&#39;[AssetId],
+    &#39;Asset&#39;[AssetKey],
+    &#39;Asset&#39;[Security Code],
+    &#39;Asset&#39;[Market Code],
+    &#39;Asset&#39;[Ticker Code],
+    &#39;Fixed Interest Asset&#39;[FixedInterestAssetID],
+    &quot;Quantity&quot;,  SUM ( &#39;Funds Under Management&#39;[Quantity] ),   -- step #3 agg
+    &quot;Value NZD&quot;, SUM ( &#39;Funds Under Management&#39;[Value NZD] )
+)
+</pre>
+</div></div><ul><li><p><strong>Filter layer</strong> – avoids expensive <code>MAX(HoldingDate)</code> scan; relies on a dim flag.</p></li><li><p><strong>Group by</strong> – collapses millions of lot rows into ≤ (Account × Asset) rows.</p></li><li><p><strong>Aggregation</strong> – pre-computes totals, boosting query-time performance.</p></li></ul><p>The partition is set to <code>dataView=&quot;full&quot;</code> → entire table is rebuilt on each refresh.</p><hr/><h4 id="id-3.2HoldingsTabular—TechnicalOne-Pager-5MeasuresBlock">5 Measures Block</h4><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="e56eee73-2522-42c4-b1ac-c127d94b5493" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Measure</p></th><th class="confluenceTh"><p>Expression (trimmed)</p></th><th class="confluenceTh"><p>Purpose</p></th></tr><tr><td class="confluenceTd"><p><code>Holdings Tabular Value</code></p></td><td class="confluenceTd"><p><code>SUM(ValueNZD)</code> <strong>excluding</strong> MarketCodes in hard-coded list (`NZUNSU</p></td><td class="confluenceTd"><p>Unlisted</p></td></tr><tr><td class="confluenceTd"><p><code>Cashman Tabular Value</code></p></td><td class="confluenceTd"><p><code>SUM(ValueNZD)</code> where <code>'Assets'[Is Cashman]=&quot;yes&quot;</code></p></td><td class="confluenceTd"><p>Cash balance KPI</p></td></tr></tbody></table></div><p>Each ends with <code>+0</code> to coerce BLANK → 0.</p><hr/><h4 id="id-3.2HoldingsTabular—TechnicalOne-Pager-6DataGrain&amp;Relationships">6 Data Grain &amp; Relationships</h4><ul><li><p><strong>Row grain:</strong> 1 row per <code>(AccountNumber, AssetKey)</code> on the flagged date.</p></li><li><p>Active relationships: <code>AccountKey</code> → <code>Account</code>, <code>AssetKey</code> → <code>Asset</code>.</p></li><li><p>Inactive: <code>FixedInterestAssetID</code> → <code>Fixed Interest Asset</code> (activate via <code>USERELATIONSHIP</code> when needed).</p></li></ul><hr/><h4 id="id-3.2HoldingsTabular—TechnicalOne-Pager-7Processing/PerformanceNotes">7 Processing / Performance Notes</h4><ul><li><p><strong>Hidden table</strong> keeps report canvas clean and avoids accidental re-aggregation.</p></li><li><p>VertiPaq compression ≈ 93 %; build time ~45 s (single thread) for ~4 M rows.</p></li><li><p>Rounding drift possible (facts stored as <em>double</em>); switch to <code>decimal</code> upstream for audit-grade cents.</p></li></ul><hr/><h4 id="id-3.2HoldingsTabular—TechnicalOne-Pager-8CommonData-QualityScenarios">8 Common Data-Quality Scenarios</h4><div class="table-wrap"><table data-table-width="1011" data-layout="center" data-local-id="7b080f4b-566f-4176-a0ff-1c733b450d53" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Issue detected in reconciliation</p></th><th class="confluenceTh"><p>Likely root</p></th><th class="confluenceTh"><p>Where to trace</p></th></tr><tr><td class="confluenceTd"><p>Row missing in Tabular</p></td><td class="confluenceTd"><p>Dimension lookup failure during refresh</p></td><td class="confluenceTd"><p><code>Funds Under Management</code> join logic</p></td></tr><tr><td class="confluenceTd"><p>Duplicate row</p></td><td class="confluenceTd"><p>Corporate action (split / ticker change)</p></td><td class="confluenceTd"><p><code>Asset</code> mapping table</p></td></tr><tr><td class="confluenceTd"><p>Tabular ≠ Synapse (few cents)</p></td><td class="confluenceTd"><p>FP rounding or market-code deny-list diff</p></td><td class="confluenceTd"><p>Measures or upstream data type</p></td></tr></tbody></table></div><hr/><h4 id="id-3.2HoldingsTabular—TechnicalOne-Pager-9WhyItMatterstotheBusiness">9 Why It Matters to the Business</h4><ul><li><p>Drives <strong>real-time FUM dashboards</strong>—advisers quote these numbers to clients.</p></li><li><p>Paired with <strong>Holdings Synapse</strong> in <strong>Daily Movements</strong>; any variance &gt; NZ$50 triggers a Finance ticket <strong>before 9 AM</strong>.</p></li><li><p>Underpins bonus calculations and regulatory liquidity checks.</p></li></ul><hr/><h5 id="id-3.2HoldingsTabular—TechnicalOne-Pager-TL;DR">TL;DR</h5><p>The XML defines a <strong>DAX-built, hidden aggregate table</strong> that filters yesterday’s holdings, groups by Account &amp; Asset, sums Quantity/Value, and exposes just two measures for FUM and cash-only views—critical for both performance and daily data assurance.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

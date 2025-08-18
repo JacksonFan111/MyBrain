@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : CRM Change Data Audit design</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : CRM Change Data Audit design
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 12-08-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Awesome start. I’ve taken your one-off “Primary Adviser” decoder and turned it into a reusable, searchable <strong>Dynamics CRM Audit decoder</strong> you can point at <em>any</em> entity and <em>any</em> audited columns (by exact name or name pattern). It:</p><ul><li><p>looks up the <strong>EntityId/ObjectTypeCode</strong> from <code>dbo.Entity</code></p></li><li><p>discovers all <strong>audited attributes</strong> that match a pattern (or the exact attribute you pass)</p></li><li><p>parses <strong>AttributeMask</strong> ↔ <strong>ChangeData</strong> positionally (mask position = change payload position)</p></li><li><p>returns one row <strong>per changed attribute per audit event</strong> with the old value (+ smart typed casts), who changed it, when, and a compact list of all other fields changed in the same event</p></li><li><p>optionally includes <strong>current values</strong> from the base view/table for the selected attribute(s) (works with standard entity views like your <code>dbo.Account</code>)</p></li><li><p>includes a small special-case helper for lookup GUIDs (e.g., <code>…adviserid</code> → <code>SystemUser</code> name)</p></li></ul><blockquote><p>Drop in, set the params at the top, and hit F5.<br/>If your base view name isn’t <code>dbo.Account</code>, just change <code>@BaseObjectName</code>.</p></blockquote><hr/><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">k;
+IF OBJECT_ID(&#39;tempdb..#Vals&#39;)          IS NOT NULL DROP TABLE #Vals;
+IF OBJECT_ID(&#39;tempdb..#Pairs&#39;)         IS NOT NULL DROP TABLE #Pairs;
+IF OBJECT_ID(&#39;tempdb..#Changes&#39;)       IS NOT NULL DROP TABLE #Changes;
+IF OBJECT_ID(&#39;tempdb..#Context&#39;)       IS NOT NULL DROP TABLE #Context;
+IF OBJECT_ID(&#39;tempdb..#Out&#39;)           IS NOT NULL DROP TABLE #Out;
+
+/* =========================
+   1) ENTITY &amp; ATTR METADATA
+   ========================= */
+-- Entity (logical ↔ display ↔ object type)
+SELECT
+    e.EntityId,
+    e.ObjectTypeCode,
+    EntityLogicalName = e.Name,
+    EntityDisplayName = vName.Label
+INTO #Entity
+FROM dbo.Entity             AS e
+JOIN dbo.EntityView         AS ev    ON ev.Name COLLATE DATABASE_DEFAULT = e.Name COLLATE DATABASE_DEFAULT
+JOIN dbo.LocalizedLabelView AS vName ON vName.ObjectId = ev.EntityId
+                                    AND vName.ObjectColumnName = &#39;LocalizedName&#39;
+                                    AND vName.LanguageId = @LanguageId
+WHERE e.Name = @EntityLogicalName;
+
+IF NOT EXISTS (SELECT 1 FROM #Entity)
+BEGIN
+    RAISERROR(&#39;Unknown entity logical name: %s&#39;, 16, 1, @EntityLogicalName);
+    RETURN;
+END
+
+-- All audited attributes on that entity (with column numbers)
+SELECT
+    a.AttributeId,
+    a.EntityId,
+    a.Name                AS AttributeLogicalName,
+    a.ColumnNumber,
+    a.IsAuditEnabled,
+    DisplayName           = ISNULL(vAttr.Label, a.Name)
+INTO #AttrAll
+FROM dbo.Attribute a
+LEFT JOIN dbo.LocalizedLabelView vAttr
+  ON vAttr.ObjectId = a.AttributeId
+ AND vAttr.ObjectColumnName = &#39;DisplayName&#39;
+ AND vAttr.LanguageId = @LanguageId
+WHERE a.EntityId = (SELECT EntityId FROM #Entity)
+  AND a.IsAuditEnabled = 1;
+
+-- Choose target attributes: either exact or by LIKE pattern (case-insensitive)
+SELECT DISTINCT
+    ta.AttributeId,
+    ta.EntityId,
+    ta.AttributeLogicalName,
+    ta.ColumnNumber,
+    ta.DisplayName
+INTO #TargetAttrs
+FROM #AttrAll ta
+WHERE (@AttributeExactLogicalName IS NOT NULL
+           AND ta.AttributeLogicalName = @AttributeExactLogicalName)
+   OR (@AttributeExactLogicalName IS NULL
+           AND ta.AttributeLogicalName LIKE @AttributeNameLike ESCAPE &#39;\&#39;);
+
+IF NOT EXISTS (SELECT 1 FROM #TargetAttrs)
+BEGIN
+    RAISERROR(&#39;No audited attributes matched. Try relaxing @AttributeNameLike or set @AttributeExactLogicalName.&#39;, 10, 1);
+    -- Still show what *is* available to help the analyst
+    SELECT TOP 200 AttributeLogicalName, ColumnNumber, DisplayName
+    FROM #AttrAll
+    ORDER BY AttributeLogicalName;
+    RETURN;
+END
+
+/* Handy preview of targets (what we’re about to decode) */
+SELECT AttributeLogicalName, ColumnNumber, DisplayName
+FROM #TargetAttrs
+ORDER BY ColumnNumber;
+
+/* =========================
+   2) PULL RELEVANT AUDIT ROWS
+   ========================= */
+-- Keep audit rows for the entity &amp; time window. We don’t pre-filter by mask here;
+-- we’ll parse the mask then join to #TargetAttrs to keep only the events we care about.
+SELECT
+    a.AuditId,
+    a.ObjectId         AS RecordId,
+    a.CreatedOn,
+    a.UserIdName,
+    a.AttributeMask,
+    a.ChangeData
+INTO #E
+FROM dbo.Audit a
+WHERE a.ObjectTypeCode = (SELECT ObjectTypeCode FROM #Entity)
+  AND a.CreatedOn &gt;= @Since
+  AND NULLIF(a.ChangeData,&#39;&#39;) IS NOT NULL;
+
+-- Short-circuit if no audit within the window
+IF NOT EXISTS (SELECT 1 FROM #E)
+BEGIN
+    RAISERROR(&#39;No audit rows found for entity %s within the last %d month(s).&#39;, 10, 1, @EntityLogicalName, @MonthsBack);
+    RETURN;
+END
+
+/* =========================
+   3) PARSE MASK &amp; CHANGEDATA
+   ========================= */
+-- Split AttributeMask by comma, keep ordinal position (1..n)
+SELECT
+    e.AuditId,
+    e.RecordId,
+    e.CreatedOn,
+    e.UserIdName,
+    pos = ROW_NUMBER() OVER (PARTITION BY e.AuditId ORDER BY (SELECT 1)),
+    ColNum = TRY_CONVERT(int, NULLIF(x.i.value(&#39;.&#39;,&#39;varchar(50)&#39;),&#39;&#39;))
+INTO #Mask
+FROM #E e
+CROSS APPLY (
+    SELECT CAST(&#39;&lt;x&gt;&lt;i&gt;&#39; +
+                REPLACE(STUFF(e.AttributeMask, 1, 1, &#39;&#39;), &#39;,&#39;, &#39;&lt;/i&gt;&lt;i&gt;&#39;) +
+                &#39;&lt;/i&gt;&lt;/x&gt;&#39; AS xml)
+) AS d(xm)
+CROSS APPLY d.xm.nodes(&#39;/x/i&#39;) AS x(i)
+WHERE TRY_CONVERT(int, NULLIF(x.i.value(&#39;.&#39;,&#39;varchar(50)&#39;),&#39;&#39;))
+      IS NOT NULL;
+
+-- Split ChangeData by &#39;~&#39;, then split each item on first comma into (AttrNameFromPayload, OldValueRaw)
+SELECT
+    e.AuditId,
+    e.RecordId,
+    e.CreatedOn,
+    pos = ROW_NUMBER() OVER (PARTITION BY e.AuditId ORDER BY (SELECT 1)),
+    AttrNameFromPayload = LEFT(v.item, CHARINDEX(&#39;,&#39;, v.item + &#39;,&#39;) - 1),
+    OldValueRaw         = NULLIF(SUBSTRING(v.item, CHARINDEX(&#39;,&#39;, v.item + &#39;,&#39;) + 1, 4000), &#39;&#39;)
+INTO #Vals
+FROM #E e
+CROSS APPLY (
+    SELECT x.i.value(&#39;.&#39;,&#39;varchar(max)&#39;) AS item
+    FROM (SELECT CAST(&#39;&lt;x&gt;&lt;i&gt;&#39; + REPLACE(e.ChangeData,&#39;~&#39;,&#39;&lt;/i&gt;&lt;i&gt;&#39;) + &#39;&lt;/i&gt;&lt;/x&gt;&#39; AS xml)) d(xm)
+    CROSS APPLY d.xm.nodes(&#39;/x/i&#39;) x(i)
+) v;
+
+-- Align: same audit + same ordinal position
+SELECT
+    m.AuditId,
+    m.RecordId,
+    m.CreatedOn,
+    m.UserIdName,
+    m.ColNum,
+    v.AttrNameFromPayload,
+    v.OldValueRaw
+INTO #Pairs
+FROM #Mask m
+JOIN #Vals v
+  ON v.AuditId   = m.AuditId
+ AND v.RecordId  = m.RecordId
+ AND v.CreatedOn = m.CreatedOn
+ AND v.pos       = m.pos;
+
+/* =========================
+   4) KEEP ONLY TARGET ATTRS
+   ========================= */
+SELECT
+    p.AuditId,
+    p.RecordId,
+    p.CreatedOn,
+    p.UserIdName,
+    t.AttributeLogicalName,
+    t.DisplayName,
+    t.ColumnNumber,
+    p.AttrNameFromPayload,
+    p.OldValueRaw,
+    -- typed casts where possible
+    OldValueGuid   = TRY_CAST(p.OldValueRaw AS uniqueidentifier),
+    OldValueInt    = TRY_CAST(p.OldValueRaw AS int),
+    OldValueFloat  = TRY_CAST(p.OldValueRaw AS decimal(38,10)),
+    OldValueDate   = TRY_CAST(p.OldValueRaw AS datetime2(3))
+INTO #Changes
+FROM #Pairs p
+JOIN #TargetAttrs t
+  ON t.ColumnNumber = p.ColNum;
+
+/* =========================
+   5) CONTEXT: OTHER FIELDS IN SAME AUDIT EVENT
+   ========================= */
+-- For each AuditId, list other columns also present in the mask (with their payload names)
+SELECT
+    c.AuditId,
+    OtherFields =
+      STUFF((
+        SELECT &#39;; &#39; + CONCAT(
+                   CASE WHEN pr.ColNum = c.ColumnNumber
+                        THEN &#39;[&#39; + CAST(pr.ColNum AS varchar(10)) + &#39;]&#39;
+                        ELSE CAST(pr.ColNum AS varchar(10))
+                   END,
+                   &#39;:&#39;, pr.AttrNameFromPayload, &#39;=&#39;, pr.OldValueRaw)
+        FROM #Pairs pr
+        WHERE pr.AuditId = c.AuditId
+        FOR XML PATH(&#39;&#39;), TYPE).value(&#39;.&#39;,&#39;nvarchar(max)&#39;),1,2,&#39;&#39;)
+INTO #Context
+FROM #Changes c
+GROUP BY c.AuditId;
+
+/* =========================
+   6) OPTIONAL: CURRENT VALUES FROM BASE VIEW
+   -------------------------
+   We can bring back current values for the target attributes if your org exposes
+   a base view e.g. dbo.Account. We’ll return the “best effort” current values:
+   - if the attribute exists on the base view, we select it dynamically;
+   - else NULL.
+   ========================= */
+-- Build a tiny dynamic projection for current values (safe: attribute names are metadata-derived)
+DECLARE @cols nvarchar(max) =
+    STRING_AGG(QUOTENAME(AttributeLogicalName), &#39;,&#39;) WITHIN GROUP (ORDER BY AttributeLogicalName)
+    FROM (SELECT DISTINCT AttributeLogicalName FROM #TargetAttrs) s;
+
+IF @BaseObjectName IS NULL OR @cols IS NULL
+BEGIN
+    -- No base view available or no columns → skip current values
+    SELECT
+        ch.RecordId,
+        Entity = @EntityLogicalName,
+        ch.AttributeLogicalName,
+        ch.DisplayName,
+        ch.ColumnNumber,
+        ch.AttrNameFromPayload,
+        ch.OldValueRaw,
+        ch.OldValueGuid,
+        ch.OldValueInt,
+        ch.OldValueFloat,
+        ch.OldValueDate,
+        ChangeDateLocal = COALESCE(dbo.fn_UTCToLocalTime_rpt(ch.CreatedOn), ch.CreatedOn),
+        ChangedBy       = ch.UserIdName,
+        ctx.OtherFields
+    FROM #Changes ch
+    LEFT JOIN #Context ctx ON ctx.AuditId = ch.AuditId
+    ORDER BY ch.CreatedOn DESC, ch.AttributeLogicalName;
+END
+ELSE
+BEGIN
+    /* Materialize current values for all target attributes into #Out
+       (one row per attribute change) */
+    DECLARE @sql nvarchar(max) = N&#39;
+    WITH Base AS (
+        SELECT t.RecordId, &#39; + @cols + N&#39;
+        FROM &#39; + @BaseObjectName + N&#39; WITH (NOLOCK) b
+        JOIN (SELECT DISTINCT RecordId FROM #Changes) t
+          ON t.RecordId = b.&#39; + CASE LOWER(@EntityLogicalName)
+                                   WHEN &#39;account&#39; THEN &#39;AccountId&#39;
+                                   WHEN &#39;contact&#39; THEN &#39;ContactId&#39;
+                                   ELSE @EntityLogicalName + &#39;Id&#39;
+                                END + N&#39;
+    )
+    SELECT
+        ch.RecordId,
+        Entity = @EntityLogicalName,
+        ch.AttributeLogicalName,
+        ch.DisplayName,
+        ch.ColumnNumber,
+        ch.AttrNameFromPayload,
+        ch.OldValueRaw,
+        ch.OldValueGuid,
+        ch.OldValueInt,
+        ch.OldValueFloat,
+        ch.OldValueDate,
+        CurrentValue = TRY_CONVERT(nvarchar(4000), b.&#39; + QUOTENAME(CASE WHEN @AttributeExactLogicalName IS NOT NULL THEN @AttributeExactLogicalName ELSE &#39;ch.AttributeLogicalName&#39; END) + N&#39;),
+        ChangeDateLocal = COALESCE(dbo.fn_UTCToLocalTime_rpt(ch.CreatedOn), ch.CreatedOn),
+        ChangedBy       = ch.UserIdName,
+        ctx.OtherFields
+    INTO #Out
+    FROM #Changes ch
+    LEFT JOIN Base b ON b.RecordId = ch.RecordId
+    LEFT JOIN #Context ctx ON ctx.AuditId = ch.AuditId
+    ORDER BY ch.CreatedOn DESC, ch.AttributeLogicalName;
+    &#39;;
+
+    EXEC sp_executesql @sql, N&#39;@EntityLogicalName sysname&#39;, @EntityLogicalName = @EntityLogicalName;
+
+    /* Optional helper: if the attribute *looks* like a SystemUser lookup (…adviserid),
+       try to resolve OldValueGuid -&gt; SystemUser.FullName for convenience. */
+    IF EXISTS (SELECT 1 FROM #Out WHERE AttributeLogicalName LIKE &#39;%adviserid&#39; AND OldValueGuid IS NOT NULL)
+    BEGIN
+        SELECT
+            o.*,
+            OldLookupName = su.FullName
+        FROM #Out o
+        LEFT JOIN dbo.SystemUser su
+               ON su.SystemUserId = o.OldValueGuid
+        ORDER BY o.ChangeDateLocal DESC, o.AttributeLogicalName;
+    END
+    ELSE
+    BEGIN
+        SELECT * FROM #Out ORDER BY ChangeDateLocal DESC, AttributeLogicalName;
+    END
+END
+</pre>
+</div></div><h3 id="CRMChangeDataAuditdesign-Howtouseit(quick):">How to use it (quick):</h3><ol start="1"><li><p>Set:</p></li></ol><ul><li><p><code>@EntityLogicalName</code> (e.g., <code>'account'</code>)</p></li><li><p>Either <code>@AttributeExactLogicalName = N'dsl_primaryadviserid'</code></p></li><li><p><strong>or</strong> leave exact null and use <code>@AttributeNameLike = N'%primary%adviser%'</code> to discover both <code>…adviserid</code> and <code>…adviseridname</code>.</p></li></ul><ol start="2"><li><p>Run. First it lists the matched audited attributes + column numbers (so you can sanity-check 10136/10137). Then it prints the decoded changes, one row per changed attribute with old values, who/when, and the other fields in the same event for context. If your base view is available, you also get <strong>CurrentValue</strong>.</p></li></ol><hr/><h4 id="CRMChangeDataAuditdesign-Notes&amp;gotchasithandles">Notes &amp; gotchas it handles</h4><ul><li><p><strong>Position alignment</strong>: <code>AttributeMask</code> order is the same as <code>ChangeData</code> chunks; we join by ordinal to align correctly (no string guessing).</p></li><li><p><strong>Robust split</strong>: the <code>ChangeData</code> parser safely handles items with/without commas.</p></li><li><p><strong>Typed “old values”</strong>: you get GUID / INT / DATETIME casts side-by-side with the raw text.</p></li><li><p><strong>Multiple columns at once</strong>: the LIKE discovery lets you grab pairs like <code>…Id</code> and <code>…IdName</code> together.</p></li><li><p><strong>Context</strong>: <code>OtherFields</code> shows <em>everything else</em> changed in the same audit event (helpful to see if a change came with status flips, owners, etc).</p></li></ul><p>If you want this as a stored procedure (<code>usp_AuditDecode</code>) with params, say the word and I’ll wrap it cleanly.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

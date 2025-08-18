@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 3.5 Circuit Breaker - ChangedServiceLevels Logics</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="Circuit-Breaker-notes_3198779447.html">Circuit Breaker notes</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 3.5 Circuit Breaker - ChangedServiceLevels Logics
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 08-06-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h3 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-OverviewoftheXMLQuery">Overview of the XML Query</h3><p>The XML defines a table creation in a database named &quot;Circuit Breaker&quot; for a table called <code>ChangedServiceLevels</code>. The table is populated using a SQL query executed against a Synapse data source. The query identifies accounts where the service level has changed by comparing the current service level with the previous one, along with the associated holding value.</p><h3 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-TableStructure">Table Structure</h3><p>The <code>ChangedServiceLevels</code> table has the following columns:</p><ol start="1"><li><p><strong>AccountNumber</strong> (string, sourced from <code>VarChar</code>): Identifies the account.</p></li><li><p><strong>ServiceLevel</strong> (string, sourced from <code>VarChar</code>): The current service level of the account.</p></li><li><p><strong>PreviousServiceLevel</strong> (string, sourced from <code>VarChar</code>): The previous service level before the change.</p></li><li><p><strong>HoldingValue</strong> (double, sourced from <code>Decimal</code>): The total value of holdings for the account.</p></li></ol><h3 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-DataLineageBreakdown">Data Lineage Breakdown</h3><h4 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-1.SourceData">1. <strong>Source Data</strong></h4><p>The query pulls data from two main sources within the <code>Trading</code> schema in a Synapse database:</p><ul><li><p><strong>Table: </strong><code>[Trading].[F_FundsUnderManagement_v]</code></p><ul><li><p>A view containing funds under management data.</p></li><li><p>Relevant columns:</p><ul><li><p><code>value nzd</code>: The value of holdings in New Zealand dollars.</p></li><li><p><code>accountkey</code>: Links to the account.</p></li><li><p><code>HoldingDateKey</code><span style="background-color: rgb(211,241,167);">: Indicates the date of the holding</span>.</p></li><li><p><code>FixedInterestAssetKey</code>: Links to fixed interest assets.</p></li></ul></li></ul></li><li><p><strong>Table: </strong><code>[Trading].[dim_Account]</code></p><ul><li><p>A dimension table containing account details.</p></li><li><p>Relevant columns:</p><ul><li><p><code>accountkey</code>: Unique identifier for accounts.</p></li><li><p><code>portfolioserviceid</code>: Identifier linking accounts to services.</p></li><li><p><code>AccountNumber</code>: The account identifier exposed in the output.</p></li><li><p><code>ServiceLevel</code>: The current service level of the account.</p></li><li><p><code>odseffectiveFrom</code>, <code>odseffectiveTo</code>: Effective date range for account records.</p></li><li><p><code>odsiscurrent</code>: Flag indicating if the record is current (1 = current, 0 = historical).</p></li></ul></li></ul></li><li><p><strong>Table: </strong><code>[Trading].[Dim_FixedInterestAsset]</code></p><ul><li><p>A dimension table for fixed interest assets.</p></li><li><p>Relevant column:</p><ul><li><p><code>FixedInterestAssetKey</code>: Links to fixed interest assets in the funds view.</p></li></ul></li></ul></li></ul><h4 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-2.QueryComponentsandDataFlow">2. <strong>Query Components and Data Flow</strong></h4><p>The query uses Common Table Expressions (CTEs) and joins to transform and filter the data. Here's the step-by-step lineage:</p><h5 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-a.CTE:holdings">a. <strong>CTE: </strong><code>holdings</code></h5><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">with holdings as (
+  select sum([value nzd]) Value, a.portfolioserviceid
+  from [Trading].[F_FundsUnderManagement_v] f
+  join trading.dim_Account a on a.accountkey = f.accountkey
+  left join [Trading].[Dim_FixedInterestAsset] i on i.FixedInterestAssetKey = f.FixedInterestAssetKey
+  where f.HoldingDateKey = (Select max(HoldingDateKey) from [Trading].[F_FundsUnderManagement_v])
+  group by a.portfolioserviceid
+)</pre>
+</div></div><ul><li><p><strong>Purpose</strong>: Aggregates the total holding value (<code>Value</code>) for each <code>portfolioserviceid</code> for the most recent <code>HoldingDateKey</code>.</p></li><li><p><strong>Data Flow</strong>:</p><ol start="1"><li><p><strong>Source</strong>: Starts with <code>[Trading].[F_FundsUnderManagement_v]</code> (aliased as <code>f</code>).</p></li><li><p><strong>Join</strong>: Joins with <code>[Trading].[dim_Account]</code> (aliased as <code>a</code>) on <code>accountkey</code> to link holdings to accounts and retrieve <code>portfolioserviceid</code>.</p></li><li><p><strong>Left Join</strong>: Optionally joins with <code>[Trading].[Dim_FixedInterestAsset]</code> (aliased as <code>i</code>) on <code>FixedInterestAssetKey</code>. This join is not used in the output but may ensure data consistency or filter specific asset types.</p></li><li><p><strong>Filter</strong>: Uses <code>where f.HoldingDateKey = (Select max(HoldingDateKey) from [Trading].[F_FundsUnderManagement_v])</code> to select only the most recent holdings data.</p></li><li><p><strong>Aggregation</strong>: Groups by <code>portfolioserviceid</code> and computes the sum of <code>value nzd</code> as <code>Value</code>.</p></li></ol></li><li><p><strong>Output</strong>: A temporary result set with columns <code>Value</code> (sum of holdings in NZD) and <code>portfolioserviceid</code>.</p></li></ul><h5 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-b.CTE:PrevServiceLevel">b. <strong>CTE: </strong><code>PrevServiceLevel</code></h5><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">, PrevServiceLevel as (
+  Select odseffectiveTo, odseffectivefrom, odsiscurrent, PortfolioServiceID, 
+         lead(ServiceLevel) over (partition by PortfolioServiceID order by odseffectiveTo desc) PreviousServiceLevel
+  from trading.dim_Account
+  where (convert(date, switchoffset(getdate(), datepart(tzoffset, getdate() at time zone &#39;New Zealand Standard Time&#39;))) = convert(date, odsEffectiveFrom)
+      OR convert(date, switchoffset(getdate(), datepart(tzoffset, getdate() at time zone &#39;New Zealand Standard Time&#39;))) = convert(date, odsEffectiveTo))
+)</pre>
+</div></div><ul><li><p><strong>Purpose</strong>: Identifies the previous service level for each <code>PortfolioServiceID</code> for accounts with changes on the current date (adjusted to New Zealand Standard Time).</p></li><li><p><strong>Data Flow</strong>:</p><ol start="1"><li><p><strong>Source</strong>: Uses <code>[Trading].[dim_Account]</code>.</p></li><li><p><strong>Filter</strong>: Selects records where either <code>odsEffectiveFrom</code> or <code>odsEffectiveTo</code> matches the current date (converted to NZST using <code>switchoffset</code> and <code>getdate()</code>).</p></li><li><p><strong>Window Function</strong>: Uses <code>LEAD(ServiceLevel) OVER (PARTITION BY PortfolioServiceID ORDER BY odseffectiveTo DESC)</code> to get the previous <code>ServiceLevel</code> for each <code>PortfolioServiceID</code>, ordered by the end date (<code>odseffectiveTo</code>) in descending order.</p></li><li><p><strong>Columns Selected</strong>: Includes <code>odseffectiveTo</code>, <code>odseffectivefrom</code>, <code>odsiscurrent</code>, <code>PortfolioServiceID</code>, and the computed <code>PreviousServiceLevel</code>.</p></li></ol></li><li><p><strong>Output</strong>: A temporary result set with <code>PortfolioServiceID</code>, <code>PreviousServiceLevel</code>, and other metadata for accounts with service level changes on the current date.</p></li></ul><h5 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-c.MainQuery">c. <strong>Main Query</strong></h5><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">select 
+  a.AccountNumber,
+  a.ServiceLevel,
+  p.PreviousServiceLevel,
+  h.Value HoldingValue
+from Trading.dim_Account a
+join holdings h on h.portfolioserviceid = a.portfolioserviceid
+join PrevServiceLevel p on p.portfolioserviceid = a.portfolioserviceid and p.odsiscurrent = 1
+where a.odsiscurrent = 1
+and a.ServiceLevel &lt;&gt; p.PreviousServiceLevel</pre>
+</div></div><ul><li><p><strong>Purpose</strong>: Combines data from <code>holdings</code>, <code>PrevServiceLevel</code>, and <code>[Trading].[dim_Account]</code> to produce the final result, selecting only accounts where the service level has changed.</p></li><li><p><strong>Data Flow</strong>:</p><ol start="1"><li><p><strong>Source</strong>: Starts with <code>[Trading].[dim_Account]</code> (aliased as <code>a</code>) for account details.</p></li><li><p><strong>Join with </strong><code>holdings</code>: Links <code>dim_Account</code> to the <code>holdings</code> CTE on <code>portfolioserviceid</code> to get the aggregated <code>Value</code> (renamed as <code>HoldingValue</code>).</p></li><li><p><strong>Join with </strong><code>PrevServiceLevel</code>: Links to the <code>PrevServiceLevel</code> CTE on <code>portfolioserviceid</code> and filters for current records (<code>p.odsiscurrent = 1</code>) to get <code>PreviousServiceLevel</code>.</p></li><li><p><strong>Filters</strong>:</p><ul><li><p><code>a.odsiscurrent = 1</code>: Ensures only current account records are included.</p></li><li><p><code>a.ServiceLevel &lt;&gt; p.PreviousServiceLevel</code>: Selects only accounts where the current <code>ServiceLevel</code> differs from the <code>PreviousServiceLevel</code>.</p></li></ul></li><li><p><strong>Output Columns</strong>:</p><ul><li><p><code>a.AccountNumber</code> → <code>AccountNumber</code></p></li><li><p><code>a.ServiceLevel</code> → <code>ServiceLevel</code></p></li><li><p><code>p.PreviousServiceLevel</code> → <code>PreviousServiceLevel</code></p></li><li><p><code>h.Value</code> → <code>HoldingValue</code></p></li></ul></li></ol></li><li><p><strong>Output</strong>: A result set with accounts that have a changed service level, including their account number, current and previous service levels, and holding value.</p></li></ul><h4 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-3.FinalDestination">3. <strong>Final Destination</strong></h4><ul><li><p><strong>Table</strong>: The results are stored in the <code>ChangedServiceLevels</code> table in the &quot;Circuit Breaker&quot; database.</p></li><li><p><strong>Partition</strong>: A single partition named <code>ChangedServiceLevels</code> with a <code>dataView</code> of <code>full</code>, indicating the entire dataset is included.</p></li><li><p><strong>Data Source</strong>: The query is executed against a Synapse database, as specified by <code>&quot;dataSource&quot;: &quot;Synapse&quot;</code>.</p></li></ul><h3 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-DataLineageSummary">Data Lineage Summary</h3><ol start="1"><li><p><strong>Raw Data Sources</strong>:</p><ul><li><p><code>[Trading].[F_FundsUnderManagement_v]</code>: Provides holding values and date keys.</p></li><li><p><code>[Trading].[dim_Account]</code>: Provides account details, service levels, and effective dates.</p></li><li><p><code>[Trading].[Dim_FixedInterestAsset]</code>: Optional join for asset details (not directly used in output).</p></li></ul></li><li><p><strong>Transformations</strong>:</p><ul><li><p><strong>Aggregation</strong>: Summing <code>value nzd</code> in the <code>holdings</code> CTE to compute total holding value per <code>portfolioserviceid</code>.</p></li><li><p><strong>Window Function</strong>: Using <code>LEAD</code> to derive the previous service level in the <code>PrevServiceLevel</code> CTE.</p></li><li><p><strong>Date Filtering</strong>: Restricting to records where service level changes align with the current date (NZST).</p></li><li><p><strong>Joins</strong>: Combining account details, holding values, and previous service levels.</p></li><li><p><strong>Filtering</strong>: Selecting only current records (<code>odsiscurrent = 1</code>) with changed service levels (<code>ServiceLevel &lt;&gt; PreviousServiceLevel</code>).</p></li></ul></li><li><p><strong>Output</strong>:</p><ul><li><p>The <code>ChangedServiceLevels</code> table contains:</p><ul><li><p><code>AccountNumber</code>: From <code>dim_Account</code>.</p></li><li><p><code>ServiceLevel</code>: From <code>dim_Account</code>.</p></li><li><p><code>PreviousServiceLevel</code>: Derived from <code>dim_Account</code> via the <code>LEAD</code> function.</p></li><li><p><code>HoldingValue</code>: Aggregated from <code>F_FundsUnderManagement_v</code>.</p></li></ul></li></ul></li></ol><h3 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-KeyPointsforSQLDevelopers">Key Points for SQL Developers</h3><ul><li><p><strong>Time Zone Handling</strong>: The query adjusts <code>getdate()</code> to New Zealand Standard Time using <code>switchoffset</code> and <code>datepart(tzoffset, ...)</code>, ensuring date comparisons align with NZST.</p></li><li><p><strong>Window Function</strong>: The <code>LEAD</code> function is critical for identifying the previous service level, partitioned by <code>PortfolioServiceID</code> and ordered by <code>odseffectiveTo</code>.</p></li><li><p><strong>Currency and Precision</strong>: <code>HoldingValue</code> is sourced from <code>value nzd</code> (Decimal) and mapped to a <code>double</code> in the table, which may require attention to precision in downstream applications.</p></li><li><p><strong>Performance Considerations</strong>: The query involves a subquery for <code>max(HoldingDateKey)</code>, multiple joins, and a window function, which could be resource-intensive on large datasets. Indexing on <code>accountkey</code>, <code>portfolioserviceid</code>, <code>HoldingDateKey</code>, and <code>odsEffective*</code> columns may improve performance.</p></li><li><p><strong>ODS Flags</strong>: The use of <code>odsiscurrent</code>, <code>odseffectiveFrom</code>, and <code>odseffectiveTo</code> suggests a slowly changing dimension (SCD) setup, likely Type 2, for tracking account history.</p></li></ul><h3 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-DiagramofDataLineage">Diagram of Data Lineage</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">[Trading].[F_FundsUnderManagement_v] --&gt; [holdings CTE] --&gt; Sum(value nzd) as Value
+[Trading].[dim_Account] -------------&gt; [holdings CTE] --&gt; portfolioserviceid
+[Trading].[Dim_FixedInterestAsset] --&gt; [holdings CTE] --&gt; (Optional join)
+
+[Trading].[dim_Account] --&gt; [PrevServiceLevel CTE] --&gt; LEAD(ServiceLevel) as PreviousServiceLevel
+                          --&gt; Filter by current date (NZST)
+
+[Trading].[dim_Account] --&gt; [Main Query] --&gt; AccountNumber, ServiceLevel
+[holdings CTE] ----------&gt; [Main Query] --&gt; HoldingValue
+[PrevServiceLevel CTE] --&gt; [Main Query] --&gt; PreviousServiceLevel
+                            Filter: odsiscurrent = 1, ServiceLevel &lt;&gt; PreviousServiceLevel
+
+[Main Query] --&gt; [ChangedServiceLevels Table]</pre>
+</div></div><p>This lineage traces the data from raw tables through transformations to the final table, capturing accounts with changed service levels and their associated holding values.</p><p /><hr/><h3 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-1|Whatexactlyisthedatagrain?">1 | What exactly is the data grain?</h3><p>Each <strong>row</strong> in <code>ChangedServiceLevels</code> represents <strong>one account that is currently active </strong><em><strong>today</strong></em><strong> whose service-level code changed </strong><em><strong>today</strong></em>, plus a portfolio-level snapshot of the latest NZ-dollar holding value for the portfolio that the account belongs to.</p><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="fa5253dd-008d-4eb1-a244-6329fd438228" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Logical pillar</p></th><th class="confluenceTh"><p>Grain</p></th></tr><tr><td class="confluenceTd"><p>Identity</p></td><td class="confluenceTd"><p><code>AccountNumber</code> (many accounts may share the same <code>PortfolioServiceID</code>)</p></td></tr><tr><td class="confluenceTd"><p>Current attributes</p></td><td class="confluenceTd"><p><code>ServiceLevel</code>, <code>odsIsCurrent = 1</code></p></td></tr><tr><td class="confluenceTd"><p>Historical attribute</p></td><td class="confluenceTd"><p><code>PreviousServiceLevel</code> (value that was current immediately before today)</p></td></tr><tr><td class="confluenceTd"><p>Numerical snapshot</p></td><td class="confluenceTd"><p><code>HoldingValue</code> aggregated <strong>per </strong><code>PortfolioServiceID</code>, then broadcast to every account in that portfolio</p></td></tr></tbody></table></div><blockquote><p><strong>Why this matters</strong> – the holdings number is <em>portfolio grain</em> while the rest of the columns are <em>account grain</em>. If a portfolio contains five accounts you will see the same <code>HoldingValue</code> five times, which may or may not be what downstream reports expect.</p></blockquote><hr/><h3 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-2|Quicklineagewalkthrough(diagrammatic)">2 | Quick lineage walkthrough (diagrammatic)</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">┌────────────────────────────────────────────┐
+│ F_FundsUnderManagement_v (latest date)     │
+│   • value nzd                              │
+│   • accountKey → dim_Account               │
+└────────────────────┬───────────────────────┘
+                     │ sum(value nzd)
+                     ▼
+   CTE ▸ holdings  (Value, PortfolioServiceID)
+                     │
+                     │
+┌────────────────────┴───────────────────────┐
+│ dim_Account (all rows for today’s change)  │
+│   • LEAD(ServiceLevel) → PreviousService   │
+└────────────────────┬───────────────────────┘
+                     │
+                     ▼
+   CTE ▸ PrevServiceLevel (one row per
+         dim_Account record effective today)
+                     │
+                     │ join on PortfolioServiceID
+                     ▼
+┌────────────────────────────────────────────┐
+│ dim_Account (current rows only)            │
+│   • filter odsIsCurrent = 1                │
+│   • ServiceLevel &lt;&gt; PreviousServiceLevel   │
+└────────────────────────────────────────────┘
+                     │
+                     ▼
+     ChangedServiceLevels table (Account grain
+     + portfolio-grain HoldingValue snapshot)
+</pre>
+</div></div><hr/><h3 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-3|Keytechnicalobservations(andrisks)">3 | Key technical observations (and risks)</h3><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="af5011b8-ee27-42da-9f02-cfd41053e3b3" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Observation</p></th><th class="confluenceTh"><p>Why it may bite you</p></th><th class="confluenceTh"><p>Mitigation</p></th></tr><tr><td class="confluenceTd"><p><strong>Currency precision</strong>: <code>value nzd</code> → <code>double</code></p></td><td class="confluenceTd"><p>IEEE double has rounding error; bad for money.</p></td><td class="confluenceTd"><p>Cast to <code>decimal(19,4)</code> (or your corporate standard) before insert.</p></td></tr><tr><td class="confluenceTd"><p><strong>Time-zone filter</strong> uses <code>SWITCHOFFSET( GETDATE() …)</code> <em>inside</em> the CTE</p></td><td class="confluenceTd"><p>SQL must call that scalar function on every row, and DST cuts can mis-flag changes.</p></td><td class="confluenceTd"><p>Calculate a once-per-query <code>@TodayNZ date</code> variable and use it.</p></td></tr><tr><td class="confluenceTd"><p><strong>Grain mismatch</strong> between portfolio and account</p></td><td class="confluenceTd"><p>Summed holdings repeat for multi-account portfolios; totals inflate if someone rolls the table up without de-duping.</p></td><td class="confluenceTd"><p>If you really need per-account holdings, aggregate by <code>accountKey</code> instead. Otherwise expose a separate portfolio-level table.</p></td></tr><tr><td class="confluenceTd"><p><code>LEAD()</code><strong> assumes contiguous history</strong></p></td><td class="confluenceTd"><p>If any gap or back-dated correction exists, <code>LEAD()</code> might skip more than one change.</p></td><td class="confluenceTd"><p>Use <code>ROW_NUMBER()</code> to identify the “current row” and <code>LAG()</code> the prior row instead, independent of dates.</p></td></tr><tr><td class="confluenceTd"><p>Casting <code>HoldingDateKey</code> with <code>MAX()</code> sub-query*</p></td><td class="confluenceTd"><p>Forces a full scan of the fact table.</p></td><td class="confluenceTd"><p>Persist latest key in a small control table or join to a date dimension on <code>[IsLatestFUM] = 1</code>.</p></td></tr><tr><td class="confluenceTd"><p>Implicit conversion on joins (<code>portfolioServiceID</code> collation / size)</p></td><td class="confluenceTd"><p>Hidden widening conversions block parallelism.</p></td><td class="confluenceTd"><p>Confirm identical data types and collations on both sides, or cast explicitly.</p></td></tr></tbody></table></div><hr/><h3 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-4|Refactored,performance-orientedscript">4 | Refactored, performance-oriented script</h3><p>Below is a fully in-line T-SQL rewrite that:</p><ul><li><p>Fixes the grain mismatch (aggregates at <strong>account</strong> level).</p></li><li><p>Removes per-row timezone math (single variable).</p></li><li><p>Uses <code>LAG()</code> instead of date equality to detect the previous service level.</p></li><li><p>Keeps monetary precision with <code>DECIMAL</code>.</p></li><li><p>Adds comments, hints, and index suggestions.</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">/* ============================================================================
+   Changed service levels as at @TodayNZ
+   Author:   &lt;Your-Name&gt;
+   Created:  2025-06-09
+   ==========================================================================*/
+DECLARE @TodayNZ DATE =
+(
+    SELECT CONVERT(date, SYSDATETIMEOFFSET() AT TIME ZONE &#39;New Zealand Standard Time&#39;)
+);
+
+/* --- Latest holdings by ACCOUNT (one row per account) -------------------- */
+WITH LatestHolding AS (
+    SELECT
+        a.AccountKey,
+        a.PortfolioServiceID,
+        SUM(f.[value nzd]) AS HoldingValueNZD
+    FROM Trading.F_FundsUnderManagement_v      AS f
+    JOIN Trading.dim_Account                   AS a ON a.AccountKey = f.AccountKey
+    WHERE f.HoldingDateKey = (
+          SELECT MAX(HoldingDateKey)
+          FROM   Trading.F_FundsUnderManagement_v
+    )
+    GROUP BY a.AccountKey, a.PortfolioServiceID
+),
+
+/* --- Current + previous service level rows ------------------------------ */
+SvcHistory AS (
+    SELECT
+        a.AccountKey,
+        a.AccountNumber,
+        a.PortfolioServiceID,
+        a.ServiceLevel,
+        a.odsIsCurrent,
+        a.odsEffectiveFrom,
+        a.odsEffectiveTo,
+        LAG(a.ServiceLevel) OVER (
+            PARTITION BY a.AccountKey
+            ORDER BY a.odsEffectiveFrom DESC
+        ) AS PreviousServiceLevel,
+        ROW_NUMBER() OVER (
+            PARTITION BY a.AccountKey
+            ORDER BY a.odsEffectiveFrom DESC
+        ) AS rn_current
+    FROM Trading.dim_Account AS a
+    WHERE   a.odsEffectiveFrom &lt;= @TodayNZ
+      AND   a.odsEffectiveTo   &gt;= @TodayNZ   -- row is “live” today
+),
+
+/* --- Join the pieces ----------------------------------------------------- */
+ChangedSvc AS (
+    SELECT
+        s.AccountNumber,
+        s.ServiceLevel,
+        s.PreviousServiceLevel,
+        CAST(h.HoldingValueNZD AS DECIMAL(19,4)) AS HoldingValue
+    FROM SvcHistory     AS s
+    JOIN LatestHolding  AS h ON h.AccountKey = s.AccountKey
+    WHERE s.rn_current = 1              -- only TODAY’s row
+      AND s.ServiceLevel &lt;&gt; s.PreviousServiceLevel
+)
+
+SELECT *
+INTO dbo.ChangedServiceLevels      -- staging table; swap to final schema
+FROM ChangedSvc;
+
+/* --- Recommended supporting index (Synapse dedicated SQL pool) ---------- 
+CREATE INDEX IX_dim_Account_Svc ON Trading.dim_Account
+(
+    AccountKey,
+    odsEffectiveFrom DESC,
+    odsEffectiveTo DESC
+)
+WITH (DISTRIBUTION = HASH(AccountKey));
+-------------------------------------------------------------------------- */
+</pre>
+</div></div><h4 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-Whythesechanges?">Why these changes?</h4><ol start="1"><li><p><strong>Single-point date variable</strong> → Only one call to the costly <code>AT TIME ZONE</code> conversion.</p></li><li><p><strong>Account-level aggregation</strong> → Removes duplication; still easy to roll up to portfolio if needed.</p></li><li><p><code>LAG()</code><strong> + </strong><code>ROW_NUMBER()</code> → Accurately finds the immediately previous service level even if there were multiple changes on the same day or corrective back-posts.</p></li><li><p><strong>Decimal precision</strong> → Keeps cents exact; avoids floating-point drift.</p></li><li><p><strong>Inlining the logic</strong> makes it clearer for code review and easier to parameterise later.</p></li></ol><hr/><h3 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-5|Next-steprecommendations">5 | Next-step recommendations</h3><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="4d22df20-4db2-4272-b5f2-10de954c4821" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Task</p></th><th class="confluenceTh"><p>Payoff</p></th></tr><tr><td class="confluenceTd"><p><strong>Confirm grain with stakeholders</strong></p></td><td class="confluenceTd"><p>Decide whether the holding value should duplicate or be stored only once per portfolio.</p></td></tr><tr><td class="confluenceTd"><p><strong>Add a nightly orchestration job</strong> in Synapse Pipelines / ADF to truncate-and-reload the table (or MERGE into a slowly changing fact for point-in-time history).</p></td><td class="confluenceTd"><p>Guarantees freshness and auditability.</p></td></tr><tr><td class="confluenceTd"><p><strong>Document SCD logic</strong> in your data dictionary – especially what <code>odsIsCurrent</code>, <code>odsEffective*</code> mean and how they are expected to behave.</p></td><td class="confluenceTd"><p>Prevents future devs from misusing the table.</p></td></tr><tr><td class="confluenceTd"><p><strong>Monitor execution plans</strong> – run the new query, capture elapsed time, logical reads, DOP.</p></td><td class="confluenceTd"><p>Validate the performance improvements; fine-tune indexes.</p></td></tr><tr><td class="confluenceTd"><p><strong>Create unit tests</strong> in tSQLt or a Synapse CI pipeline: feed a small synthetic data set with a deliberate service-level change and assert the output.</p></td><td class="confluenceTd"><p>Protects against future regressions.</p></td></tr></tbody></table></div><hr/><h3 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-6|Inonesentence">6 | In one sentence</h3><p><code>ChangedServiceLevels</code> is an <em>account-daily</em> fact capturing “what changed today”, and by tightening its date handling, precision, and grain alignment you’ll get faster refreshes, cleaner semantics, and far fewer downstream surprises.</p><p /><hr/><p>Below is a design pattern you can drop into Synapse (or classic SQL Server) to capture <em><strong>every</strong></em><strong> service-level hop per account since 1 January 2010</strong>, together with the NZ-dollar holding snapshot that was current at the moment of change.</p><hr/><h2 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-1Whatdoes“achange”mean?">1 What does “a change” mean?</h2><ul><li><p><strong>FromServiceLevel ≠ ToServiceLevel</strong> for the same <code>AccountKey</code></p></li><li><p>Change-date = the <code>odsEffectiveFrom</code> of the <strong>new</strong> row<br/>(i.e. the instant the new level became effective)</p></li><li><p>Holding value = the <strong>first daily funds-under-management snapshot </strong><em><strong>on or after</strong></em><strong> that change-date</strong><br/>(avoids nulls when a service level flips at 23:59 but holdings load at 02:00 next day)</p></li></ul><p>The output grain is therefore <strong>one row per account-level change event</strong>:</p><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="4a1d38a7-2864-4b2b-a3b7-a0b0de8bbfe4" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Column</p></th><th class="confluenceTh"><p>Grain</p></th><th class="confluenceTh"><p>Notes</p></th></tr><tr><td class="confluenceTd"><p>AccountNumber</p></td><td class="confluenceTd"><p>Account</p></td><td class="confluenceTd"><p>Business key</p></td></tr><tr><td class="confluenceTd"><p>FromServiceLevel</p></td><td class="confluenceTd"><p>Account-change</p></td><td class="confluenceTd"><p><code>LAG()</code> value</p></td></tr><tr><td class="confluenceTd"><p>ToServiceLevel</p></td><td class="confluenceTd"><p>Account-change</p></td><td class="confluenceTd"><p>Current row value</p></td></tr><tr><td class="confluenceTd"><p>ChangeDate</p></td><td class="confluenceTd"><p>Account-change</p></td><td class="confluenceTd"><p><code>odsEffectiveFrom</code> of the new row</p></td></tr><tr><td class="confluenceTd"><p>HoldingValueNZD</p></td><td class="confluenceTd"><p>Account-change</p></td><td class="confluenceTd"><p>Decimal(19,4)</p></td></tr></tbody></table></div><hr/><h2 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-2Referenceimplementation">2 Reference implementation</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">/* ============================================================================
+   Full historical service-level changes since 2010
+   Creates / refreshes dbo.ChangedServiceLevelsHistory
+   Author : &lt;you&gt;
+   Date   : 2025-06-09
+   ==========================================================================*/
+IF OBJECT_ID(&#39;dbo.ChangedServiceLevelsHistory&#39;) IS NOT NULL
+    TRUNCATE TABLE dbo.ChangedServiceLevelsHistory;   -- idempotent rebuild
+
+DECLARE @StartDate date = &#39;2010-01-01&#39;;
+
+/* --------------------------------------------------------------------------
+   1. Service-level history with previous level and change flag
+---------------------------------------------------------------------------*/
+WITH SvcHistory AS (
+    SELECT
+        a.AccountKey,
+        a.AccountNumber,
+        a.PortfolioServiceID,
+        a.ServiceLevel                              AS ToServiceLevel,
+        LAG(a.ServiceLevel) OVER (
+            PARTITION BY a.AccountKey
+            ORDER BY a.odsEffectiveFrom
+        )                                           AS FromServiceLevel,
+        a.odsEffectiveFrom                          AS ChangeDate
+    FROM  Trading.dim_Account AS a
+    WHERE a.odsEffectiveFrom &gt;= @StartDate
+),
+Changes AS (
+    SELECT *
+    FROM   SvcHistory
+    WHERE  FromServiceLevel IS NOT NULL      -- suppress very first row
+       AND FromServiceLevel &lt;&gt; ToServiceLevel
+),
+
+/* --------------------------------------------------------------------------
+   2. Holdings at, or immediately after, the change date
+---------------------------------------------------------------------------*/
+ChangeHoldings AS (
+    SELECT
+        c.AccountKey,
+        c.ChangeDate,
+        CAST(hv.HoldingValueNZD AS DECIMAL(19,4)) AS HoldingValueNZD
+    FROM  Changes AS c
+    CROSS APPLY (
+        SELECT TOP (1) SUM(f.[value nzd]) AS HoldingValueNZD
+        FROM   Trading.F_FundsUnderManagement_v AS f
+        WHERE  f.AccountKey     = c.AccountKey
+          AND  f.HoldingDateKey &gt;= CONVERT(date, c.ChangeDate)  -- &gt;= change
+        GROUP  BY f.AccountKey, f.HoldingDateKey
+        ORDER  BY f.HoldingDateKey                               -- first one
+    ) AS hv
+)
+
+/* --------------------------------------------------------------------------
+   3. Write out the final history table
+---------------------------------------------------------------------------*/
+INSERT INTO dbo.ChangedServiceLevelsHistory
+        (AccountNumber, FromServiceLevel, ToServiceLevel,
+         ChangeDate,   HoldingValueNZD)
+SELECT
+        c.AccountNumber,
+        c.FromServiceLevel,
+        c.ToServiceLevel,
+        c.ChangeDate,
+        h.HoldingValueNZD
+FROM    Changes        AS c
+LEFT JOIN ChangeHoldings AS h
+       ON h.AccountKey  = c.AccountKey
+      AND h.ChangeDate  = c.ChangeDate;
+
+/* Optional: cluster &amp; distribute for synapse performance */
+-- ALTER TABLE dbo.ChangedServiceLevelsHistory
+--     ADD  INDEX IX_ChangeDate CLUSTERED (ChangeDate) WITH (DATA_COMPRESSION = COLUMNSTORE);
+</pre>
+</div></div><h3 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-Whythispattern?">Why this pattern?</h3><ol start="1"><li><p><strong>Window function + </strong><code>LAG()</code> gives you the previous service level without relying on perfect date continuity.</p></li><li><p><strong>Cross Apply</strong> fetches exactly one FUM snapshot (the earliest on/after the flip) for each change; that scales far better than joining the whole fact set.</p></li><li><p>Everything is parameter-driven (<code>@StartDate</code>), so reruns or incremental loads are trivial.</p></li></ol><hr/><h2 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-3Performancetips">3 Performance tips</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="1a800731-fe4c-47f7-ad7b-60a98ad6a662" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Tip</p></th><th class="confluenceTh"><p>Detail</p></th></tr><tr><td class="confluenceTd"><p><strong>Index on </strong><code>dim_Account</code></p></td><td class="confluenceTd"><p><code>(AccountKey, odsEffectiveFrom)</code> ascending; not filtered by <code>odsIsCurrent</code> because we need the full history.</p></td></tr><tr><td class="confluenceTd"><p><strong>Date lookup</strong></p></td><td class="confluenceTd"><p>If <code>F_FundsUnderManagement_v</code> stores <code>HoldingDateKey</code> as an <code>int</code> surrogate (yyyymmdd), convert <strong>both sides</strong> to the same data type – or join through your date dimension.</p></td></tr><tr><td class="confluenceTd"><p><strong>Partition elimination</strong></p></td><td class="confluenceTd"><p>In Synapse dedicated pools, keep <code>F_FundsUnderManagement_v</code> partitioned by <code>HoldingDateKey</code> (range) and filtered by predicate push-down (<code>&gt;= ChangeDate</code>).</p></td></tr><tr><td class="confluenceTd"><p><strong>Incremental loads</strong></p></td><td class="confluenceTd"><p>After the first full build, switch logic to “load only where <code>odsEffectiveFrom &gt;= @LastRunDate</code>” and <code>NOT EXISTS</code> in history.</p></td></tr></tbody></table></div><hr/><h2 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-4Validatingtheresult">4 Validating the result</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- Expect exactly one change row per (AccountKey, ChangeDate)
+SELECT AccountNumber, ChangeDate, COUNT(*)   -- should all be 1
+FROM   dbo.ChangedServiceLevelsHistory
+GROUP  BY AccountNumber, ChangeDate
+HAVING COUNT(*) &gt; 1;
+
+-- Spot-check a single account
+DECLARE @acct varchar(50) = &#39;A123-456&#39;;
+SELECT *
+FROM   dbo.ChangedServiceLevelsHistory
+WHERE  AccountNumber = @acct
+ORDER  BY ChangeDate;
+</pre>
+</div></div><hr/><h3 id="id-3.5CircuitBreaker-ChangedServiceLevelsLogics-TL;DR">TL;DR</h3><p>Pivot the raw SCD history with <code>LAG()</code>, flag every row where the service code flips, and <strong>look up the very first funds-under-management snapshot on or after that flip</strong>. Load the result into <code>ChangedServiceLevelsHistory</code> and you have a complete audit of service-level migrations – from 2010 to today – together with the dollars that were on the line each time they moved.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

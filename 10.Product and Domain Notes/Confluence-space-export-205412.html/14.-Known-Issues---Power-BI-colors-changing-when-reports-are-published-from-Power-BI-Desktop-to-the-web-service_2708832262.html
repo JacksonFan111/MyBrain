@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 14. Known Issues - Power BI colors changing when reports are published from Power BI Desktop to the web service</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 14. Known Issues - Power BI colors changing when reports are published from Power BI Desktop to the web service
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 12-09-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Microsoft has acknowledged the issue of Power BI colors changing when reports are published from Power BI Desktop to the web service. However, they have not provided a permanent fix as of the latest reports. Their primary guidance includes ensuring you are using the latest version of Power BI Desktop, as some updates have addressed specific visual-related bugs. Additionally, Microsoft suggests trying the following steps:</p><ol start="1"><li><p><strong>Reverting to Default Colors</strong>: As mentioned earlier, one of the common fixes recommended by users and community members is to revert visuals to default colors in Power BI Desktop before publishing to the web service(</p></li><li><p><strong>Custom Themes</strong>: If you are using custom themes, Microsoft recommends reviewing the JSON structure of the theme to ensure it's correctly formatted and doesn't contain any problematic elements like wildcard characters. Simplifying the theme can sometimes resolve issues(</p></li><li><p><strong>Workarounds</strong>: One workaround suggested by the community, which Microsoft has referenced in support discussions, involves publishing a copy of the report after making changes to the original template. This sometimes helps bypass the color change issue</p></li></ol><p><a class="external-link" data-card-appearance="inline" href="https://community.fabric.microsoft.com/t5/Service/Data-colors-changing-once-published-to-web/m-p/1024753" rel="nofollow">https://community.fabric.microsoft.com/t5/Service/Data-colors-changing-once-published-to-web/m-p/1024753</a> </p><p /><p><a class="external-link" data-card-appearance="inline" href="https://community.fabric.microsoft.com/t5/Service/Visualization-Colors-changing-when-publishing-to-web/m-p/545079" rel="nofollow">https://community.fabric.microsoft.com/t5/Service/Visualization-Colors-changing-when-publishing-to-web/m-p/545079</a> </p><p /><p><a class="external-link" data-card-appearance="inline" href="https://community.fabric.microsoft.com/t5/Desktop/Colors-in-visuals-change-after-publishing-to-web-service-any/td-p/1207846" rel="nofollow">https://community.fabric.microsoft.com/t5/Desktop/Colors-in-visuals-change-after-publishing-to-web-service-any/td-p/1207846</a> </p><h3 id="id-14.KnownIssues-PowerBIcolorschangingwhenreportsarepublishedfromPowerBIDesktoptothewebservice-Step-by-StepGuideforNewUsers:">Step-by-Step Guide for New Users:</h3><ol start="1"><li><p><strong>Clear Cache on Power BI Desktop:</strong></p><ul><li><p>Open <strong>Power BI Desktop</strong>.</p></li><li><p>Navigate to the <strong>File</strong> menu in the top-left corner.</p></li><li><p>Go to <strong>Options and settings</strong> and select <strong>Options</strong>.</p></li><li><p>In the left-hand menu under <strong>Global</strong>, click on <strong>Data Load</strong>.</p></li><li><p>Find the option <strong>Clear cache</strong> and click on it to clear the cache data from Power BI Desktop.</p></li></ul></li><li><p><strong>Delete the Report from Power BI Service:</strong></p><ul><li><p>Open your web browser and log in to the <strong>Power BI Service</strong> (<a class="external-link" href="https://app.powerbi.com)." rel="nofollow">https://app.powerbi.com).</a></p></li><li><p>In the <strong>Workspace</strong> where your report is located, find the report you want to delete.</p></li><li><p>Select the report, click the <strong>More options (three dots)</strong> next to the report name, and choose <strong>Delete</strong>.</p></li><li><p>Confirm the deletion when prompted.</p></li></ul></li><li><p><strong>Re-upload the Report to Power BI Service:</strong></p><ul><li><p>Go back to <strong>Power BI Desktop</strong>.</p></li><li><p>After clearing the cache, re-open your report or ensure the latest version is open.</p></li><li><p>Click on <strong>Publish</strong> in the top-right corner of the Power BI Desktop window.</p></li><li><p>Select the appropriate <strong>Workspace</strong> in Power BI Service and click <strong>Select</strong> to upload the report again.</p></li></ul></li><li><p><strong>Verify the Fix:</strong></p><ul><li><p>Once the report is re-uploaded, go to the <strong>Power BI Service</strong> in your web browser.</p></li><li><p>Check the colors in the visuals to ensure they now match the colors seen in Power BI Desktop.</p></li></ul></li></ol><p>This should resolve the color differences between the Power BI Desktop and Power BI Service.</p><p /><hr/><p>Another known issues &gt;&gt;</p><p>Suppose you apply a custom color set or individual color to a data point in a visual by using the Custom </p><p> As far as I know, Power BI doesn't support us to use conditional formatting after we use Legend in Statcked Column Chart. Power BI will determind the color for each legend based on theme. If we need to change the color for legends, we need to select the legend and choose the color we need manually.</p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image confluence-external-resource image-center" alt="RicoZhou_1-1656567770385.png" width="250" src="https://community.fabric.microsoft.com/t5/image/serverpage/image-id/740717iA9AB58B48725E123/image-size/medium?v=v2&amp;px=400" data-image-src="https://community.fabric.microsoft.com/t5/image/serverpage/image-id/740717iA9AB58B48725E123/image-size/medium?v=v2&amp;px=400" loading="lazy"></span><p /><p><a class="external-link" data-card-appearance="inline" href="https://community.fabric.microsoft.com/t5/Desktop/conditional-color-Stack-column-chart/m-p/2611010#M919622" rel="nofollow">https://community.fabric.microsoft.com/t5/Desktop/conditional-color-Stack-column-chart/m-p/2611010#M919622</a> </p><p> </p><p><a class="external-link" data-card-appearance="inline" href="https://ideas.fabric.microsoft.com/ideas/idea/?ideaid=b0797f65-96d7-4792-a713-5e262e672b42" rel="nofollow">https://ideas.fabric.microsoft.com/ideas/idea/?ideaid=b0797f65-96d7-4792-a713-5e262e672b42</a> </p><p />
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

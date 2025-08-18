@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 03. Learning How SSRS is governed in CIP</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="1.-Internal_2555216013.html">1. Internal</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 03. Learning How SSRS is governed in CIP
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 13-06-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h1 id="id-03.LearningHowSSRSisgovernedinCIP-Overview">Overview</h1><p>Insights are the old SSRS system have about 750 reports.</p><p>Craig wrote some important Confluence on them already</p><p><a href="https://craigsip.atlassian.net/wiki/spaces/DAC/pages/757892175/SSRS+Reports+Craigs+Insights" rel="nofollow">SSRS Reports (Craigs Insights)</a></p><p /><p>Most of the reports could be managed and looked at through these BI reports</p><p><a class="external-link" href="https://app.powerbi.com/groups/4dc4862a-2053-4ad2-8cc0-3134e34bf444/reports/ecfe1704-94c8-4c3e-87de-f528f4c3292f/ReportSection?experience=power-bi" rel="nofollow">Insights Catalogue</a></p><p><a class="external-link" href="https://app.powerbi.com/groups/6017a518-aa2c-4694-814c-b15f59966f88/reports/216b6dea-f220-40b7-b3c6-265d00bf2fa9/ReportSection1bb965ad0a8d37121c7b?experience=power-bi" rel="nofollow">Insights SSRS Monitoring</a></p><p><strong>Key Points:</strong></p><ul><li><p>There are quite a lot of reports, a lot of reports are query daily</p></li></ul><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240613-014159.png" width="760" loading="lazy" src="attachments/2556559427/2556362808.png?width=760" data-image-src="attachments/2556559427/2556362808.png" data-height="1058" data-width="1832" data-unresolved-comment-count="0" data-linked-resource-id="2556362808" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240613-014159.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2556559427" data-linked-resource-container-version="1" data-media-id="a342b2c1-99e8-428b-ac62-5f6ce294bd87" data-media-type="file"></span><p>The most used are : </p><p>Daily advisors report</p><p>Aged Debtors by Advisors</p><hr/><ul><li><p>Two request type &gt;&gt; Subscription / Interactive</p></li></ul><p>n SQL Server Reporting Services (SSRS), there are two main types of requests: <strong>Subscription</strong> and <strong>Interactive</strong>. Here’s a brief explanation of each:</p><ul><li><p><strong>Interactive</strong> (<code>Request Type 0</code>): This type of request is when a user actively interacts with the report server to request a report. <a class="external-link" href="https://stackoverflow.com/questions/10935768/what-are-the-main-difference-between-2-type-of-subscriptions-in-ssrs" rel="nofollow">It’s a manual request where the report is rendered in real-time as the user waits<sup>1</sup></a>.</p></li><li><p><strong>Subscription</strong> (<code>Request Type 1</code>): Subscriptions in SSRS allow reports to be delivered automatically at scheduled times or in response to events. There are two kinds of subscriptions:</p><ul><li><p><strong>Standard Subscription</strong>: This is a basic subscription where the report is delivered with a fixed set of parameters and options. </p></li><li><p><strong>Data-Driven Subscription</strong>: This is a more dynamic subscription that can distribute a report to a fluctuating list of subscribers. </p></li></ul></li></ul><hr/><ul><li><p><a data-card-appearance="inline" href="https://craigsip.atlassian.net/wiki/spaces/DAC/pages/757892175/SSRS+Reports+Craigs+Insights#3.-Updating%2FCreating-SSRS-Reports-using-the-Source-Control-(Git%2FBitBucket)" rel="nofollow">https://craigsip.atlassian.net/wiki/spaces/DAC/pages/757892175/SSRS+Reports+Craigs+Insights#3.-Updating%2FCreating-SSRS-Reports-using-the-Source-Control-(Git%2FBitBucket)</a> </p></li></ul><ol start="1"><li><p><strong>Set Up Your Environment</strong>:</p><ul><li><p>Ensure you have a Bitbucket account with access to the <code>Craigs.Insights.ReportPortal</code> repository.</p></li><li><p>Install Git Desktop or SourceTree, Visual Studio (with SSRS plugin), and optionally Visual Studio Code.</p></li><li><p>Install Microsoft Report Builder.</p></li></ul></li><li><p><strong>Fetch and Pull Changes</strong>:</p><ul><li><p>Open SourceTree and make sure you’re on the <code>master</code> branch.</p></li><li><p>Fetch the latest changes from the origin to see updates on the remote.</p></li><li><p>Pull the changes to merge them into your local <code>master</code> branch.</p></li></ul></li><li><p><strong>Create a New Branch</strong>:</p><ul><li><p>Use the “Branch” button in SourceTree to create a new branch.</p></li><li><p>Name the branch appropriately, usually including the Jira or Service Desk Ticket reference.</p></li></ul></li><li><p><strong>Make Changes to the Report</strong>:</p><ul><li><p>Modify the report as needed using Visual Studio or Report Builder.</p></li><li><p>Save the changes.</p></li></ul></li><li><p><strong>Commit and Push Changes</strong>:</p><ul><li><p>In SourceTree, stage your changes and commit them with a descriptive message.</p></li><li><p>Push the changes immediately to the origin.</p></li></ul></li><li><p><strong>Create a Pull Request</strong>:</p><ul><li><p>Verify that the new branch is visible in Bitbucket.</p></li><li><p>Create a Pull Request and add a reviewer from the Data Team.</p></li></ul></li></ol><p>This process ensures that all changes are tracked and reviewed, maintaining the integrity and quality of the reports in Insights.</p><h1 id="id-03.LearningHowSSRSisgovernedinCIP-Summary">Summary</h1><p> </p><ul><li><p>[Brief summary of the main points covered]</p></li></ul>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2556559427/2555838639.png">image-20240613-014138.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2556559427/2556624955.png">image-20240613-014157.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2556559427/2556362808.png">image-20240613-014159.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:52</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

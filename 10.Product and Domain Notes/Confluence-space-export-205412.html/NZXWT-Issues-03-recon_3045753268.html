@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : NZXWT Issues 03 recon</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : NZXWT Issues 03 recon
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 04-03-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Let’s interpret the output you provided and confirm the conclusion based on your observation that there doesn’t seem to be an impact:</p><h3 id="NZXWTIssues03recon-OutputAnalysis">Output Analysis</h3><p>Here’s the result from the verification script’s third part:</p><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="93588449-dcc6-4d24-8c39-081e45a118cb" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>CheckType</p></th><th class="confluenceTh"><p>ContactDetailsWithCorrectCountry</p></th><th class="confluenceTh"><p>CorrectAustraliaCount</p></th><th class="confluenceTh"><p>IncorrectNZCount</p></th></tr><tr><td class="confluenceTd"><p>Unaffected ContactDetails</p></td><td class="confluenceTd"><p>71                               </p></td><td class="confluenceTd"><p>71                    </p></td><td class="confluenceTd"><p>0                </p></td></tr></tbody></table></div><h4 id="NZXWTIssues03recon-Breakdown:">Breakdown:</h4><ul><li><p><code>ContactDetailsWithCorrectCountry = 71</code>:</p><ul><li><p>This is the total number of <code>ContactDetail</code> records linked to <code>CountryCity</code> where <code>ct.Id = '1673'</code> and <code>ct.CityName = 'Sydney'</code>.</p></li><li><p>71 records were found matching these criteria.</p></li></ul></li><li><p><code>CorrectAustraliaCount = 71</code>:</p><ul><li><p>Out of those 71 records, all 71 have <code>PCDC.CountryName = 'Australia'</code> (resolved from <code>PCD.Country_Id</code>).</p></li><li><p>This means every <code>ContactDetail</code> record associated with this <code>CountryCity</code> entry has Australia as its country.</p></li></ul></li><li><p><code>IncorrectNZCount = 0</code>:</p><ul><li><p>Zero records have <code>PCDC.CountryName = 'New Zealand'</code>.</p></li><li><p>This indicates no <code>ContactDetail</code> records are incorrectly showing New Zealand as the country despite the <code>CountryCity</code> error.</p></li></ul></li></ul><h4 id="NZXWTIssues03recon-ConclusionfromtheData:">Conclusion from the Data:</h4><ul><li><p><strong>No Impact on </strong><code>ContactDetail</code>: The incorrect mapping in <code>CountryCity</code> (ID '1673', Sydney mapped to New Zealand) does not affect the <code>ContactDetail</code> table. All 71 affected <code>ContactDetail</code> records correctly show Australia as the country, based on <code>PCD.Country_Id</code>.</p></li><li><p><strong>Error Isolated to </strong><code>CountryCity</code>: The issue is confined to the <code>CountryCity</code> table, where ID '1673' wrongly maps Sydney to New Zealand. Since <code>PCD.Country_Id</code> isn’t derived from or updated by <code>CountryCity</code>, the <code>ContactDetail</code> table remains unaffected.</p></li></ul><hr/><h3 id="NZXWTIssues03recon-WhyNoImpact?">Why No Impact?</h3><p>Based on the JOIN structure and this output:</p><ul><li><p><code>PCD.Country_Id</code> is Independent: The country in <code>ContactDetail</code> comes directly from <code>PCD.Country_Id</code>, which links to the <code>Country</code> table (e.g., ID 2072 for Australia). It doesn’t rely on <code>CountryCity</code>’s <code>Country_Id</code> (e.g., 1922 for New Zealand in the incorrect '1673' record).</p></li><li><p><code>CountryCity</code> as a Lookup: The <code>LEFT JOIN CountryCity ct ON PCD.City = ct.CityName</code> only brings in <code>CountryCity</code> data for reference or reporting—it doesn’t control or overwrite <code>PCD.Country_Id</code>.</p></li><li><p><strong>Your Comment Confirmed</strong>: Your statement, “it does seem no impact,” aligns with this data. The error stops at <code>CountryCity</code> and doesn’t propagate to <code>ContactDetail</code> or, by extension, <code>Portfolio</code>.</p></li></ul><hr/><h3 id="NZXWTIssues03recon-ReasoningRecap">Reasoning Recap</h3><ul><li><p><strong>Database Design</strong>: <code>ContactDetail</code> stores its own <code>Country_Id</code>, separate from <code>CountryCity</code>. The <code>CountryCity</code> join (<code>PCD.City = ct.CityName</code>) is a loose, text-based lookup, not a foreign key relationship that enforces data consistency.</p></li><li><p><strong>Error Source</strong>: The mistake in <code>CountryCity</code> (ID '1673' linking Sydney to NZ) is a data error in a reference table, but it’s not used to populate or validate <code>PCD.Country_Id</code> in this context.</p></li><li><p><strong>Portfolio Safety</strong>: Since <code>Portfolio</code> relies on <code>ContactDetail</code> via <code>Entity</code> (<code>E.PostalAddress_Id</code>), and <code>ContactDetail</code> is correct, there’s no downstream impact on <code>Portfolio</code>.</p></li></ul><hr/><h3 id="NZXWTIssues03recon-VerificationandNextSteps">Verification and Next Steps</h3><p>The output confirms your observation, but let’s double-check and plan next steps:</p><h4 id="NZXWTIssues03recon-FinalVerificationQuery">Final Verification Query</h4><p>To be extra sure, let’s confirm that no <code>ContactDetail</code> records linked to <code>Portfolio</code> are affected, focusing on the full chain:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    &#39;Final Impact Check&#39; AS CheckType,
+    P.Id AS PortId,
+    P.PortfolioReference AS PortfolioId,
+    PCD.City AS ContactDetailCity,
+    PCD.Country_Id AS ContactDetailCountryId,
+    PCDC.CountryName AS ContactDetailCountry,
+    ct.Id AS CountryCityId,
+    ct.CityName AS CountryCityCity,
+    ct.Country_Id AS CountryCityCountryId,
+    c.CountryName AS CountryCityMappedCountry
+FROM 
+    dbo.Portfolio P
+    LEFT JOIN Entity E ON E.id = P.Client_Id
+    LEFT JOIN ContactDetail PCD ON PCD.Id = E.PostalAddress_Id
+    LEFT JOIN Country PCDC ON PCDC.Id = PCD.Country_Id
+    LEFT JOIN CountryCity ct ON PCD.City = ct.CityName
+    LEFT JOIN Country c ON c.Id = ct.Country_Id
+WHERE 
+    ct.CityName = &#39;Sydney&#39;
+    AND ct.Id = &#39;1673&#39;
+    AND PCD.City = &#39;Sydney&#39;
+ORDER BY 
+    P.Id;</pre>
+</div></div><ul><li><p><strong>Expectation</strong>: </p><ul><li><p><code>ContactDetailCountry</code> should all be 'Australia'.</p></li><li><p><code>CountryCityMappedCountry</code> will be 'New Zealand' (due to the error in '1673').</p></li><li><p>If this holds, it reaffirms no impact.</p></li></ul></li></ul><h4 id="NZXWTIssues03recon-ExpectedOutputExample:">Expected Output Example:</h4><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="261d94f9-52dd-42d9-b732-2e13e275ed67" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>CheckType</p></th><th class="confluenceTh"><p>PortId</p></th><th class="confluenceTh"><p>PortfolioId</p></th><th class="confluenceTh"><p>ContactDetailCity</p></th><th class="confluenceTh"><p>ContactDetailCountry</p></th><th class="confluenceTh"><p>CountryCityId</p></th><th class="confluenceTh"><p>CountryCityMappedCountry</p></th></tr><tr><td class="confluenceTd"><p>Final Impact Check</p></td><td class="confluenceTd"><p>1001   </p></td><td class="confluenceTd"><p>PF001       </p></td><td class="confluenceTd"><p>Sydney            </p></td><td class="confluenceTd"><p>Australia            </p></td><td class="confluenceTd"><p>1673          </p></td><td class="confluenceTd"><p>New Zealand              </p></td></tr><tr><td class="confluenceTd"><p>Final Impact Check</p></td><td class="confluenceTd"><p>1002   </p></td><td class="confluenceTd"><p>PF002       </p></td><td class="confluenceTd"><p>Sydney            </p></td><td class="confluenceTd"><p>Australia            </p></td><td class="confluenceTd"><p>1673          </p></td><td class="confluenceTd"><p>New Zealand              </p></td></tr></tbody></table></div><ul><li><p><strong>Result</strong>: If all rows show <code>ContactDetailCountry = 'Australia'</code> and <code>CountryCityMappedCountry = 'New Zealand'</code>, the error is indeed isolated.</p></li></ul><hr/><h3 id="NZXWTIssues03recon-ActionPlan">Action Plan</h3><p>Since there’s no impact on <code>ContactDetail</code> or <code>Portfolio</code>, you can safely address the <code>CountryCity</code> error without worrying about downstream effects:</p><ol start="1"><li><p><strong>Fix the </strong><code>CountryCity</code> Entry:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Assuming Australia’s Country_Id is 2072 (replace with actual ID)
+UPDATE CountryCity 
+SET Country_Id = 2072
+WHERE Id = &#39;1673&#39;
+AND CityName = &#39;Sydney&#39;;
+
+-- Verify the fix
+SELECT 
+    ct.Id AS CountryCityId,
+    ct.CityName,
+    c.CountryName
+FROM 
+    CountryCity ct
+    LEFT JOIN Country c ON c.Id = ct.Country_Id
+WHERE 
+    ct.Id = &#39;1673&#39;;</pre>
+</div></div><ul><li><p>Post-fix, <code>c.CountryName</code> should show 'Australia'.</p></li></ul></li><li><p><strong>Check for Other Incorrect Entries</strong>:</p><ul><li><p>Ensure no other <code>CountryCity</code> records incorrectly map cities to wrong countries:</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    ct.Id,
+    ct.CityName,
+    c.CountryName
+FROM 
+    CountryCity ct
+    LEFT JOIN Country c ON c.Id = ct.Country_Id
+WHERE 
+    ct.CityName = &#39;Sydney&#39;;</pre>
+</div></div></li><li><p><strong>Monitor Application Logic</strong>:</p><ul><li><p>Confirm with your team if any application code or processes use <code>CountryCity</code> to set <code>PCD.Country_Id</code>. If not, the fix is purely cosmetic for reporting purposes.</p></li></ul></li></ol><hr/><h3 id="NZXWTIssues03recon-FinalThoughts">Final Thoughts</h3><ul><li><p><strong>No Impact Confirmed</strong>: The data shows the error doesn’t affect <code>ContactDetail</code> or <code>Portfolio</code>, aligning with your assessment.</p></li><li><p><strong>Root Cause</strong>: A data error in <code>CountryCity</code> (ID '1673') that’s not enforced on <code>ContactDetail</code>.</p></li><li><p><strong>Resolution</strong>: Fix <code>CountryCity</code> for accuracy in reports or lookups relying on it.</p></li></ul><p>If you need help running these scripts, interpreting further results, or digging into application-level usage of <code>CountryCity</code>, just let me know!</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

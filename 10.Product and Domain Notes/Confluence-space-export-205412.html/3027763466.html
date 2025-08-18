@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Napier AML System – SQL Focus Tech Doc v0.1</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Napier AML System – SQL Focus Tech Doc v0.1
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 26-02-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p><strong>Last Updated:</strong> 18.02.2025<br/><strong>Intended Audience:</strong> SQL Developers (Not for Business Users)<br/><strong>Reviewed By:</strong> Raj, Chris C, Jackson Fan</p><style type='text/css'>/*<![CDATA[*/
+div.rbtoc1755550420100 {padding: 0px;}
+div.rbtoc1755550420100 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1755550420100 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style><div class='toc-macro rbtoc1755550420100'>
+<ul class='toc-indentation'>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-1.Introduction'>1. Introduction</a>
+<ul class='toc-indentation'>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-History:'>History:</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-Backgroudrecently'>Backgroud recently</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-BackgroudforRADfuture'>Backgroud for RAD future</a></li>
+</ul>
+</li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-2.PurposeandScope'>2. Purpose and Scope</a>
+<ul class='toc-indentation'>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-Purpose'>Purpose</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-Scope'>Scope</a></li>
+</ul>
+</li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-3.DataFlowProcess'>3. Data Flow Process</a>
+<ul class='toc-indentation'>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-3.0High_levelDiagram'>3.0 High_level Diagram</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-3.1.ConceptualProcessDiagram'>3.1. Conceptual Process Diagram</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-3.2.DetailedProcessDescription'>3.2. Detailed Process Description</a>
+<ul class='toc-indentation'>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-SQLJob1–DataRefresh&amp;Non-TransactionCSVGeneration(Occursat3:00AM)'>SQL Job 1 – Data Refresh &amp; Non-Transaction CSV Generation (Occurs at 3:00 AM)</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-SQLJob2–TransactionCSVGeneration(Occursat4:15AM)'>SQL Job 2 – Transaction CSV Generation (Occurs at 4:15 AM)</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-JAMSJob–FileTransfer(Occursat4:00AM&amp;4:30AM)'>JAMS Job – File Transfer (Occurs at 4:00 AM &amp; 4:30 AM)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-4.CIP-NapierEnvironment'>4. CIP-Napier Environment</a>
+<ul class='toc-indentation'>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-SourceSystemsandLinkedServers:'>Source Systems and Linked Servers:</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-SMTPSharedPath:'>SMTP Shared Path:</a></li>
+</ul>
+</li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-5.SourceSystemObjects(Tables)usedforNapier'>5. Source System Objects (Tables) used for Napier</a>
+<ul class='toc-indentation'>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-[Dynamics](CRMDynamics)'>[Dynamics] (CRM Dynamics)</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-aacarptsrv(ChelmerACE)'>aacarptsrv (Chelmer ACE)</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-aacarptsrvTransactions(WrapportrenamedintoFusion)'>aacarptsrv Transactions (Wrapport renamed into Fusion)</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-PROD–CIPTabularModel(KAPSass-prd01)'>PROD – CIP Tabular Model (KAPSass-prd01)</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-NZXWT(CRAIGS_PROD_Main)'>NZXWT (CRAIGS_PROD_Main)</a></li>
+</ul>
+</li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-6.TargetDatabase(TMS5_Napier)Objects'>6. Target Database (TMS5_Napier) Objects</a>
+<ul class='toc-indentation'>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-MainTables'>Main Tables</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-Reference/MasterDataTables'>Reference / Master Data Tables</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-ETL/ConfigurationTables'>ETL/Configuration Tables</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-StoredProcedures(FromStarttoEnd)'>Stored Procedures (From Start to End)</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-Views(forCSVGeneration)'>Views (for CSV Generation)</a></li>
+</ul>
+</li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-7.SSISPackages'>7. SSIS Packages</a>
+<ul class='toc-indentation'>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-Overview'>Overview</a></li>
+</ul>
+</li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-8.ETLScheduling'>8. ETL Scheduling</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-9.NapierSQLServerJobs'>9. Napier SQL Server Jobs</a>
+<ul class='toc-indentation'>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-1.TMS5_Napier_DailyDataLoad(OccursDailyat3:30AM)'>1. TMS5_Napier_DailyDataLoad (Occurs Daily at 3:30 AM)</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-2.TMS5_Napier_DailyDataLoadTrans(OccursDailyat4:15AM)'>2. TMS5_Napier_DailyDataLoadTrans (Occurs Daily at 4:15 AM)</a></li>
+</ul>
+</li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-10.ETLControl,Logging&amp;ErrorHandling'>10. ETL Control, Logging &amp; Error Handling</a>
+<ul class='toc-indentation'>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-LoggingTables'>Logging Tables</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-ConfigurationTables'>Configuration Tables</a></li>
+</ul>
+</li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-11.FilteringMechanismandBusinessEnhancements'>11. Filtering Mechanism and Business Enhancements</a>
+<ul class='toc-indentation'>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-FilteringRequirements'>Filtering Requirements</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-CodeExampleforFilteringinusp_Populating_Transactions'>Code Example for Filtering in usp_Populating_Transactions</a></li>
+</ul>
+</li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-12.FAQ'>12. FAQ</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-13.BitbucketRepository'>13. Bitbucket Repository</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-14.CIP:0237901MeetingSummary'>14. CIP:0237901 Meeting Summary</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-15.21.02.2025JacksonFanMappedoutthefullETLlogcialRunwithgreatDetails'>15. 21.02.2025 Jackson Fan Mapped out the full ETL logcial Run with great Details</a></li>
+<li><a href='#NapierAMLSystem–SQLFocusTechDocv0.1-'></a></li>
+</ul>
+</div><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-1.Introduction">1. Introduction</h2><p>This document provides a complete technical specification for the CIP‐Napier data loading/extraction process. It details how data is extracted from various source systems, transformed (including data cleansing, mapping, and filtering), and loaded into the target database (TMS5_Napier). Finally, the data is exported as CSV files for further processing by the Napier system. This document also covers job scheduling, error handling, and notification processes.</p><p><strong>Key Words:</strong> <code>[TMS5_Napier]</code>, <code>Accounts</code>, <code>LegalEntities</code>, <code>Persons</code>, <code>Roles</code>, <code>Staging_Transactions</code>, <code>Transactions</code></p><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-History:">History:</h3><p>Mohan and Raj developed the initial CIP-Napier integration in 2022 to meet Anti-Money Laundering (AML) compliance requirements. The system has been stable, with rare failures, demonstrating its reliability. Recent updates include integration with the Pinnacle project (ALOHA and RAD) and the implementation of transaction filtering to address cost concerns arising from processing excessive data volumes.</p><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-Backgroudrecently">Backgroud recently</h3><p>The Napier AML system has incurred increased costs due to processing a high volume of transactions, many of which are considered &quot;noise&quot; (non-critical Or non-material transactions from the daily ET for compliance). </p><p>To address this, the compliance team has requested filtering logic to exclude specific transaction types and all transactions with normalized amounts less than 2 NZD. This filtering aims to reduce the number of transactions sent to Napier, thereby lowering processing costs, especially to stay below the 15,000,000 transactions per annum threshold.</p><p><a href="https://craigsip.atlassian.net/wiki/spaces/BC2205/pages/1969389599/Napier+-+A1" data-linked-resource-id="1969389599" data-linked-resource-version="13" data-linked-resource-type="page">Napier - A1</a> </p><p>And Raj had wrrite a really detailed technical Docx to outline all we need to know a SQl Develoepr.</p><p class="media-group"><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/3027763466/3028451427.docx" data-nice-type="Microsoft Word Document" data-file-src="/wiki/download/attachments/3027763466/Napier%20tech%20doc%20-%20v1%20-%20Super%20Important.docx?version=1&amp;modificationDate=1739920250565&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="3028451427" data-linked-resource-type="attachment" data-linked-resource-container-id="3027763466" data-linked-resource-default-alias="Napier tech doc - v1 - Super Important.docx" data-mime-type="application/vnd.openxmlformats-officedocument.wordprocessingml.document" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="9e400152-e624-4e2b-87de-cd39d1331e3b" data-media-type="file"><img src="attachments/thumbnails/3027763466/3028451427" height="250"/></a></span></p><p>At a really high level, we are facing a lot of cost increase <strong>$$$ </strong>from the Napier AML Side (they charged us a lot money on analysis that created “Nosies“ in our system, compliance team had recached out to Chris C to filter the dbo.Transactions tabe down to a reasonable Cost level - at the moement is too high)</p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250218-231612.png" width="463" loading="lazy" src="attachments/3027763466/3027960102.png?width=463" data-image-src="attachments/3027763466/3027960102.png" data-height="279" data-width="413" data-unresolved-comment-count="0" data-linked-resource-id="3027960102" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250218-231612.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3027763466" data-linked-resource-container-version="31" data-media-id="870fa516-f79f-44f2-95a8-597e46807dbf" data-media-type="file"></span><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250218-231345.png" width="760" loading="lazy" src="attachments/3027763466/3028222122.png?width=760" data-image-src="attachments/3027763466/3028222122.png" data-height="231" data-width="768" data-unresolved-comment-count="0" data-linked-resource-id="3028222122" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250218-231345.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3027763466" data-linked-resource-container-version="31" data-media-id="bd56c8d5-146d-4a06-9264-4358fc6d02cb" data-media-type="file"></span><p>The whole reason of fitlering out thoes npoise are to keep the system sending “Less“ Trasnacatio nto Napier AML soft ware from now on. (<strong>If CIP stays under the 15,000,000 per annum transaction threshold</strong>)</p><p>we got way too many trasaction sending over.</p><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-BackgroudforRADfuture"><strong>Backgroud for RAD future</strong></h3><p>Future integration with the RAD (Replicated Data Store) system may require extending <code>[TMS5_Napier].[dbo].[usp_Populating_Staging_Transactions]</code> to include RAD data sources. This is currently a placeholder for future planning.</p><hr/><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-2.PurposeandScope">2. Purpose and Scope</h2><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-Purpose">Purpose</h3><ul><li><p><strong>Outline</strong> the end-to-end design of the data flow process for the Napier platform.</p></li><li><p><strong>Document</strong> the Napier database and ETL structure.</p></li><li><p><strong>Detail</strong> data extraction, transformation (ETL), and job monitoring processes.</p></li><li><p><strong>Specify</strong> notifications for job success and failure.</p></li><li><p><strong>Incorporate</strong> new business requirements (e.g., filtering out “noise” transactions and transactions with a normalized amount less than 2 NZD).</p></li></ul><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-Scope">Scope</h3><ul><li><p><strong>Data Extraction:</strong> From multiple source systems (e.g., CRM, SSAS, NZXWT, aacarptsrv). Note: ODS is outdated and no longer used.</p></li><li><p><strong>Data Transformation:</strong> Includes cleansing, validation, mapping, and filtering.</p></li><li><p><strong>Data Loading:</strong> Into the <code>[TMS5_Napier]</code> database.</p></li><li><p><strong>CSV File Generation:</strong> Using SSIS packages, followed by transfer via JAMS.</p></li><li><p><strong>Job Monitoring:</strong> Through SQL Server Agent jobs and logging tables.</p></li></ul><hr/><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-3.DataFlowProcess">3. Data Flow Process</h2><p /><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-3.0High_levelDiagram">3.0 High_level Diagram</h3><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="TMS5_Napier_Transaction_Data.svg" width="1234" loading="lazy" src="attachments/3027763466/3043393550.svg?width=1234" data-image-src="attachments/3027763466/3043393550.svg" data-height="3491" data-width="6270" data-unresolved-comment-count="0" data-linked-resource-id="3043393550" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="TMS5_Napier_Transaction_Data.svg" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/svg+xml" data-linked-resource-container-id="3027763466" data-linked-resource-container-version="31" data-media-id="b9d19399-0a83-4769-94be-5c130edc6363" data-media-type="file"></span><div class="ap-container" id="ap-com.lucidchart.confluence.plugins.lucid-confluence__lucidchart5856724854039925722">
+
+  <div class="ap-content " id="embedded-com.lucidchart.confluence.plugins.lucid-confluence__lucidchart5856724854039925722"></div>
+  <script nonce="68a3926d3342cd836ca6930dfa32f3f9" class="ap-iframe-body-script">
+  (function(){
+    var data = {
+    "addon_key":"com.lucidchart.confluence.plugins.lucid-confluence",
+    "uniqueKey":"com.lucidchart.confluence.plugins.lucid-confluence__lucidchart5856724854039925722",
+    "key":"lucidchart",
+     "moduleType":"dynamicContentMacros",      "moduleLocation":"content",         "cp":"/wiki",
+            "general":"",
+    "w":"",
+    "h":"",
+    "url":"https://lucid.app/ac/confluence/viewer?documentId=&name=&macroId=&pages=&pageCount=&type=&width=&height=&autoSize=&align=&p_id=3027763466&output_type=html_export&autoUpdate=&documentToken=&id=&confluencePageId=3027763466&pageId=3027763466&embedId=&installationId=&lucidAccountId=&lucidProduct=&alignment=&signature=&viewerType=&url=https%3A%2F%2Flucid.app%2Flucidchart%2F2a559289-2e09-4227-b69c-fba494844890%2Fedit%3Fpage%3Da%7Ek3gF5XFLte%26invitationId%3Dinv_fbafc092-7dfe-4284-8050-9b681490e534%23&xdm_e=https%3A%2F%2Fcraigsip.atlassian.net&xdm_c=channel-com.lucidchart.confluence.plugins.lucid-confluence__lucidchart5856724854039925722&cp=%2Fwiki&xdm_deprecated_addon_key_do_not_use=com.lucidchart.confluence.plugins.lucid-confluence&lic=none&cv=1000.0.0-713bf844151e&traceId=7397ab7d3477d5ec895a19c561a92204&spanId=695e0d2f5aa4709b&traceSampled=0&jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3MTIwMjA6MjQ0ZTljNGMtNDdkMi00MzY1LWI4MTUtNjViZTA2YWFlNGM2IiwicXNoIjoiNzA5YjJjM2FiNDI2ZjZjODAxNDc2OWVhNWMyYmI1YzAyZjg5OGU5YTk3ODBkMDFkZWVmMzMyZDA4ZmIwZmRkNyIsImlzcyI6ImM5OTA2OWYxLTA3YTUtM2U4OC04OTU4LTY1ZDczNWNlYTUyZCIsImNvbnRleHQiOnt9LCJleHAiOjE3NTU1NTA2MDAsImlhdCI6MTc1NTU1MDQyMH0.lvRAo1N_CdL-_6BZR4H8DDIiFbzF6JKUWUJE0Fu1e-g",
+     "contextJwt": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3MTIwMjA6MjQ0ZTljNGMtNDdkMi00MzY1LWI4MTUtNjViZTA2YWFlNGM2IiwicXNoIjoiY29udGV4dC1xc2giLCJpc3MiOiJjOTkwNjlmMS0wN2E1LTNlODgtODk1OC02NWQ3MzVjZWE1MmQiLCJjb250ZXh0Ijp7InVybCI6eyJkaXNwbGF5VXJsIjoiaHR0cHM6XC9cL2NyYWlnc2lwLmF0bGFzc2lhbi5uZXRcL3dpa2kifSwiY29uZmx1ZW5jZSI6eyJlZGl0b3IiOnsidmVyc2lvbiI6InYyIn0sIm1hY3JvIjp7Im91dHB1dFR5cGUiOiJodG1sX2V4cG9ydCIsImhhc2giOiJmMDhhYmJmZC1iMjllLTRkYTYtOWRiYy04MzM3ZDFjZmIzYzMiLCJpZCI6ImYwOGFiYmZkLWIyOWUtNGRhNi05ZGJjLTgzMzdkMWNmYjNjMyJ9LCJ0cmFjaW5nIjp7InRyYWNlSWQiOiI3Mzk3YWI3ZDM0NzdkNWVjODk1YTE5YzU2MWE5MjIwNCIsInNwYW5JZCI6IjY5NWUwZDJmNWFhNDcwOWIiLCJzYW1wbGVkIjoiMCJ9LCJjb250ZW50Ijp7InR5cGUiOiJwYWdlIiwidmVyc2lvbiI6IjMxIiwiaWQiOiIzMDI3NzYzNDY2In0sInNwYWNlIjp7ImtleSI6In43MTIwMjAyNDRlOWM0YzQ3ZDI0MzY1YjgxNTY1YmUwNmFhZTRjNiIsImlkIjoiMjU1NDg4ODIwMCJ9fX0sImV4cCI6MTc1NTU1MTMyMCwiaWF0IjoxNzU1NTUwNDIwfQ.p2kUL2MtracTQUjEH53OesiXc1E1M9VHVAGn0t_taOo",    "structuredContext": "{\"confluence\":{\"editor\":{\"version\":\"v2\"},\"macro\":{\"outputType\":\"html_export\",\"hash\":\"f08abbfd-b29e-4da6-9dbc-8337d1cfb3c3\",\"id\":\"f08abbfd-b29e-4da6-9dbc-8337d1cfb3c3\"},\"tracing\":{\"traceId\":\"7397ab7d3477d5ec895a19c561a92204\",\"spanId\":\"695e0d2f5aa4709b\",\"sampled\":\"0\"},\"content\":{\"type\":\"page\",\"version\":\"31\",\"id\":\"3027763466\"},\"space\":{\"key\":\"~712020244e9c4c47d24365b81565be06aae4c6\",\"id\":\"2554888200\"}},\"url\":{\"displayUrl\":\"https://craigsip.atlassian.net/wiki\"}}",
+    "contentClassifier":"content",
+    "productCtx":"{\"page.id\":\"3027763466\",\"macro.hash\":\"f08abbfd-b29e-4da6-9dbc-8337d1cfb3c3\",\"space.key\":\"~712020244e9c4c47d24365b81565be06aae4c6\",\"tracing.sampled\":\"0\",\"page.type\":\"page\",\"content.version\":\"31\",\"page.title\":\"Napier AML System \u2013 SQL Focus Tech Doc v0.1\",\"macro.localId\":\"88062334-17f7-427c-a699-9fdf6f72e10b\",\"macro.body\":\"\",\": = | RAW | = :\":\"url=https://lucid.app/lucidchart/2a559289-2e09-4227-b69c-fba494844890/edit?page=a~k3gF5XFLte&invitationId=inv_fbafc092-7dfe-4284-8050-9b681490e534#\",\"space.id\":\"2554888200\",\"macro.truncated\":\"false\",\"content.type\":\"page\",\"output.type\":\"html_export\",\"url\":\"https://lucid.app/lucidchart/2a559289-2e09-4227-b69c-fba494844890/edit?page=a~k3gF5XFLte&invitationId=inv_fbafc092-7dfe-4284-8050-9b681490e534#\",\"page.version\":\"31\",\"macro.fragmentLocalId\":\"\",\"content.id\":\"3027763466\",\"tracing.traceId\":\"7397ab7d3477d5ec895a19c561a92204\",\"macro.id\":\"f08abbfd-b29e-4da6-9dbc-8337d1cfb3c3\",\"tracing.spanId\":\"695e0d2f5aa4709b\",\"user.isExternalCollaborator\":\"false\",\"editor.version\":\"v2\"}",
+    "timeZone":"UTC",
+    "origin":"https://lucid.app",
+    "hostOrigin":"https://craigsip.atlassian.net",
+    "sandbox":"allow-downloads allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-scripts allow-same-origin allow-top-navigation-by-user-activation allow-storage-access-by-user-activation",            "apiMigrations": {
+        "gdpr": true
+    }
+}
+;
+    if(window.AP && window.AP.subCreate) {
+      window._AP.appendConnectAddon(data);
+    } else {
+      require(['ac/create'], function(create){
+        create.appendConnectAddon(data);
+      });
+    }
+
+    // For Confluence App Analytics. This code works in conjunction with CFE's ConnectSupport.js.
+    // Here, we add a listener to the initial HTML page that stores events if the ConnectSupport component
+    // has not mounted yet. In CFE, we process the missed event data and disable this initial listener.
+    const __MAX_EVENT_ARRAY_SIZE__ = 20;
+    const connectAppAnalytics = "ecosystem.confluence.connect.analytics";
+    window.connectHost && window.connectHost.onIframeEstablished((eventData) => {
+      if (!window.__CONFLUENCE_CONNECT_SUPPORT_LOADED__) {
+        let events = JSON.parse(window.localStorage.getItem(connectAppAnalytics)) || [];
+        if (events.length >= __MAX_EVENT_ARRAY_SIZE__) {
+          events.shift();
+        }
+        events.push(eventData);
+        window.localStorage.setItem(connectAppAnalytics, JSON.stringify(events));
+      }
+    });
+
+  }());
+</script>
+
+</div>
+<h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-3.1.ConceptualProcessDiagram">3.1. Conceptual Process Diagram</h3><p>The process consists of two SQL Server Agent jobs and JAMS jobs for file transfer:</p><ol start="1"><li><p><strong>SQL Job 1 (3:00 AM):</strong> Data extraction, transformation, loading, and CSV generation for non-transaction data.</p></li><li><p><strong>SQL Job 2 (4:15 AM):</strong> CSV generation for transaction data.</p></li><li><p><strong>JAMS Jobs (4:00 AM &amp; 4:30 AM):</strong> Transfer CSV files to the Napier system.</p></li></ol><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">                           [SVSQLCIP\SQLCIP]
+                                   │
+                                   ▼
+          +------------------------------------------------+
+          |         SQL Job 1 (Occurs at 3:00 AM)            |
+          |------------------------------------------------|
+          |  1. Execute [usp_PopulateSourceData(main)]       |
+          |     - Snapshot CRM &amp; Supplementary Data          |
+          |     - Drop previous Temp Tables                  |
+          |     - Create new BatchID                         |
+          |     - Load data into new Temp Tables             |
+          |       via [usp_Populating_TempTables]            |
+          |                                                │
+          |  2. Populate Main Entities:                      |
+          |     - [usp_Populating_Accounts]                  |
+          |     - [usp_Populating_LegalEntities]             |
+          |     - [usp_Populating_Persons]                   |
+          |     - [usp_Populating_Roles]                     |
+          |     - [usp_Populating_Staging_Transactions]      |
+          |     - [usp_Populating_Transactions]              |
+          |       (with filtering logic)                   |
+          |                                                │
+          |  3. Generate CSV for Non-Transaction Data        |
+          |     via SSIS Package:                            |
+          |     TMS5Napier_SourcetoCSVExport.dtsx             |
+          |                                                │
+          |  4. Cleanup &amp; Notifications                      |
+          +------------------------------------------------+
+                                   │
+                                   ▼
+          +------------------------------------------------+
+          |         SQL Job 2 (Occurs at 4:15 AM)            |
+          |------------------------------------------------|
+          |  Generate CSV for Transaction Data             |
+          |  via SSIS Package:                             |
+          |  TMS5Napier_SourcetoCSVExportTrans.dtsx          |
+          |  Notifications:                                |
+          |    - Success: Email to Compliance@craigsip.com   |
+          |    - Failure: Notify support group             |
+          +------------------------------------------------+
+                                   │
+                                   ▼
+          +------------------------------------------------+
+          |         JAMS Job (Occurs at 4:00 &amp; 4:30 AM)      |
+          |------------------------------------------------|
+          |  Transfer CSV Files via sFTP to the Napier System|
+          +------------------------------------------------+
+</pre>
+</div></div><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-3.2.DetailedProcessDescription">3.2. Detailed Process Description</h3><h4 id="NapierAMLSystem–SQLFocusTechDocv0.1-SQLJob1–DataRefresh&amp;Non-TransactionCSVGeneration(Occursat3:00AM)">SQL Job 1 – Data Refresh &amp; Non-Transaction CSV Generation (Occurs at 3:00 AM)</h4><p><strong>Step 1: Data Extraction &amp; Preparation</strong></p><ul><li><p><strong>Action:</strong> Execute the main stored procedure <code>[TMS5_Napier].[dbo].[usp_PopulateSourceData(main)]</code>.</p></li><li><p><strong>Sub-Steps:</strong></p><ul><li><p><strong>Snapshot:</strong> Capture a snapshot of CRM and supplementary data from the various source systems.</p></li><li><p><strong>Cleanup:</strong> Drop any temporary tables created during previous ETL runs to ensure a clean starting state.</p></li><li><p><strong>Batch Initialization:</strong> Create a new BatchID to uniquely identify the current ETL batch.</p></li><li><p><strong>Temporary Loading:</strong> Load data into new temporary tables by calling Step 1.1 <code>[usp_Populating_TempTables]</code>.<br/><em>Note: This step ensures data from sources is prepopulated and ready for transformation.</em></p></li></ul></li></ul><p><strong>Step 2: Populate Main Entities via </strong>Step 1.1 <code>[usp_Populating_TempTables]</code></p><ul><li><p><strong>Action:</strong> Sequentially execute a series of stored procedures to load data into the main tables:</p><ul><li><p><strong>Step 2.1:</strong> <code>[usp_Populating_Accounts]</code> – Loads account data.</p></li><li><p><strong>Step 2.2:</strong> <code>[usp_Populating_LegalEntities]</code> – Loads legal entity data.</p></li><li><p><strong>Step 2.3:</strong> <code>[usp_Populating_Persons]</code> – Loads person data.</p></li><li><p><strong>Step 2.4:</strong> <code>[usp_Populating_Roles]</code> – Loads role/bridge table data.</p></li><li><p><strong>Step 2.5:</strong> <code>[usp_Populating_Staging_Transactions]</code> – Performs an incremental refresh for transaction data into the staging table (covering the last 7 days).</p></li><li><p><strong>Step 2.6:</strong> <code>[usp_Populating_Transactions] @lcBatchId=@lcBatchID</code> – Copies new records from the staging table into the final <code>[dbo].[Transactions]</code> table and applies the filtering logic to exclude “noise” transactions and any transaction with a normalized amount less than 2 NZD.</p></li><li><p>* this table have Billions of rows</p></li></ul><p><strong>Important Note on Flagging:</strong><br/>The stored procedure <code>[dbo].[usp_update_TransactionExportedToCSVFlag]</code>—which is invoked within the SSIS package for exporting transaction data—updates the <code>ExportedToCSV</code> flag. </p></li><li><p>By filtering in <code>[usp_Populating_Transactions]</code>, the process prevents unwanted transactions from reaching the final table and affecting the flag update.</p></li></ul><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250218-232516.png" width="525" loading="lazy" src="attachments/3027763466/3028025539.png?width=525" data-image-src="attachments/3027763466/3028025539.png" data-height="98" data-width="525" data-unresolved-comment-count="0" data-linked-resource-id="3028025539" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250218-232516.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3027763466" data-linked-resource-container-version="31" data-media-id="b1ce9bd0-9378-492f-991b-2f5fb550411e" data-media-type="file"></span><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">WHERE [EntryDate] &gt;= DATEADD(day, -7, &#39;2023-12-05&#39;)
+      AND ([Transaction Type] NOT IN (
+            &#39;Settlement Credit&#39;, 
+            &#39;Settlement Debit&#39;, 
+            &#39;Terminal Tax Payment&#39;, 
+            &#39;FX Switch In Variable&#39;, 
+            &#39;FX Switch Out Fixed&#39;, 
+            &#39;Income&#39;, 
+            &#39;Dividend&#39;, 
+            &#39;Portfolio Fee&#39;, 
+            &#39;Interest&#39;, 
+            &#39;Resident Withholding Tax&#39;,
+            &#39;FX Switch In Fixed&#39;, 
+            &#39;FX Switch Out Variable&#39;, 
+            &#39;Employee Interest&#39;, 
+            &#39;Employer Interest&#39;
+      )
+      AND [Normalized Amount] &gt;= 2
+)</pre>
+</div></div><p /><p><strong>Step 3: Generate CSV for Non-Transaction Data</strong></p><ul><li><p><strong>Action:</strong> Run the SSIS package located at:</p><ul><li><p><code>I:\Packages\Napier\TMS5Napier_SourcetoCSVExport.dtsx</code></p></li></ul></li><li><p>JF check SQLCIP &gt;&gt; the actual file path = FileDestination \\SVSFTP2K8001\napier\PRD\</p></li><li><p>For SQL UAT it seems in this path &gt;&gt; \\SVSQLTST001\SQLUAT_Packages\Napier</p></li><li><p>But it is otudated</p></li></ul><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250220-230408.png" width="598" loading="lazy" src="attachments/3027763466/3034513435.png?width=598" data-image-src="attachments/3027763466/3034513435.png" data-height="100" data-width="598" data-unresolved-comment-count="0" data-linked-resource-id="3034513435" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250220-230408.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3027763466" data-linked-resource-container-version="31" data-media-id="3d426b5b-5491-4398-8968-50dcd2973d24" data-media-type="file"></span><ul><li><p><strong>Purpose:</strong> This package extracts data for non-transaction entities <strong>(Persons, Roles, Legal Entities, and Accounts)</strong> from the TMS5_Napier database and exports it into CSV files.</p></li></ul><p><strong>Step 4: Cleanup &amp; Notifications</strong></p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250220-230451.png" width="274" loading="lazy" src="attachments/3027763466/3034349623.png?width=274" data-image-src="attachments/3027763466/3034349623.png" data-height="60" data-width="274" data-unresolved-comment-count="0" data-linked-resource-id="3034349623" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250220-230451.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3027763466" data-linked-resource-container-version="31" data-media-id="b7a973f9-1139-4444-8d9a-eaec44164c04" data-media-type="file"></span><ul><li><p><strong>Cleanup:</strong> Drop the temporary tables created during the extraction and transformation steps to free up resources.</p></li><li><p><strong>SQLCIP Notifications:</strong></p><ul><li><p><strong>On Success:</strong> An email is sent to <code>Compliance@craigsip.com</code>.</p></li><li><p><strong>On Failure:</strong> Notifications are sent to the support group including:</p><ul><li><p><a class="external-link" href="mailto:Mohan.vulchi@craigsip.com" rel="nofollow">Mohan.vulchi@craigsip.com</a></p></li><li><p><a class="external-link" href="mailto:matthew.andrews@craigsip.com" rel="nofollow">matthew.andrews@craigsip.com</a></p></li><li><p><a class="external-link" href="mailto:rajendra.vechalapu@craigsip.com" rel="nofollow">rajendra.vechalapu@craigsip.com</a></p></li><li><p><a class="external-link" href="mailto:datateam@craigsip.com" rel="nofollow">datateam@craigsip.com</a></p></li><li><p><a class="external-link" href="mailto:Compliance@craigsip.com" rel="nofollow">Compliance@craigsip.com</a></p></li></ul></li></ul></li></ul><p>For <strong>SQL UAT </strong>it only sent to data team people for testing</p><hr/><h4 id="NapierAMLSystem–SQLFocusTechDocv0.1-SQLJob2–TransactionCSVGeneration(Occursat4:15AM)">SQL Job 2 – Transaction CSV Generation (Occurs at 4:15 AM)</h4><p><strong>Action:</strong> Generate CSV files specifically for transaction data.</p><ul><li><p><strong>Data Preparation:</strong><br/><span style="background-color: rgb(211,241,167);">All populating—including loading and filtering of transaction data—is completed in SQL Job 1</span>. Therefore, SQL Job 2 does not execute any data population procedures.</p></li><li><p><strong>CSV Generation for Transactions:</strong></p><ul><li><p><strong>Action:</strong> Run the SSIS package located at:</p><ul><li><p><code>I:\Packages\Napier\TMS5Napier_SourcetoCSVExportTrans.dtsx</code></p></li></ul></li><li><p><strong>Purpose:</strong> This package exports the incremental transaction data (which has already been loaded into the <code>[dbo].[Transactions]</code> table) into CSV format.</p></li></ul></li><li><p><strong>Notifications:</strong></p><ul><li><p><strong>On Success:</strong> An email is sent to <code>Compliance@craigsip.com</code>.</p></li><li><p><strong>On Failure:</strong> The support group (as defined above) is notified.</p></li></ul></li></ul><hr/><h4 id="NapierAMLSystem–SQLFocusTechDocv0.1-JAMSJob–FileTransfer(Occursat4:00AM&amp;4:30AM)">JAMS Job – File Transfer (Occurs at 4:00 AM &amp; 4:30 AM)</h4><p><strong>Action:</strong> Transfer CSV files from the shared folder to the Napier system.</p><ul><li><p><strong>File Source:</strong> CSV files generated by SQL Job 1 (non-transaction data) and SQL Job 2 (transaction data) are dropped into the shared folder at <code>\\SVSFTP2K8001\napier\PRD</code>.</p></li><li><p><strong>Transfer Mechanism:</strong><br/>JAMS jobs pick up these files and transfer them via sFTP to the Napier system.</p></li><li><p><strong>Schedule:</strong><br/>The file transfer jobs run at 4:00 AM and 4:30 AM to ensure that files are delivered in a timely manner.</p></li></ul><hr/><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-4.CIP-NapierEnvironment">4. CIP-Napier Environment</h2><ul><li><p><strong>Production Server:</strong> <code>SVSQLCIP\SQLCIP</code></p></li><li><p><strong>Database Name:</strong> <code>TMS5_Napier</code></p></li></ul><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-SourceSystemsandLinkedServers:">Source Systems and Linked Servers: </h3><ul><li><p><strong><span style="background-color: rgb(254,222,200);">ODS (Legacy – Outdated):</span></strong></p><ul><li><p><strong>Note:</strong> No longer used but still referenced in old tech docs. ODS it isthe Old data Lake/ datawarehosue that hosted the Tabular Dtamdoel, but after we modernlised the whole thing, now we could use Open quer yto query, so it won’t be used any more </p></li></ul></li><li><p><strong>FOR SQLUAT Server:</strong></p><ul><li><p><strong>Server:</strong> <code>SQL_BI</code> <strong><span style="background-color: rgb(254,222,200);">(Legacy – Outdated)</span></strong></p></li><li><p><strong>Data Source:</strong> <code>TGASQLBIUAT\BI_UAT</code> <strong><span style="background-color: rgb(254,222,200);">(Legacy – Outdated)</span></strong></p></li></ul></li><li><p><strong>FOR SQLCIP Server (Previous Configuration):</strong></p><ul><li><p><strong>Source Server:</strong> <code>TGASQLENT01\BI</code> <strong><span style="background-color: rgb(254,222,200);">(Legacy – Outdated)</span></strong></p></li><li><p><strong>Source Database:</strong> <code>ODS</code> <strong><span style="background-color: rgb(254,222,200);">(Legacy – Outdated)</span></strong></p></li><li><p><strong>Linked Server:</strong> Initially used the <strong>SQL_BI</strong> linked server from <code>SVSQLCIP\SQLCIP</code> to extract data.</p></li></ul></li></ul><hr/><ul><li><p><strong><span style="background-color: rgb(211,241,167);">(Current) Replacement Configuration:</span></strong></p><ul><li><p><strong>Server:</strong> <code>aacarptsrv</code> <em>(Current Chelmers server hosting ace, fusion, cashman data)</em></p></li><li><p><strong>Database:</strong> <code>ace, fusion , cashman (all 3 are old 80s style DB)</code></p></li><li><p><strong>Linked Server Name:</strong> <code>aacarptsrv</code></p></li><li><p><strong>Linked Server Details:</strong></p><ul><li><p><code>@server = N'AACARPTSRV'</code></p></li><li><p><code>@datasrc = N'AACARPTSRV'</code></p></li></ul></li></ul></li></ul><hr/><ul><li><p><strong>CRM: </strong></p><ul><li><p><strong>Actual Physical Server:</strong> <code>KAPSQLCRM\CRM</code></p></li><li><p>Linked Server name = [Dynamics]</p></li><li><p><strong>Database:</strong> <code>CRM_MSCRM</code></p></li></ul></li></ul><hr/><ul><li><p><strong>SSAS – ‘CIP Tabular Model’: (Used Dynamic Dax To Query)</strong></p><ul><li><p><strong>Actual SSAS Server:</strong> <code>tgasqlent01\bi_as_tab</code> <em>(Production SSAS Tabular Model – mainly for financial data such as current holdings)</em></p></li><li><p><strong>Linked Server Name:</strong> <code>[TabularModelPRD01]</code></p></li><li><p><strong>Linked Server Details:</strong></p><ul><li><p><code>@server = N'TabularModelPRD01'</code></p></li><li><p><code>@datasrc = N'KAPSass-prd01'</code></p></li><li><p><code>@catalog = N'CIP Tabular Model'</code></p></li></ul></li></ul><p><em>Usage:</em> Used to query SSAS via the linked server from <code>SVSQLCIP\SQLCIP</code>.</p></li><li><p><strong>NZXWT</strong></p><ul><li><p><strong>Actual Physical Server:</strong> <code>cip-sql-reporting.nzxwt.nz</code></p></li><li><p><strong>Linked Server Name:</strong> <code>[NZXWTrptsrv]</code></p></li><li><p><strong>Linked Server Details:</strong></p><ul><li><p><code>@server = N'NZXWTrptsrv'</code></p></li><li><p><code>@datasrc = N'cip-sql-reporting.nzxwt.nz'</code></p></li></ul></li><li><p><strong>Database:</strong> <code>CRAIGS_PROD_Main</code></p></li></ul></li></ul><p style="margin-left: 30.0px;"><em>Usage:</em> Used to connect to the NZXWT production source from <code>SVSQLCIP\SQLCIP</code>.</p><ul><li><p><strong><span style="background-color: rgb(211,241,167);">#CoreTransactionExtract</span></strong></p><ul><li><p><strong>Linked Server Details:</strong></p><ul><li><p><code>@server = N'KAPSQLDAT-PRD01'</code></p></li><li><p><code>@datasrc = N'KAPSQLDAT-PRD01'</code></p></li></ul></li><li><p><strong>Purpose:</strong> Extracts data from <code>StagingBI.NZXWT.CoreTransactionExtract</code> for cross-checking NZXWT core transactions.</p></li><li><p><strong>Note:</strong> For large data loads (e.g. Data Platform and Napier), the NZXWT database in <code>KAPSQLDAT</code> is populated daily via a SQL Agent job.</p></li></ul></li></ul><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-SMTPSharedPath:">SMTP Shared Path:</h3><p><code>\\SVSFTP2K8001\napier\PRD</code><br/><em>(Used for dropping CSV files before sFTP transfer via JAMS.)</em></p><hr/><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-5.SourceSystemObjects(Tables)usedforNapier">5. Source System Objects (Tables) used for Napier</h2><h4 id="NapierAMLSystem–SQLFocusTechDocv0.1-[Dynamics](CRMDynamics)">[Dynamics] (CRM Dynamics)</h4><ul><li><p><strong>Account:</strong> <code>[CRM_MSCRM].dbo.[Account]</code> → <em>temp_syn_CRM_Account</em></p></li><li><p><strong>dsl_roles:</strong> <code>[CRM_MSCRM].dbo.[dsl_roles]</code> → <em>temp_syn_CRM_ACC_noofBenificialOwners</em></p></li><li><p><strong>Contact:</strong> <code>[CRM_MSCRM].dbo.[Contact]</code> </p></li><li><p><strong>StringMap:</strong> <code>[CRM_MSCRM].dbo.[StringMap]</code> </p></li><li><p><strong>dsl_portfolioservice:</strong> <code>[CRM_MSCRM].dbo.[dsl_portfolioservice]</code></p></li><li><p><strong>dsl_portfolioservicelevel:</strong> <code>[CRM_MSCRM].dbo.[dsl_portfolioservicelevel]</code></p></li><li><p><strong>dsl_country:</strong> <code>[CRM_MSCRM].dbo.[dsl_country]</code></p></li><li><p><strong>dsl_advisercommissioncode:</strong> <code>[CRM_MSCRM].dbo.[dsl_advisercommissioncode]</code></p></li><li><p><strong>BusinessUnit:</strong> <code>[CRM_MSCRM].dbo.[BusinessUnit]</code></p></li><li><p><strong>Contact (selected fields) as CT:</strong> <code>[CRM_MSCRM].dbo.[Contact]</code></p></li><li><p><strong>SystemUser:</strong> <code>[CRM_MSCRM].dbo.[SystemUser]</code></p></li><li><p><strong>dsl_natureandpurposeofbusiness:</strong> <code>[CRM_MSCRM].dbo.[dsl_natureandpurposeofbusiness]</code></p></li><li><p><strong>dsl_natureandpurposeofbusiness_account:</strong> <code>[CRM_MSCRM].dbo.[dsl_natureandpurposeofbusiness_account]</code></p></li><li><p><strong>dsl_identificationitem:</strong> <code>[CRM_MSCRM].dbo.[dsl_identificationitem]</code></p></li></ul><hr/><h4 id="NapierAMLSystem–SQLFocusTechDocv0.1-aacarptsrv(ChelmerACE)">aacarptsrv (Chelmer ACE)</h4><ul><li><p><strong>StClients_Master:</strong> <code>ace.dbo.[StClients_Master]</code></p></li><li><p><strong>EqContracts:</strong> <code>ace.dbo.EqContracts</code></p></li><li><p><strong>EqOrders:</strong> <code>ace.dbo.EqOrders</code></p></li></ul><hr/><h4 id="NapierAMLSystem–SQLFocusTechDocv0.1-aacarptsrvTransactions(WrapportrenamedintoFusion)">aacarptsrv Transactions (Wrapport renamed into Fusion)</h4><ul><li><p><strong>Trn:</strong> <code>fusion.dbo.Trn T</code></p></li><li><p><strong>Portfolio:</strong> <code>fusion.dbo.Portfolio P</code></p></li><li><p><strong>Drum:</strong> <code>fusion.dbo.Drum</code></p></li><li><p><strong>Glt:</strong> <code>fusion.dbo.Glt</code></p></li><li><p><strong>DataProvider:</strong> <code>fusion.dbo.ataProvider</code></p></li><li><p><strong>Currency:</strong> <code>fusion.dbo.Currency</code></p></li><li><p><strong>Asset:</strong> <code>fusion.dbo.Asset</code></p></li><li><p><strong>Exchange:</strong> <code>fusion.dbo.Exchange</code></p></li></ul><hr/><h4 id="NapierAMLSystem–SQLFocusTechDocv0.1-PROD–CIPTabularModel(KAPSass-prd01)">PROD – CIP Tabular Model (KAPSass-prd01)</h4><ul><li><p><strong>Account Holdings Monthly</strong></p></li><li><p><strong>Asset</strong></p></li><li><p><strong>Account Holdings Date</strong></p></li><li><p><strong>Account</strong></p></li><li><p><strong>NZXWT</strong></p></li><li><p><strong>Core Transaction Extract:</strong> <code>ods.NZXWT.CoreTransactionExtract</code></p></li></ul><hr/><h4 id="NapierAMLSystem–SQLFocusTechDocv0.1-NZXWT(CRAIGS_PROD_Main)">NZXWT (CRAIGS_PROD_Main)</h4><ul><li><p><strong>CurrencyRate:</strong> <code>[CRAIGS_PROD_Main].dbo.CurrencyRate</code></p></li><li><p><strong>Currency:</strong> <code>[CRAIGS_PROD_Main].dbo.Currency</code></p></li><li><p><strong>ProductPrice:</strong> <code>[CRAIGS_PROD_Main].dbo.ProductPrice</code></p></li><li><p><strong>Asset:</strong> <code>[CRAIGS_PROD_Main].dbo.Asset</code></p></li><li><p><strong>Portfolio:</strong> <code>[CRAIGS_PROD_Main].dbo.Portfolio</code></p></li><li><p><strong>PortfolioAssetHolding:</strong> <code>[CRAIGS_PROD_Main].dbo.PortfolioAssetHolding</code></p></li><li><p><strong>PortfolioCashHolding:</strong> <code>[CRAIGS_PROD_Main].dbo.PortfolioCashHolding</code></p></li><li><p><strong>ServiceDm:</strong> <code>[CRAIGS_PROD_Main].dbo.ServiceDm</code></p></li></ul><hr/><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-6.TargetDatabase(TMS5_Napier)Objects">6. Target Database (TMS5_Napier) Objects</h2><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-MainTables">Main Tables</h3><ul><li><p><strong>Accounts:</strong> <code>[dbo].Accounts</code></p></li><li><p><strong>Legal Entities:</strong> <code>[dbo].LegalEntities</code></p></li><li><p><strong>Persons:</strong> <code>[dbo].Persons</code></p></li><li><p><strong>Roles:</strong> <code>[dbo].Roles</code></p></li><li><p><strong>Transactions:</strong> <code>[dbo].Transactions</code><br/><em>(Stores 12 months of data; includes columns such as </em><code>ExportedToCSV</code><em>, </em><code>DateofExportedToCSV</code><em>, </em><code>BatchID</code><em>, </em><code>DateCreated</code><em>)</em></p></li><li><p><strong>Staging Transactions:</strong> <code>[dbo].Staging_Transactions (Stored Last 7 days daily Transactions)</code><br/><em>(Used for incremental/staging data)</em></p></li></ul><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-Reference/MasterDataTables">Reference / Master Data Tables</h3><ul><li><p><code>[dbo].[Ref_ProductNames]</code></p></li><li><p><code>[dbo].[Ref_ProductsMap(CRMvsNapier)]</code></p></li><li><p><code>[dbo].[Ref_SecurityCodes]</code></p></li></ul><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-ETL/ConfigurationTables">ETL/Configuration Tables</h3><ul><li><p><strong>Batch Log:</strong> <code>[ETL].[BatchLog]</code></p></li><li><p><strong>Table Load Status:</strong> <code>[ETL].[TableLoadStatus]</code></p></li><li><p><strong>SSIS Packages Config:</strong> <code>[ETL].[SSIS_Packages_Config]</code></p></li></ul><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-StoredProcedures(FromStarttoEnd)">Stored Procedures (From Start to End)</h3><ul><li><p><code>[dbo].usp_PopulateSourceData(main)</code></p></li><li><p><code>[dbo].usp_Populating_TempTables</code></p></li></ul><p><strong>Important SPs data flow explained &gt;&gt; </strong><code>[dbo].usp_Populating_TempTables</code></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">              ┌────────────────────────────┐
+              │      Transactions          │
+              │   (Production Table)       │
+              └────────────┬───────────────┘
+                           │
+                           ▼
+              ┌────────────────────────────┐
+              │         trandates          │
+              │ (Calculated Date per Src)  │
+              └────────────┬───────────────┘
+                           │
+                           ▼
+              ┌────────────────────────────────────────────┐
+              │     Data Extraction from Dynamics          │
+              │             (via OPENQUERY)                │
+              └────────────┬─────────────┬────────────┬─────┘
+                           │             │            │
+                           │             │            │
+                           ▼             ▼            ▼
+          ┌────────────────────────┐  ┌────────────────────────┐   ┌────────────────────────┐
+          │ [CRM_MSCRM].Account     │  │ [CRM_MSCRM].Contact     │   │ [CRM_MSCRM].SystemUser  │
+          └────────────┬───────────┘  └────────────┬───────────┘   └────────────┬───────────┘
+                       │                        │                            │
+                       │                        │                            │
+                       ▼                        ▼                            ▼
+          ┌────────────────────────┐  ┌────────────────────────┐   ┌────────────────────────┐
+          │ temp_syn_CRM_Account   │  │ temp_syn_CRM_Contact   │   │ temp_syn_CRM_SystemUser│
+          └────────────────────────┘  └────────────────────────┘   └────────────────────────┘
+                                        │
+                                        ▼
+                             ┌────────────────────────────┐
+                             │  [Subset: #dContact]       │
+                             └────────────────────────────┘
+
+
+          Additional Dynamics Tables:
+          ┌─────────────────────────────────────────────────────────────┐
+          │ [CRM_MSCRM].dsl_roles                                      │
+          │    └─► temp_syn_CRM_ACC_noofBenificialOwners                │
+          │                                                             │
+          │ [CRM_MSCRM].dsl_natureandpurposeofbusiness + Mapping Table   │
+          │    └─► #temp_businesspurposes ──► temp_syn_CRM_ACC_Businesspurposes │
+          │                                                             │
+          │ [ace].dbo.StClients_Master                                 │
+          │    └─► temp_syn_ACE_StClients_Master                       │
+          │                                                             │
+          │ [CRM_MSCRM].dsl_nominee                                    │
+          │    └─► temp_syn_CRM_dsl_nominee                            │
+          │                                                             │
+          │ [CRM_MSCRM].StringMap                                      │
+          │    └─► temp_syn_CRM_StringMap                              │
+          │                                                             │
+          │ [CRM_MSCRM].dsl_portfolioservice                           │
+          │    └─► temp_syn_CRM_dsl_PortfolioService                   │
+          │                                                             │
+          │ [CRM_MSCRM].dsl_portfolioservicelevel                      │
+          │    └─► temp_syn_CRM_dsl_PortfolioServiceLevel              │
+          │                                                             │
+          │ [CRM_MSCRM].dsl_identificationitem                         │
+          │    └─► temp_syn_CRM_dsl_identificationitem                 │
+          └─────────────────────────────────────────────────────────────┘
+
+
+              ┌────────────────────────────────────────────┐
+              │ Data Extraction from TabularModelPRD01       │
+              │   (Balance Information for Portfolios)       │
+              └────────────┬─────────────┬─────────────────────┘
+                           │             │
+                           │             ├─► Dynamic Query:
+                           │             │       Standard Broking Service
+                           │             │          (Balance &amp; NormalizedBalance)
+                           │             │
+                           │             └─► Dynamic Query:
+                           │                     Cash Management
+                           │                        (Balance &amp; NormalizedBalance)
+                           │
+                           ▼
+              ┌────────────────────────────┐
+              │       Temp_Balance         │
+              └────────────────────────────┘
+
+
+              ┌────────────────────────────────────────────┐
+              │ Data Extraction from Fusion Database         │
+              │    (Wrapport Transactions Data)              │
+              └────────────┬─────────────┘
+                           │
+                           ▼
+              ┌────────────────────────────┐
+              │       temp_Wrapport        │
+              └────────────────────────────┘
+
+
+              ┌────────────────────────────────────────────┐
+              │ Data Extraction from KAPSQLDAT-PRD01         │
+              │ (CoreTransactionExtract from NZXWT source)   │
+              └────────────┬─────────────┘
+                           │
+                           ▼
+              ┌────────────────────────────┐
+              │ #CoreTransactionExtract    │
+              └────────────┬─────────────┘
+                           │
+                           ▼
+              ┌────────────────────────────┐
+              │        temp_Start          │
+              │ (Transformed Start Data)   │
+              └────────────────────────────┘
+</pre>
+</div></div><p /><ul><li><p><code>[dbo].usp_Populating_Accounts</code></p></li><li><p><code>[dbo].usp_Populating_LegalEntities</code></p></li><li><p><code>[dbo].usp_Populating_Persons</code></p></li><li><p><code>[dbo].usp_Populating_Roles</code></p></li><li><p><code>[dbo].usp_Populating_Staging_Transactions</code><br/>Explaining data flows for <code>[dbo].usp_Populating_Staging_Transactions</code> In Details</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">            ┌────────────────────────────────────┐
+            │        Staging_Transactions        │
+            │      (Target Staging Table)        │
+            └────────────────────────────────────┘
+                           │
+                           ▼
+            ┌────────────────────────────────────┐
+            │  Step 1: Log current row count     │
+            │    (usp_BatchLog: &quot;Started&quot;)       │
+            └────────────────────────────────────┘
+                           │
+                           ▼
+            ┌────────────────────────────────────┐
+            │  Step 2: Clear the staging table   │
+            │  (TRUNCATE TABLE - optional)       │
+            └────────────────────────────────────┘
+                           │
+                           ▼
+        ┌─────────────────────────────────────────────┐
+        │      Step 3: Insert Wrapport Data           │
+        │                                             │
+        │   ┌────────────────────────────────────┐    │
+        │   │ Data from various sources:         │    │
+        │   │ - Accounts                         │    │
+        │   │ - Persons                          │    │
+        │   │ - temp_syn_CRM_dsl_PortfolioService  │    │
+        │   │ - temp_syn_CRM_dsl_PortfolioServiceLevel │ │
+        │   │ - temp_Wrapport (Wrapport data)    │    │
+        │   └────────────────────────────────────┘    │
+        │          Map fields to staging table        │
+        └─────────────────────────────────────────────┘
+                           │
+                           ▼
+        ┌─────────────────────────────────────────────┐
+        │      Step 4: Insert START Data              │
+        │                                             │
+        │   ┌────────────────────────────────────┐    │
+        │   │ Data from various sources:         │    │
+        │   │ - Accounts                         │    │
+        │   │ - Persons                          │    │
+        │   │ - temp_START (START data)          │    │
+        │   └────────────────────────────────────┘    │
+        │    (Apply extra logic for Buy/Sell flag)      │
+        └─────────────────────────────────────────────┘
+                           │
+                           ▼
+        ┌─────────────────────────────────────────────┐
+        │  Step 5: Update &quot;Seq&quot; Column                │
+        │    (Assign sequential row numbers         │
+        │     based on [Transaction Date] descending) │
+        └─────────────────────────────────────────────┘
+                           │
+                           ▼
+            ┌────────────────────────────────────┐
+            │  Step 6: Log completion of data load │
+            │   (usp_BatchLog: &quot;Completed&quot;)        │
+            └────────────────────────────────────┘
+                           │
+                           ▼
+            ┌────────────────────────────────────┐
+            │  Step 7: Error Handling            │
+            │  (Log any errors &amp; re-raise them)   │
+            └────────────────────────────────────┘
+</pre>
+</div></div><p /><ul><li><p><code>[dbo].usp_Populating_Transactions</code> <em>(Key procedure where filtering is applied)</em></p></li><li><p><code>[dbo].[usp_update_TransactionExportedToCSVFlag] </code>&gt;&gt; this Sp would udpaetd the <code>[dbo].Transactions</code> table Exported toi CSV Flag for ETL purposes.</p></li><li><p><code>[ETL].[usp_BatchLog]</code></p></li><li><p><code>[dbo].usp_sp_send_dbmail_Success</code></p></li><li><p><code>[dbo].usp_sp_send_dbmail_Success_Trans</code></p></li><li><p><code>[dbo].usp_sp_send_dbmail_Fail</code></p></li></ul><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-Views(forCSVGeneration)">Views (for CSV Generation)</h3><ul><li><p><code>[dbo].vwAccounts</code></p></li><li><p><code>[dbo].vwLegalEntities</code></p></li><li><p><code>[dbo].vwPersons</code></p></li><li><p><code>[dbo].vwRoles</code></p></li><li><p><code>[dbo].vwTransactions</code> <em>(Final dataset for CSV export)</em></p></li><li><p><code>ETL.vwSSIS_Packages_Config</code></p></li><li><p><strong>Master Reference View:</strong> <code>[dbo].vw_CRM_vs_Napier(ProductCodes)</code></p></li></ul><hr/><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-7.SSISPackages">7. SSIS Packages</h2><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-Overview">Overview</h3><p>SSIS packages are used to export data from the TMS5_Napier database into CSV files for downstream processing.</p><ul><li><p><strong>TMS5_Napier_DailyDataLoad:</strong></p><ul><li><p><strong>Purpose:</strong> Refreshes the target database with non-transaction data and exports CSV files .</p></li><li><p><strong>Path:</strong> <code>\\Svsqlcip\ssis\Napier\TMS5Napier_SourcetoCSVExport_Cust.dtsx</code></p></li></ul></li><li><p><strong>TMS5_Napiner_DailyDataLoadTrans:</strong></p><ul><li><p><strong>Purpose:</strong> Exports incremental transaction data to CSV files.</p></li><li><p><strong>Path:</strong> <code>\\Svsqlcip\ssis\Napier\TMS5Napier_SourcetoCSVExport_trans.dtsx</code></p></li></ul></li></ul><div class="confluence-information-macro confluence-information-macro-information"><span class="aui-icon aui-icon-small aui-iconfont-info confluence-information-macro-icon"></span><div class="confluence-information-macro-body"><p>I learnt that Raj used a Custom C# Scrtipt to evaluate the tables and exported the Views from Target DB as CSV</p><p>C#-ExportCSVEngine (Custom task in SSIS)</p><p><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/3027763466/3046539296.cs" data-nice-type="Text File" data-file-src="/wiki/download/attachments/3027763466/C%23-ExportCSVEngine.cs?version=1&amp;modificationDate=1740610685816&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="3046539296" data-linked-resource-type="attachment" data-linked-resource-container-id="3027763466" data-linked-resource-default-alias="C#-ExportCSVEngine.cs" data-mime-type="text/plain" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="1075373a-090e-402b-a20f-f2adf0aa832f" data-media-type="file"><img src="attachments/thumbnails/3027763466/3046539296" height="250"/></a></span>  </p></div></div><hr/><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-8.ETLScheduling">8. ETL Scheduling</h2><p>ETL processes are scheduled via SQL Server Agent jobs. Each job is dependent on the successful completion of the previous step.</p><ul><li><p><strong>Job Dependencies:</strong><br/>Data Extraction &amp; Refresh → CSV Generation → Email Notifications.</p></li><li><p><strong>Schedule:</strong></p><ul><li><p>SQL Job 1 runs daily at 3:00–3:30 AM.</p></li><li><p>SQL Job 2 runs daily at 4:15 AM.</p></li><li><p>JAMS jobs run at 4:00 AM and 4:30 AM.</p></li></ul></li></ul><hr/><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-9.NapierSQLServerJobs">9. Napier SQL Server Jobs</h2><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250226-224606.png" width="335" loading="lazy" src="attachments/3027763466/3046506514.png?width=335" data-image-src="attachments/3027763466/3046506514.png" data-height="140" data-width="335" data-unresolved-comment-count="0" data-linked-resource-id="3046506514" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250226-224606.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3027763466" data-linked-resource-container-version="31" data-media-id="c8d6da90-3e5d-4eb3-9974-02a26a566227" data-media-type="file"></span><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-1.TMS5_Napier_DailyDataLoad(OccursDailyat3:30AM)">1. TMS5_Napier_DailyDataLoad (Occurs Daily at 3:30 AM)</h3><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250226-224619.png" width="616" loading="lazy" src="attachments/3027763466/3046211693.png?width=616" data-image-src="attachments/3027763466/3046211693.png" data-height="27" data-width="188" data-unresolved-comment-count="0" data-linked-resource-id="3046211693" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250226-224619.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3027763466" data-linked-resource-container-version="31" data-media-id="81bf3c98-0f44-423e-9d8c-1058ae9c2ba7" data-media-type="file"></span><p><strong>Purpose:</strong></p><ul><li><p>Extract a full data refresh for <strong>Accounts, Legal Entities, Persons, and Roles.</strong></p></li><li><p>Perform an incremental refresh for Transactions (staging data).</p></li><li><p>Generate CSV files for non-transaction data.</p></li></ul><p><strong>Steps:</strong></p><ol start="1"><li><p><strong>Data Refresh:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">USE [TMS5_Napier]
+GO
+DECLARE @return_value int;
+EXEC @return_value = [dbo].[usp_PopulateSourceData(main)];
+SELECT &#39;Return Value&#39; = @return_value;
+GO
+</pre>
+</div></div><ul><li><p>The main procedure calls:</p><ul><li><p><code>[usp_Populating_TempTables]</code></p></li><li><p><code>[usp_Populating_Accounts]</code></p></li><li><p><code>[usp_Populating_LegalEntities]</code></p></li><li><p><code>[usp_Populating_Persons]</code></p></li><li><p><code>[usp_Populating_Roles]</code></p></li><li><p><code>[usp_Populating_Staging_Transactions]</code></p></li><li><p><code>[usp_Populating_Transactions]</code> <em>(applies new filtering logic)</em></p></li></ul></li></ul></li><li><p><strong>CSV Generation (Non-Transaction Data):</strong></p><ul><li><p>Execute the SSIS package:<br/><code>I:\Packages\Napier\TMS5Napier_SourcetoCSVExport.dtsx</code></p></li></ul></li><li><p><strong>Notification:</strong></p><ul><li><p><strong>Success:</strong> Email sent to <code>Compliance@craigsip.com</code></p></li><li><p><strong>Failure:</strong> Notify the support group:</p><ul><li><p><a class="external-link" href="mailto:Mohan.vulchi@craigsip.com" rel="nofollow">Mohan.vulchi@craigsip.com</a></p></li><li><p><a class="external-link" href="mailto:matthew.andrews@craigsip.com" rel="nofollow">matthew.andrews@craigsip.com</a></p></li><li><p><a class="external-link" href="mailto:rajendra.vechalapu@craigsip.com" rel="nofollow">rajendra.vechalapu@craigsip.com</a></p></li><li><p><a class="external-link" href="mailto:datateam@craigsip.com" rel="nofollow">datateam@craigsip.com</a></p></li><li><p><a class="external-link" href="mailto:Compliance@craigsip.com" rel="nofollow">Compliance@craigsip.com</a></p></li></ul></li></ul></li></ol><hr/><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-2.TMS5_Napier_DailyDataLoadTrans(OccursDailyat4:15AM)">2. TMS5_Napier_DailyDataLoadTrans (Occurs Daily at 4:15 AM)</h3><p><strong>Purpose:</strong></p><ul><li><p>Process incremental transaction data by copying new records from staging to the final table.</p></li><li><p>Generate CSV files for transaction data.</p></li></ul><p><strong>Steps:</strong></p><ol start="1"><li><p><strong>Load Transactions:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">EXEC [dbo].[usp_Populating_Transactions] @lcBatchId = @lcBatchID;
+</pre>
+</div></div><ul><li><p>Copies new records from <code>[dbo].[Staging_Transactions]</code> to <code>[dbo].[Transactions]</code>.</p></li></ul></li><li><p><strong>CSV Generation (Transaction Data):</strong></p><ul><li><p>Execute the SSIS package:<br/><code>I:\Packages\Napier\TMS5Napier_SourcetoCSVExportTrans.dtsx</code></p></li></ul></li><li><p><strong>Notification:</strong></p><ul><li><p><strong>Success:</strong> Email sent to <code>Compliance@craigsip.com</code></p></li><li><p><strong>Failure:</strong> Notify the same support group as above.</p></li></ul></li></ol><hr/><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-10.ETLControl,Logging&amp;ErrorHandling">10. ETL Control, Logging &amp; Error Handling</h2><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-LoggingTables">Logging Tables</h3><ul><li><p><strong>Batch Log:</strong> <code>[ETL].[BatchLog]</code> – Records details of every ETL run and exceptions.</p></li></ul><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250226-224511.png" width="602" loading="lazy" src="attachments/3027763466/3046178920.png?width=602" data-image-src="attachments/3027763466/3046178920.png" data-height="57" data-width="294" data-unresolved-comment-count="0" data-linked-resource-id="3046178920" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250226-224511.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3027763466" data-linked-resource-container-version="31" data-media-id="5c953f86-5350-4f0f-a90b-b23f041c38e5" data-media-type="file"></span><ul><li><p><strong>Source Data Delta Log:</strong> <code>[ETL].[SourceDataDelta_Log]</code> – Tracks incremental data loads.</p></li></ul><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-ConfigurationTables">Configuration Tables</h3><ul><li><p><strong>SSIS Packages Config:</strong> <code>[ETL].[SSIS_Packages_Config]</code> – Contains paths and SQL queries for CSV generation.</p></li><li><p><strong>Table Load Status:</strong> <code>[ETL].[TableLoadStatus]</code> – Flags for enabling/disabling CSV generation.</p></li></ul><hr/><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-11.FilteringMechanismandBusinessEnhancements">11. Filtering Mechanism and Business Enhancements</h2><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-FilteringRequirements">Filtering Requirements</h3><ul><li><p><strong>Exclude “Noise” Transactions:</strong><br/>Transactions identified as non-critical based on type.</p></li><li><p><strong>Normalized Amount Filter:</strong><br/>Exclude transactions with a normalized amount (converted to NZD) less than 2.</p></li></ul><h3 id="NapierAMLSystem–SQLFocusTechDocv0.1-CodeExampleforFilteringinusp_Populating_Transactions">Code Example for Filtering in usp_Populating_Transactions</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">
+SELECT 
+    [Transaction ID]       ,
+    [Transaction Type]     ,
+    [Normalized Amount]    ,
+    Amount	    		   ,
+    --[Amount2]			   ,
+    --[Gross Amount]         ,
+    --[Gross Normalized Amount],
+    --[Net Amount]           ,
+    --[Net Normalized Amount],
+    [EntryDate],			   
+    [Transaction Date]     ,
+    [Settlement Date]      ,
+    Customer,			   
+    [Customer ID]          ,
+    Originator,			   
+    Beneficiary,		   
+    [Originator Bank Bic]  ,
+    [Beneficiary Bank Bic] ,
+    [Product Volume]       ,
+    [Product Price]        ,
+    [Product ID]           ,
+    [Product ISIN]         ,
+    BatchID,			   
+    [Record Updated]       
+FROM 
+    [dbo].[Staging_Transactions] st
+WHERE 
+st.EntryDate &gt;= DATEADD(day, -7, GETDATE() ) -- Only last 7 days of data EntryDate is the date that used to contraol homay data in stagig table
+-- UAT without fitlers 266,024 rows 
+-- i swapped to SQLCIP &gt;&gt; looked at GETDATE() without fitlers 40,040 Rows
+
+AND  st.[Transaction Type]  NOT IN (
+          &#39;Settlement Credit&#39;, 
+		  &#39;Settlement Debit&#39;, 
+		  &#39;Terminal Tax Payment&#39;, 
+          &#39;FX Switch In Variable&#39;, 
+		  &#39;FX Switch Out Fixed&#39;, 
+		  &#39;Income&#39;, 
+          &#39;Dividend&#39;, 
+		  &#39;Portfolio Fee&#39;, 
+		  &#39;Interest&#39;, 
+		  &#39;Resident Withholding Tax&#39;,
+          &#39;FX Switch In Fixed&#39;, 
+		  &#39;FX Switch Out Variable&#39;, 
+		  &#39;Employee Interest&#39;, 
+          &#39;Employer Interest&#39;
+          )
+      AND st.[Normalized Amount] &gt;= 2  
+-- with filters &gt;&gt; 129,703 rows
+--SQL CIP With Filters &gt;&gt; 21,945 Rows &gt;&gt; almost halfed the Trasnsactions
+</pre>
+</div></div><hr/><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-12.FAQ">12. FAQ</h2><ol start="1"><li><p><strong>Common Linked Server Error</strong></p></li></ol><ul><li><p><strong>Error Message:</strong><br/>&quot;TCP Provider: An existing connection was forcibly closed by the remote host&quot;</p></li><li><p><strong>Possible Causes:</strong></p><ul><li><p>Source systems are not accessible,Linked Server is broken due to a high throttling error</p></li></ul></li><li><p><strong>Fix:</strong></p><ul><li><p>This is an intermittent issue and rarely occurs.</p></li><li><p>Upon receiving business approval, re-run the following jobs at the scheduled time:</p><ul><li><p><strong>TMS5_Napier_DailyDataLoad</strong></p></li><li><p><strong>TMS5_Napier_DailyDataLoadTrans</strong></p></li></ul></li></ul></li></ul><p /><ol start="2"><li><p>ETL Job loads seven days' worth of Trans data every day at a specific time, then checks the Target Database for incremental data load (new data). Where can we change the criteria for loading previous days' Transaction data (if we need to change it for more than 7 days)?</p></li></ol><ul><li><p>IF you need to Modifying the Date Criteria:</p><ul><li><p>Procedure to Edit: usp_Populating_TempTables</p></li><li><p>Changes to Consider:</p><ul><li><p>Change 1:</p><ul><li><p>Table: Wrapport Trans Table</p></li><li><p>Filter: t.postedDate</p></li></ul></li></ul></li></ul></li></ul><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250226-225014.png" width="346" loading="lazy" src="attachments/3027763466/3046473742.png?width=346" data-image-src="attachments/3027763466/3046473742.png" data-height="71" data-width="346" data-unresolved-comment-count="0" data-linked-resource-id="3046473742" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250226-225014.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3027763466" data-linked-resource-container-version="31" data-media-id="51b73239-42b2-46ff-bacb-c1b90e12bc3b" data-media-type="file"></span><ul><li><p>Change 2:</p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250226-225034.png" width="711" loading="lazy" src="attachments/3027763466/3046473748.png?width=711" data-image-src="attachments/3027763466/3046473748.png" data-height="49" data-width="415" data-unresolved-comment-count="0" data-linked-resource-id="3046473748" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250226-225034.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3027763466" data-linked-resource-container-version="31" data-media-id="4f9af262-63e7-4237-899b-9f1734d22fab" data-media-type="file"></span><ul><li><p>Table: NZXWT Trans Table</p></li><li><p>Filter: t.MarketDate</p></li><li><p>Adjust the criteria as needed per business requirements to load data from more than the default seven days.</p></li></ul></li></ul><p /><ol start="3"><li><p>What is the name of the Master/Ref table that contains the product names to modify/add?</p></li></ol><ul><li><p><strong>Table Name:</strong> <code>[dbo].[Ref_ProductNames]</code></p></li></ul><p /><ol start="4"><li><p>What is the name of Master/Ref table that holds the CRM vs Napier Products Code mapping modify/add?</p></li></ol><ul><li><p><strong>Table Name:</strong> <code>[dbo].[Ref_ProductsMap(CRMvsNapier)]</code></p></li></ul><p /><ol start="5"><li><p>What is the name of the Master/Ref table that contains the security names modify/add?</p></li></ol><ul><li><p><strong>Table Name:</strong> <code>[dbo].Ref_SecurityCodes</code></p></li></ul><p /><ol start="6"><li><p>Which table holds details of daily ETL jobs and any errors? </p></li></ol><ul><li><p><strong>Table Name:</strong> <code>[ETL].[BatchLog]</code></p></li></ul><p /><ol start="7"><li><p>Which table contains the path location of the CSV files and the SQL query that generates the CSV files to modify?<br/><strong>Table Name:</strong> <code>[ETL].[SSIS_Packages_Config]</code></p></li></ol><p /><ol start="8"><li><p>What table contains the flag that enables/disables CSV file generation?</p></li></ol><ul><li><p><strong>Table Name:</strong> <code>[ETL].[TableLoadStatus]</code></p></li></ul><hr/><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-13.BitbucketRepository">13. Bitbucket Repository</h2><p>All TMS5_Napier database objects and SSIS solutions are stored in the Bitbucket repository:<br/><strong>Repository:</strong> <a class="external-link" data-card-appearance="inline" href="https://bitbucket.org/craigsip/craigs.database.napier/src/master/" rel="nofollow">https://bitbucket.org/craigsip/craigs.database.napier/src/master/</a> </p><hr/><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-14.CIP:0237901MeetingSummary">14. CIP:0237901 Meeting Summary</h2><ul><li><p><strong>Date:</strong> 18.02.2025</p></li><li><p><strong>Attendees:</strong> Raj, Chris C</p></li><li><p><a class="external-link" data-card-appearance="inline" href="https://craigsip.haloitsm.com/tickets?area=4&amp;mainview=team&amp;viewid=2&amp;selid=126&amp;sellevel=2&amp;selparentid=data%20team&amp;id=237901" rel="nofollow">https://craigsip.haloitsm.com/tickets?area=4&amp;mainview=team&amp;viewid=2&amp;selid=126&amp;sellevel=2&amp;selparentid=data%20team&amp;id=237901</a> </p></li></ul><p>Overview &amp; Key Points Discussed</p><ul><li><p>Project Name: Napier AML - Exploring options to reduce transaction sent to Napier</p></li><li><p>Primary Goals:</p><ul><li><p>Reduce Data Throughput: By filtering out “noise” transactions.</p></li><li><p>Exclude Low-Value Transactions: Specifically, any transaction with a normalized amount less than 2 NZD, regardless of its original currency.</p></li><li><p>Cost Savings: Lower processing and transfer costs by reducing the volume of data sent to the Napier system.</p></li></ul></li></ul><p>Action Items</p><ul><li><p>Review Filtering Logic:<br/>Validate and test the filtering rules in [usp_Populating_Transactions] to ensure that transactions with a normalized amount &lt; 2 NZD and designated “noise” types are excluded.</p></li></ul><hr/><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-15.21.02.2025JacksonFanMappedoutthefullETLlogcialRunwithgreatDetails">15. 21.02.2025 Jackson Fan Mapped out the full ETL logcial Run with great Details</h2><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250226-230234.png" width="1074" loading="lazy" src="attachments/3027763466/3046539304.png?width=1074" data-image-src="attachments/3027763466/3046539304.png" data-height="543" data-width="1013" data-unresolved-comment-count="0" data-linked-resource-id="3046539304" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250226-230234.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3027763466" data-linked-resource-container-version="31" data-media-id="bf80f82b-977a-41b6-a5f3-156ccd675e99" data-media-type="file"></span><h2 id="NapierAMLSystem–SQLFocusTechDocv0.1-"><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/3027763466/3033661913.xlsx" data-nice-type="Microsoft Excel Spreadsheet" data-file-src="/wiki/download/attachments/3027763466/ETL%20Monitoring%20log.xlsx?version=1&amp;modificationDate=1740093144676&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="3033661913" data-linked-resource-type="attachment" data-linked-resource-container-id="3027763466" data-linked-resource-default-alias="ETL Monitoring log.xlsx" data-mime-type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="eb347980-1730-4409-89e2-4f589879fd1e" data-media-type="file"><img src="attachments/thumbnails/3027763466/3033661913" height="250"/></a></span> </h2><p class="media-group"><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/3027763466/3046277173.sql" data-nice-type="null" data-file-src="/wiki/download/attachments/3027763466/Mon8%20-%20Detailed%20ETL%20log.sql?version=1&amp;modificationDate=1740610841620&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="3046277173" data-linked-resource-type="attachment" data-linked-resource-container-id="3027763466" data-linked-resource-default-alias="Mon8 - Detailed ETL log.sql" data-mime-type="binary/octet-stream" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="4c4d269f-4bd6-498e-b1e0-9990ecd1c0ed" data-media-type="file"><img src="attachments/thumbnails/3027763466/3046277173" height="250"/></a></span></p><p />
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3028123703.png">image-20250218-213049.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3027960026.png">image-20250218-215146.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3028451427.docx">Napier tech doc - v1 - Super Important.docx</a> (application/vnd.openxmlformats-officedocument.wordprocessingml.document)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3028222122.png">image-20250218-231345.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3027960102.png">image-20250218-231612.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3028025539.png">image-20250218-232516.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3030384831.png">image-20250219-202553.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3034513435.png">image-20250220-230408.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3034349623.png">image-20250220-230451.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3033661913.xlsx">ETL Monitoring log.xlsx</a> (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3043393550.svg">TMS5_Napier_Transaction_Data.svg</a> (image/svg+xml)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3046178920.png">image-20250226-224511.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3046506514.png">image-20250226-224606.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3046211693.png">image-20250226-224619.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3046473742.png">image-20250226-225014.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3046473748.png">image-20250226-225034.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3046539296.cs">C#-ExportCSVEngine.cs</a> (text/plain)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3046277173.sql">Mon8 - Detailed ETL log.sql</a> (binary/octet-stream)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3027763466/3046539304.png">image-20250226-230234.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

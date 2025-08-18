@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Staff Vs. Normal Sanity Checks</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Staff Vs. Normal Sanity Checks
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 27-04-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is a quick “sanity-check” first, followed by a deeper code-review of each logical block and some suggestions you might find useful.</p><hr/><h2 id="StaffVs.NormalSanityChecks-1·Quicksanity-checkonyourMarchsample">1 · Quick sanity-check on your March sample</h2><div class="table-wrap"><table data-table-width="1800" data-layout="center" data-local-id="e9fed277-6b8d-45ad-92e1-19768c57d735" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Metric</p></th><th class="confluenceTh"><p>Value</p></th><th class="confluenceTh"><p>Comment</p></th></tr><tr><td class="confluenceTd"><p><strong>Monthly staff fee actually debited</strong></p></td><td class="confluenceTd"><p><strong>NZ $ 4.12</strong></p></td><td class="confluenceTd"><p>From <code>#FinalStaffManagementFee</code></p></td></tr><tr><td class="confluenceTd"><p><strong>Sum of 31 daily staff fees you calculated</strong></p></td><td class="confluenceTd"><p><strong>NZ $ 4.10</strong></p></td><td class="confluenceTd"><p>0.02 variance (≈ 0.5 %) is just rounding – good.</p></td></tr><tr><td class="confluenceTd"><p><strong>Sum of 31 daily </strong><em><strong>normal</strong></em><strong> fees you calculated</strong></p></td><td class="confluenceTd"><p><strong>NZ $ 8.27</strong></p></td><td class="confluenceTd"><p>~2× the staff fee – the discount is being picked up correctly.</p></td></tr></tbody></table></div><p>So for the single-portfolio slice you showed (shares only), the piece-wise linear fee function is reproducing the real staff invoice within normal rounding error. Your “normal” fee is about double, which is exactly the business rule.</p><p><strong>Bottom line:</strong> the arithmetic checks out for the data in the extract.</p><hr/><h2 id="StaffVs.NormalSanityChecks-2·Block-by-blocklogicreview">2 · Block-by-block logic review</h2><div class="table-wrap"><table data-table-width="1800" data-layout="center" data-local-id="d18b61f9-aa91-4ffd-a3f9-20da3df2e1bf" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Unit</p></th><th class="confluenceTh"><p>Core purpose</p></th><th class="confluenceTh"><p>Things that look solid</p></th><th class="confluenceTh"><p>Potential improvements / gotchas</p></th></tr><tr><td class="confluenceTd"><p><strong>1 – Setup / variables</strong></p></td><td class="confluenceTd"><p>Declare dates &amp; portfolio; burn any old temp tables.</p></td><td class="confluenceTd"><p>Good use of <code>OBJECT_ID</code>, clear parameter list.</p></td><td class="confluenceTd"><p><em>Small</em>: convert the <code>@PortfolioID</code> comment block into an explicit <code>SET @PortfolioID = NULL</code> when you want “all”, to avoid accidental hard-coding.</p></td></tr><tr><td class="confluenceTd"><p><strong>2 – #PrescribedPerson</strong></p></td><td class="confluenceTd"><p>Hard-coded lookup for prescribed person types.</p></td><td class="confluenceTd"><p>Simple CTE, fine.</p></td><td class="confluenceTd"><p>Long-term keep this in a dim table; avoids script edits if HR adds a new category.</p></td></tr><tr><td class="confluenceTd"><p><strong>3 – #StaffManagementFee → #FinalStaffManagementFee</strong></p></td><td class="confluenceTd"><p>Pull the <em>actual</em> staff fee that was invoiced/billed.</p></td><td class="confluenceTd"><p>Correct join filters (<code>TradeTypeDM</code> 444/449/450) and package whitelist. Nice addition of closed-portfolio support.</p></td><td class="confluenceTd"><ul><li><p>Your fee-package whitelist is repeated in Units 3, 4 &amp; 5. Put it in a table-valued parameter, temp table, or one CTE so it lives in one place.• <code>CONVERT(VARCHAR(25), fed.DatePaid, 103)</code> turns a date into a string mid-query. Keep it as <code>DATE</code>/<code>DATETIME</code> and only format in your final SELECT (SSRS will still display it nicely).</p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>4.1 – #AssetTypeMapping</strong></p></td><td class="confluenceTd"><p>Friendly names for product codes.</p></td><td class="confluenceTd"><p>Clean VALUES clause.</p></td><td class="confluenceTd"><p>When <code>NULL,NULL,'Cash Call Account'</code> is inserted, <code>NULL</code> in the first column means “all other asset types”. That’s fine, just document it.</p></td></tr><tr><td class="confluenceTd"><p><strong>4.2 – #RankedFeeScales</strong></p></td><td class="confluenceTd"><p>Re-map every <strong>staff</strong> fee package ID to its <strong>normal</strong> counterpart and rank each scale.</p></td><td class="confluenceTd"><p>Clever <code>CASE</code> mapping handles “DO NOT USE” &amp; <em>v2</em> edge cases.</p></td><td class="confluenceTd"><ul><li><p>Same mapping logic re-appears in Unit 5; pull it up into a view/CTE.• The <code>ROW_NUMBER</code> partition is correct, but <code>NULL</code> <code>EndValue</code> is ranked first; you already handle that later, just keep the comment stating why.</p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>4.3 / 4.4 – Range calc &amp; final fee table</strong></p></td><td class="confluenceTd"><p>Build <code>StartValue</code>/<code>EndValue</code> pairs and the annual % rate.</p></td><td class="confluenceTd"><p><code>LAG()</code> + <code>COALESCE</code> solves the open-ended top tier nicely.</p></td><td class="confluenceTd"><ul><li><p>In Unit 4.4 the sub-query to get <em>MAX(EndValue)</em> for each package runs per row. Wrap that in a CTE keyed by <code>(FeePackageName,AssetTypeName)</code> so it’s calculated once.</p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>5 – #TempValuationNZD</strong></p></td><td class="confluenceTd"><p>Pull daily valuation by portfolio &amp; asset.</p></td><td class="confluenceTd"><p>Good filters to exclude orphaned fee-package rows.</p></td><td class="confluenceTd"><ul><li><p>The <code>NOT (pfp.Status &lt;&gt; 450 AND ps.code = 'Active')</code> predicate is hard to read – maybe flip it positive.• You again replicate the package-mapping <code>CASE</code>.</p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>5.1 – #PortfolioValuationByAssetType</strong></p></td><td class="confluenceTd"><p>Aggregate to one row per day/asset.</p></td><td class="confluenceTd"><p>Straightforward <code>GROUP BY</code>.</p></td><td class="confluenceTd"><p>Consider an index on <code>Portfolio_ID, ValuationAsAtDate</code> while the temp table lives – it speeds the later joins.</p></td></tr><tr><td class="confluenceTd"><p><strong>6 – #FinalNormalManagementFees</strong></p></td><td class="confluenceTd"><p>Apply the tiered fee functions (staff &amp; normal).</p></td><td class="confluenceTd"><p>Piece-wise calculation is correct; <code>OUTER APPLY</code> is handy because it copes with variable tier count.</p></td><td class="confluenceTd"><ul><li><p>For a large date range this becomes <code>N × tiers</code> calculations. If performance degrades, pre-expand the tiers into a fixed table and join instead of the per-row <code>APPLY</code>.• Division by 365 assumes no leap-year; if you ever analyse 29 Feb you may want <code>CASE WHEN YEAR(d)=…</code> or use <code>DATEDIFF(DAY,@StartDate,@EndDate)+1</code>.</p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>7 – Final merge</strong></p></td><td class="confluenceTd"><p>Put “what we billed” vs “what we <em>would</em> bill” side-by-side.</p></td><td class="confluenceTd"><p>Works once you group staff fee to portfolio level.</p></td><td class="confluenceTd"><ul><li><p>Your early comment (“duplicate for each asset type”) is exactly because <code>#FinalStaffManagementFee</code> has no <code>AssetType</code>. Easiest fix: aggregate <code>Cal_Daily*Fee</code> up <strong>after</strong> the merge so both sides sit at <strong>portfolio-level</strong> granularity.</p></li></ul></td></tr></tbody></table></div><hr/><h2 id="StaffVs.NormalSanityChecks-3·Business-sensecheck">3 · Business-sense check</h2><ul><li><p>Daily <em>staff</em> fee ≈ 0.13 – 0.14 on ~NZ $ 9.8 k portfolio ⇒ annualised ≈ 0.50 %<br/>0.14 × 365 / 9810 ≈ 0.52 % — spot-on for the <em>mySTART staff</em> schedule (0.50 % top tier).</p></li><li><p>Daily <em>normal</em> fee ≈ 0.27 — annualised ≈ 1.02 % — matches the normal <em>mySTART</em> schedule (1 %).</p></li></ul><p>The numbers therefore obey the current rate cards.</p><hr/><h2 id="StaffVs.NormalSanityChecks-4·Suggestions&amp;nextsteps">4 · Suggestions &amp; next steps</h2><ol start="1"><li><p><strong>Centralise the staff→normal package map</strong><br/>Create a small reference table (<code>DimPackageMapping</code>) with columns<br/><code>(StaffPackageId, NormalPackageId)</code>. Replace the repeated <code>CASE</code> expressions with a join.</p></li><li><p><strong>Index temp tables used more than once</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">CREATE INDEX IX_ValByAsset ON #PortfolioValuationByAssetType
+     (Portfolio_ID, ValuationAsAtDate, AssetType);
+</pre>
+</div></div></li><li><p><strong>Parameterise the “include closed portfolios” flag</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">DECLARE @IncludeClosed BIT = 1;
+...
+AND ( @IncludeClosed = 1 OR ps.Code = &#39;Active&#39; )
+</pre>
+</div></div></li><li><p><strong>Leap-year awareness</strong><br/>If you ever analyse February of a leap year, switch<br/><code>rate / 365</code> → <code>rate / DATEDIFF(DAY, ValuationAsAtDate, DATEADD(YEAR,1,ValuationAsAtDate))</code>.</p></li><li><p><strong>Unit 7 duplication</strong><br/>Aggregate daily fees to <strong>portfolio-month</strong> level first, then join.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT ClientCode, SUM(TotalDailyStaffFee) AS MonthStaffFee ...
+</pre>
+</div></div></li><li><p><strong>SSRS tip</strong><br/>Pass the final dataset already pre-aggregated (one row per portfolio) and let SSRS drill-through to a detail report if needed. This keeps the main report lightning-fast.</p></li></ol><hr/><h3 id="StaffVs.NormalSanityChecks-Verdict">Verdict</h3><p><em>From an accounting perspective</em> your script correctly reproduces the March staff fee for portfolio <strong>673158_MS</strong> and produces the expected “what-if” normal fee.<br/><em>From a technical perspective</em> the logic is sound; the main opportunities now are maintainability (centralising lookup data) and making Unit 6 more scalable for very wide date ranges.</p><p>Let me know if you’d like a rewritten version incorporating some of the refactors above, or if you want me to run the same validation for additional portfolios/date ranges.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 16.01.2025 - CRM reay to Open Task Audit logcis</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 16.01.2025 - CRM reay to Open Task Audit logcis
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 16-01-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is a <strong>conceptual roadmap</strong> for how you can tackle these two “big picture” requirements:</p><ol start="1"><li><p><strong>“Ready to Open” (RTO) task creation</strong> data—including who created each task (robot vs. human).</p></li><li><p><strong>Modification (change) logs</strong> for the same records—to see if and when the robot user (<code>svc_crmdeploy_portal SERVICE</code>) made changes to those records in CRM.</p></li></ol><p>Because your ultimate goal is to do additional reporting and analysis in Power Query or Power BI, I'll outline how you might structure your SQL queries (or M queries) and then <strong>join</strong> or <strong>merge</strong> them in Power Query to get your final dataset.</p><hr/><h2 id="id-16.01.2025-CRMreaytoOpenTaskAuditlogcis-Part1:“ReadytoOpen”Tasks(MainQuery)">Part 1: “Ready to Open” Tasks (Main Query)</h2><p>You already have a working SQL query that returns a list of “Ready to Open” tasks, with columns such as:</p><ul><li><p><strong>Subject</strong></p></li><li><p><strong>CreatedByName</strong></p></li><li><p><strong>CreatedOn</strong></p></li><li><p><strong>ModifiedByName</strong></p></li><li><p><strong>ModifiedOn</strong></p></li><li><p>… plus any other helpful columns like <em>OwnerId</em>, <em>RegardingObjectIdName</em>, <em>ActivityTypeCodeName</em>, etc.</p></li></ul><h3 id="id-16.01.2025-CRMreaytoOpenTaskAuditlogcis-SampleMScriptfortheMainQuery">Sample M Script for the Main Query</h3><p>In Power Query, you might have something like:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">let
+    // This queries the CRM database for all &quot;Ready to Open&quot; tasks within date range
+    ReadyToOpenSource =
+        Sql.Database(
+            &quot;YourSqlServerName&quot;, 
+            &quot;YourDatabaseName&quot;,
+            [
+                Query =
+&quot;DECLARE @StartDate DATETIME = &#39;2024-05-13&#39;;  
+ DECLARE @EndDate   DATETIME = &#39;2025-02-01&#39;;
+
+ SELECT DISTINCT
+        a.ActivityId,
+        a.Subject,
+        a.RegardingObjectId,
+        a.RegardingObjectIdName,
+        a.CreatedOn,
+        a.CreatedByName,
+        a.ModifiedOn,
+        a.ModifiedByName,
+        a.StatusCode,
+        a.StateCode
+ FROM  ActivityPointer a
+ WHERE  a.Subject = &#39;Ready to open&#39;
+   AND  a.CreatedOn BETWEEN @StartDate AND @EndDate
+&quot;
+            ]
+        ),
+
+    // Example transformations in M
+    #&quot;Added Robot Flag&quot; = Table.AddColumn(
+        ReadyToOpenSource,
+        &quot;IsRobotCreated&quot;,
+        each if [CreatedByName] = &quot;svc_crmdeploy_portal SERVICE&quot; 
+             then true 
+             else false
+    ),
+    // ... add other transformations if desired, e.g. year/month/quarter
+    #&quot;Inserted Created Year&quot; = Table.AddColumn(
+        #&quot;Added Robot Flag&quot;,
+        &quot;Created_Year&quot;,
+        each Date.Year([CreatedOn]),
+        Int64.Type
+    ),
+    ...
+in
+    #&quot;Inserted Created Year&quot;
+</pre>
+</div></div><p>In that table, you can easily see who created each task, as well as do some grouping to see how many tasks are “robot-created” vs. “human-created.” That already satisfies your <strong>“RTO tasks created by robot vs. RTO tasks created by human”</strong> analysis.</p><hr/><h2 id="id-16.01.2025-CRMreaytoOpenTaskAuditlogcis-Part2:Modification/ChangeLogs(AuditQuery)">Part 2: Modification / Change Logs (Audit Query)</h2><p>The more difficult piece is that you’d like to see whether the robot user has <em>modified</em> anything in the same entity’s record (regardless of who <em>initially</em> created the record). In standard Microsoft Dataverse/Dynamics CRM, that information typically resides in the <strong>Audit</strong> logs (i.e., <code>AuditBase</code>, <code>FilteredAudit</code>, or similarly named tables/views).</p><ol start="1"><li><p>You need to confirm <strong>which</strong> audit table or view you can query. In Dynamics 365 / CRM on-prem, you might have direct access to a table called <code>AuditBase</code>.</p></li><li><p>Confirm you have <strong>Audit</strong> turned on for the entity in question (because if auditing isn’t enabled, or if the environment is locked down, you won’t see these logs).</p></li></ol><blockquote><p><strong>Note</strong>: The table or view that stores auditing data may look something like:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">AuditBase (or FilteredAudit)
+  - AuditId (PK)
+  - ObjectId
+  - CreatedOn
+  - UserIdName (i.e., “svc_crmdeploy_portal SERVICE”)
+  - Operation
+  - AttributeMask
+  - ChangedData
+  - ...
+</pre>
+</div></div><p>The <strong>ObjectId</strong> is often the foreign key pointing back to the record that was changed.</p></blockquote><h3 id="id-16.01.2025-CRMreaytoOpenTaskAuditlogcis-SampleSQLfortheAuditQuery">Sample SQL for the Audit Query</h3><p>Let’s assume your “Audit” data is in <code>[CRM_MSCRM].dbo.AuditBase</code>, and you want to see changes within the same time window (<code>@StartDate</code> to <code>@EndDate</code>) <strong>for any record</strong> that the robot user touched. For example:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">DECLARE @StartDate DATETIME = &#39;2024-05-13&#39;;  
+DECLARE @EndDate   DATETIME = &#39;2025-02-01&#39;;
+
+SELECT
+    ab.AuditId,
+    ab.ObjectId,
+    ab.UserIdName,      -- e.g. &quot;svc_crmdeploy_portal SERVICE&quot;
+    ab.CreatedOn        -- when the change happened
+    -- possibly other columns like ab.Operation, ab.AttributeMask, etc.
+FROM
+    [CRM_MSCRM].dbo.AuditBase ab
+WHERE
+    ab.CreatedOn BETWEEN @StartDate AND @EndDate
+    AND ab.UserIdName = &#39;svc_crmdeploy_portal SERVICE&#39;;
+</pre>
+</div></div><p>Your real query might be more complex if you want <em>any modifications by anyone</em>, not just the robot. Then you’d remove the <code>UserIdName = 'svc_crmdeploy_portal SERVICE'</code> filter and bring in all changes, or store that user in a column for analysis.</p><h3 id="id-16.01.2025-CRMreaytoOpenTaskAuditlogcis-PullingAuditQueryintoPowerQuery">Pulling Audit Query into Power Query</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">let
+    AuditSource = 
+        Sql.Database(
+            &quot;YourSqlServerName&quot;, 
+            &quot;YourDatabaseName&quot;,
+            [
+                Query =
+&quot;DECLARE @StartDate DATETIME = &#39;2024-05-13&#39;;  
+ DECLARE @EndDate   DATETIME = &#39;2025-02-01&#39;;
+
+ SELECT
+     ab.AuditId,
+     ab.ObjectId,
+     ab.UserIdName,
+     ab.CreatedOn AS AuditCreatedOn
+ FROM
+     [CRM_MSCRM].dbo.AuditBase ab
+ WHERE
+     ab.CreatedOn BETWEEN @StartDate AND @EndDate
+&quot;
+            ]
+        )
+in
+    AuditSource
+</pre>
+</div></div><hr/><h2 id="id-16.01.2025-CRMreaytoOpenTaskAuditlogcis-Part3:Merge/CombinetheTwoQueriesinPowerQuery">Part 3: Merge / Combine the Two Queries in Power Query</h2><p>Now that you have:</p><ul><li><p><strong>Query 1</strong>: “RTO tasks” – each row references the <code>ActivityId</code> (or possibly the <code>RegardingObjectId</code>) for each “Ready to Open” task.</p></li><li><p><strong>Query 2</strong>: “Audit logs” – each row references an <code>ObjectId</code> that was modified, plus which user made the modification.</p></li></ul><h3 id="id-16.01.2025-CRMreaytoOpenTaskAuditlogcis-DecidingWhichKeytoJoinOn">Deciding Which Key to Join On</h3><p>In many CRM setups, the <code>ActivityId</code> from <code>ActivityPointer</code> might appear in the <code>AuditBase.ObjectId</code> if auditing is configured at the Activity level. Alternatively, if you want to see if the robot user changed the <em>underlying entity</em> (like an Opportunity, custom entity, etc.) that the “RTO” task is <em>regarding</em>, you might need to join on <code>RegardingObjectId</code> → <code>AuditBase.ObjectId</code>. This can get tricky:</p><ul><li><p>If you want to see changes on the <strong>task</strong> record itself, use <code>ActivityId</code>.</p></li><li><p>If you want to see changes on the <strong>related entity</strong> (like an Opportunity), use <code>RegardingObjectId</code>.</p></li></ul><p>For example, if your “Ready to Open” tasks have <code>RegardingObjectId</code> referencing an Opportunity record, you want to see if the robot user changed that <strong>Opportunity</strong>—not just the Task. So you would join <code>a.RegardingObjectId = ab.ObjectId</code>.</p><h3 id="id-16.01.2025-CRMreaytoOpenTaskAuditlogcis-SampleMergeinPowerQuery">Sample Merge in Power Query</h3><ol start="1"><li><p><strong>Load</strong> both queries into Power Query:</p><ul><li><p><code>RTOQuery</code> (the “Ready to Open” query)</p></li><li><p><code>AuditQuery</code> (the “AuditBase” query)</p></li></ul></li><li><p><strong>Merge</strong> them on the appropriate key. For instance, to see if the robot user changed the <strong>underlying entity</strong> that the RTO task is referencing:</p></li></ol><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">let
+    RTOQuery = ... ,     // from Part 1
+    AuditQuery = ... ,   // from Part 2
+
+    // Merge on the &#39;RegardingObjectId&#39; from RTO tasks to the &#39;ObjectId&#39; in the Audit
+    MergedQuery =
+        Table.NestedJoin(
+            RTOQuery, 
+            {&quot;RegardingObjectId&quot;}, 
+            AuditQuery, 
+            {&quot;ObjectId&quot;}, 
+            &quot;AuditRows&quot;, 
+            JoinKind.LeftOuter
+        ),
+
+    // Expand or add a flag to see if the robot user changed something
+    WithRobotFlag =
+        Table.AddColumn(
+            MergedQuery,
+            &quot;RobotModifiedTheEntity&quot;,
+            each 
+                let
+                    allChanges = [AuditRows],
+                    // did we have any row(s) by the robot user?
+                    robotEdits = Table.SelectRows(allChanges, each [UserIdName] = &quot;svc_crmdeploy_portal SERVICE&quot;)
+                in
+                    if Table.RowCount(robotEdits) &gt; 0 then true else false
+        ),
+
+    // Expand columns from &quot;AuditRows&quot; if you want to see the actual changes, times, etc.
+    ExpandedAudit =
+        Table.ExpandTableColumn(
+            WithRobotFlag,
+            &quot;AuditRows&quot;,
+            {&quot;AuditId&quot;,&quot;UserIdName&quot;,&quot;AuditCreatedOn&quot;},
+            {&quot;AuditId&quot;,&quot;Audit_UserIdName&quot;,&quot;AuditCreatedOn&quot;}
+        )
+in
+    ExpandedAudit
+</pre>
+</div></div><p>With this approach, each “Ready to Open” record will have:</p><ul><li><p><strong>RobotModifiedTheEntity</strong> = <code>true</code> if at least one row in the audit logs indicated <code>svc_crmdeploy_portal SERVICE</code> changed that entity.</p></li><li><p>Optionally, you can see all the expansions from the Audit logs (i.e., each row of changes) to do more granular analysis.</p></li></ul><hr/><h2 id="id-16.01.2025-CRMreaytoOpenTaskAuditlogcis-PuttingItAllTogether">Putting It All Together</h2><ol start="1"><li><p><strong>Query #1</strong> (RTO tasks) → “<strong>Which tasks are created by the robot?</strong>”</p><ul><li><p>Summarize or filter to see the number and % of tasks that are “robot-created.”</p></li></ul></li><li><p><strong>Query #2</strong> (Audit logs) → “<strong>Which records had modifications by the robot user?</strong>”</p><ul><li><p>Summarize or filter to see which ones were touched by the robot.</p></li></ul></li><li><p><strong>Merged Query</strong> in Power Query → “<strong>For each RTO, did the robot user also do any modifications to the underlying entity?</strong>”</p><ul><li><p>You can create a field like <strong>DocuSignUsageAttempted</strong> = <code>true</code> if the robot user had at least one row in the audit logs for that entity.</p></li><li><p>Then you can build your measure: “Number of RTO tasks that were <em>created by humans but had a robot’s modification anyway</em> = partial usage / automation attempt.”</p></li><li><p>Similarly: “Number of RTO tasks that were fully done by the robot (created + updated).”</p></li><li><p>Over time, you can see day/week/month/quarter trends.</p></li></ul></li></ol><hr/><h2 id="id-16.01.2025-CRMreaytoOpenTaskAuditlogcis-IfCRMAuditingIsn’tSufficient(orisTooComplex)">If CRM Auditing Isn’t Sufficient (or is Too Complex)</h2><p>You noted that you also collect data from <strong>DocuSign</strong> (via its own API or built-in reporting). If you find that the CRM auditing route is <strong>too</strong> unwieldy or partially missing data, you might:</p><ul><li><p>Continue to use the <strong>DocuSign</strong> API (which you already use for your robot).</p></li><li><p>Pull that into Power BI or Power Query as a <strong>separate</strong> dataset.</p></li><li><p>Attempt to cross-reference with CRM records by some unique ID (e.g., envelope ID, record ID, or something else).</p></li></ul><p>This approach, however, typically requires ensuring your CRM records and DocuSign envelopes share some key/ID that can be matched—often a custom field in DocuSign that matches the CRM record ID.</p><hr/><h2 id="id-16.01.2025-CRMreaytoOpenTaskAuditlogcis-FinalThoughts">Final Thoughts</h2><ol start="1"><li><p><strong>Yes</strong>, it is possible (though not always trivial!) to get:</p><ul><li><p>“Who created the task?”</p></li><li><p>“Which user(s) later modified the entity in any way?” (via CRM’s Audit logs).</p></li></ul></li><li><p><strong>M (Power Query) approach</strong> is typically:</p><ol start="1"><li><p>Pull in two queries (the main “RTO tasks” query and the “Audit logs” query).</p></li><li><p><strong>Merge</strong> them on the correct key (or keys).</p></li><li><p><strong>Expand</strong> or derive a “WasModifiedByRobot?” flag.</p></li></ol></li><li><p>Once you have that single combined dataset, you can easily build <strong>visuals</strong> in Power BI (bar charts, lines with totals, etc.) to see usage and success rates over time—<strong>all inside your normal Power Query/Power BI workflow</strong>.</p></li></ol><p>Hopefully this gives you a solid <strong>conceptual</strong> guide and example of how to proceed. Feel free to adjust table names, column names, or the join logic to match your CRM environment’s specifics. If you have <strong>further</strong> complexities (e.g., encrypted data, special user security), you’ll need your CRM admin or dev team to ensure you have proper table access (especially to the audit tables).</p><p>Good luck with your analysis!</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

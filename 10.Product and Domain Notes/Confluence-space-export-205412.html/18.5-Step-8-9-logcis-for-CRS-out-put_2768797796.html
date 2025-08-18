@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 18.5 Step 8-9 logcis for CRS out put</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="2762113156.html">18. Rebuild FATCA/CRS step 1 - 10</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 18.5 Step 8-9 logcis for CRS out put
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 15-10-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h1 id="id-18.5Step8-9logcisforCRSoutput-ProfilingtheActualCRSOutputColumnsStructure">Profiling the Actual CRS Output Columns Structure</h1><h2 id="id-18.5Step8-9logcisforCRSoutput-KeySectionsofCRSReporting">Key Sections of CRS Reporting</h2><ol start="1"><li><p><strong>Account Holder Information</strong></p></li><li><p><strong>Controlling Person Information</strong></p></li><li><p><strong>Financial Account Information</strong></p></li></ol><h3 id="id-18.5Step8-9logcisforCRSoutput-1.AccountHolderInformation">1. Account Holder Information</h3><h4 id="id-18.5Step8-9logcisforCRSoutput-IndividualAccountHolders">Individual Account Holders</h4><ul><li><p><strong>Account Holder Name</strong>: Full name of the individual.</p></li><li><p><strong>Account Holder Address</strong>: Residential address.</p></li><li><p><strong>Account Holder Residence</strong>: Jurisdiction(s) of residence.</p></li><li><p><strong>Account Holder TIN</strong>: Tax Identification Number(s).</p></li><li><p><strong>Account Holder DOB</strong>: Date of birth.</p></li><li><p><strong>Account Holder POB</strong>: Place of birth.</p></li></ul><h4 id="id-18.5Step8-9logcisforCRSoutput-EntityAccountHolders">Entity Account Holders</h4><ul><li><p><strong>Entity Name</strong>: Legal name of the entity.</p></li><li><p><strong>Entity Address</strong>: Registered address.</p></li><li><p><strong>Entity Residence</strong>: Jurisdiction(s) of residence.</p></li><li><p><strong>Entity TIN</strong>: Tax Identification Number(s).</p></li></ul><h3 id="id-18.5Step8-9logcisforCRSoutput-2.ControllingPersonInformation">2. Controlling Person Information</h3><p>For entities with Controlling Persons, the following details are required:</p><ul><li><p><strong>Controlling Person Name</strong>: Full name.</p></li><li><p><strong>Controlling Person Address</strong>: Residential address.</p></li><li><p><strong>Controlling Person Residence</strong>: Jurisdiction(s) of residence.</p></li><li><p><strong>Controlling Person TIN</strong>: Tax Identification Number(s).</p></li><li><p><strong>Controlling Person DOB</strong>: Date of birth.</p></li><li><p><strong>Controlling Person POB</strong>: Place of birth.</p></li></ul><h3 id="id-18.5Step8-9logcisforCRSoutput-3.FinancialAccountInformation">3. Financial Account Information</h3><ul><li><p><strong>Account Number</strong>: Unique identifier for the account.</p></li><li><p><strong>Reporting FI Name</strong>: Name of the Reporting Financial Institution.</p></li><li><p><strong>Reporting FI Number</strong>: Identifying number of the Reporting Financial Institution.</p></li><li><p><strong>Account Balance</strong>: Balance or value of the account at the end of the reporting period.</p></li><li><p><strong>Total Interest Paid</strong>: Total gross amount of interest paid or credited to the account during the reporting period.</p></li><li><p><strong>Total Dividends Paid</strong>: Total gross amount of dividends paid or credited to the account during the reporting period.</p></li></ul><hr/><p>Below is an explanation of each reportable account type along with examples using two tables: one for accounts and one for contacts. In this scenario, we will assume that all accounts are classified as Non-Financial Foreign Entities (NFFE).</p><h3 id="id-18.5Step8-9logcisforCRSoutput-ReportableAccountTypes">Reportable Account Types</h3><ol start="1"><li><p><strong>CRS101 - Passive Non-Financial Entity with one or more controlling person that is a Reportable Person</strong></p><ul><li><p><strong>Description</strong>: This type refers to entities that are not financial institutions and do not engage in substantial business activities. They have one or more controlling persons who are reportable persons (individuals subject to CRS reporting).</p></li><li><p><strong>Example</strong>: A holding company that primarily holds investments and has individual shareholders who control it.</p></li></ul></li><li><p><strong>CRS102 - CRS Reportable Person (Individual)</strong></p><ul><li><p><strong>Description</strong>: This type refers to individual account holders who are subject to CRS reporting. This includes individuals with a single Tax Identification Number (TIN) or multiple TINs.</p></li><li><p><strong>Example</strong>: An individual who has a personal bank account and is a tax resident in a CRS participating jurisdiction.</p></li></ul></li><li><p><strong>CRS102 - CRS Reportable Person (Organization)</strong></p><ul><li><p><strong>Description</strong>: This type refers to organizations that are subject to CRS reporting. This includes corporations, partnerships, and other entities that are not classified as financial institutions.</p></li><li><p><strong>Example</strong>: A foreign corporation that operates in a CRS participating jurisdiction and has a bank account.</p></li></ul></li><li><p><strong>CRS103 - Passive Non-Financial Entity that is a CRS Reportable Person</strong></p><ul><li><p><strong>Description</strong>: This type refers to passive NFFEs that are themselves reportable persons. This means that the entity itself is subject to reporting due to its ownership structure or other criteria.</p></li><li><p><strong>Example</strong>: A trust that holds assets for beneficiaries who are reportable persons.</p></li></ul></li><li><p><strong>Nil report</strong></p><ul><li><p><strong>Description</strong>: This indicates that there are no reportable accounts to report for a given reporting period. It is used when an entity has no reportable accounts to submit.</p></li><li><p><strong>Example</strong>: A financial institution that has no accounts held by reportable persons during the reporting year.</p></li></ul></li></ol><h3 id="id-18.5Step8-9logcisforCRSoutput-ExampleTables">Example Tables</h3><h4 id="id-18.5Step8-9logcisforCRSoutput-Table1:Accounts">Table 1: Accounts</h4><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="ad12e778-6c0f-4693-9555-6819b59c88fa" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Account ID</p></th><th class="confluenceTh"><p>Account Type</p></th><th class="confluenceTh"><p>Account Holder Name</p></th><th class="confluenceTh"><p>Account Holder Type</p></th></tr><tr><td class="confluenceTd"><p>1          </p></td><td class="confluenceTd"><p>Bank Account </p></td><td class="confluenceTd"><p>Holding Company A    </p></td><td class="confluenceTd"><p>CRS101              </p></td></tr><tr><td class="confluenceTd"><p>2          </p></td><td class="confluenceTd"><p>Bank Account </p></td><td class="confluenceTd"><p>John Doe             </p></td><td class="confluenceTd"><p>CRS102              </p></td></tr><tr><td class="confluenceTd"><p>3          </p></td><td class="confluenceTd"><p>Investment Account </p></td><td class="confluenceTd"><p>XYZ Corp       </p></td><td class="confluenceTd"><p>CRS102              </p></td></tr><tr><td class="confluenceTd"><p>4          </p></td><td class="confluenceTd"><p>Trust Account </p></td><td class="confluenceTd"><p>Family Trust B      </p></td><td class="confluenceTd"><p>CRS103              </p></td></tr><tr><td class="confluenceTd"><p>5          </p></td><td class="confluenceTd"><p>Savings Account </p></td><td class="confluenceTd"><p>N/A               </p></td><td class="confluenceTd"><p>Nil report          </p></td></tr></tbody></table></div><h4 id="id-18.5Step8-9logcisforCRSoutput-Table2:Contacts">Table 2: Contacts</h4><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="35daba7a-35b3-4f8d-b46e-5cfd33fed777" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Contact ID</p></th><th class="confluenceTh"><p>Account ID</p></th><th class="confluenceTh"><p>Contact Name</p></th><th class="confluenceTh"><p>Relationship to Account Holder</p></th></tr><tr><td class="confluenceTd"><p>1          </p></td><td class="confluenceTd"><p>1          </p></td><td class="confluenceTd"><p>Alice Smith  </p></td><td class="confluenceTd"><p>Shareholder                   </p></td></tr><tr><td class="confluenceTd"><p>2          </p></td><td class="confluenceTd"><p>2          </p></td><td class="confluenceTd"><p>John Doe     </p></td><td class="confluenceTd"><p>Account Holder                </p></td></tr><tr><td class="confluenceTd"><p>3          </p></td><td class="confluenceTd"><p>3          </p></td><td class="confluenceTd"><p>Bob Johnson   </p></td><td class="confluenceTd"><p>Director                      </p></td></tr><tr><td class="confluenceTd"><p>4          </p></td><td class="confluenceTd"><p>4          </p></td><td class="confluenceTd"><p>Mary Brown   </p></td><td class="confluenceTd"><p>Beneficiary                   </p></td></tr><tr><td class="confluenceTd"><p>5          </p></td><td class="confluenceTd"><p>5          </p></td><td class="confluenceTd"><p>N/A          </p></td><td class="confluenceTd"><p>N/A                           </p></td></tr></tbody></table></div><h3 id="id-18.5Step8-9logcisforCRSoutput-Summary">Summary</h3><ul><li><p><strong>CRS101</strong> accounts are held by passive NFFEs with controlling persons.</p></li><li><p><strong>CRS102</strong> accounts are held by individual reportable persons.</p></li><li><p><strong>CRS102</strong> accounts can also be held by organizations that are reportable.</p></li><li><p><strong>CRS103</strong> accounts are held by passive NFFEs that are reportable.</p></li><li><p><strong>Nil report</strong> indicates no reportable accounts for the period.</p></li></ul><p>This classification helps ensure compliance with the CRS reporting requirements and facilitates the identification of reportable persons based on their account types.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

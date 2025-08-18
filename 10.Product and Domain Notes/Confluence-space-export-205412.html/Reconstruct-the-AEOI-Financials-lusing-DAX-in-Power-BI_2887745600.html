@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Reconstruct the AEOI Financials lusing DAX in Power BI</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Reconstruct the AEOI Financials lusing DAX in Power BI
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 04-12-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Certainly! I'll help you reconstruct the table from your SQL script in Power BI using DAX. We'll create the necessary measures and calculated tables in Power BI to replicate the functionality of your SQL stored procedure. We'll also handle the date in a similar manner to ensure consistency.</p><hr/><h3 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-Overview"><strong>Overview</strong></h3><p>Your SQL script constructs a dynamic DAX query that:</p><ul><li><p>Defines several measures in DAX.</p></li><li><p>Executes an <code>EVALUATE</code> statement to return a summarized table.</p></li><li><p>Filters the data based on certain conditions.</p></li><li><p>Replaces placeholders like <code>@Date</code> and <code>@Year</code> with actual values.</p></li></ul><p>Our goal is to:</p><ol start="1"><li><p><strong>Recreate the measures</strong> in Power BI.</p></li><li><p><strong>Create a calculated table</strong> in Power BI that mimics the <code>EVALUATE</code> and <code>SUMMARIZE</code> functionality.</p></li><li><p><strong>Handle the date</strong> parameters in a similar manner.</p></li><li><p><strong>Ensure the output table</strong> matches what the SQL script produces.</p></li></ol><hr/><h3 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-Step1:RecreatetheMeasuresinPowerBI"><strong>Step 1: Recreate the Measures in Power BI</strong></h3><p>First, we'll define all the measures that are in your DAX query within Power BI. These measures will be used in our calculated table.</p><h4 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-1.1HandleDateParameters"><strong>1.1 Handle Date Parameters</strong></h4><p>Since <code>@Date</code> and <code>@Year</code> are dynamic parameters in your SQL script, we'll need to define them in Power BI.</p><ul><li><p><strong>Option A:</strong> Use <strong>What-If Parameters</strong> to allow user selection.</p></li><li><p><strong>Option B:</strong> Use variables in measures to define fixed or dynamic dates.</p></li></ul><p>For simplicity, I'll use variables within the measures. You can later adjust them to be dynamic based on your requirements.</p><h4 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-1.2DefinetheDateVariables"><strong>1.2 Define the Date Variables</strong></h4><p>In each measure, we'll define <code>TargetDate</code> and <code>TargetYear</code>.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">VAR TargetDate = DATE(2025, 3, 31)  // Replace with your desired date
+VAR TargetYear = YEAR(TargetDate)
+</pre>
+</div></div><p>Alternatively, if you want the date to be dynamic based on today's date:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">VAR TargetDate = TODAY()
+VAR TargetYear = YEAR(TargetDate)
+</pre>
+</div></div><h4 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-1.3DefinetheMeasures"><strong>1.3 Define the Measures</strong></h4><p>Now, we'll define each measure in Power BI, using the variables for dates.</p><hr/><p><strong>Measure: TotalTDIncAI</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalTDIncAI =
+VAR TargetDate = DATE(2025, 3, 31)
+VAR MaxAvailableDate =
+    CALCULATE(
+        MAX(&#39;account holdings Date&#39;[account holdings date]),
+        &#39;account holdings Date&#39;[account holdings date] &lt;= TargetDate
+    )
+RETURN
+    CALCULATE(
+        SUM(&#39;Account Holdings Monthly&#39;[Holding NZD Total]),
+        &#39;asset&#39;[valuation method] = &quot;Accumulation&quot;,
+        &#39;account holdings Date&#39;[account holdings date] = MaxAvailableDate,
+        &#39;asset&#39;[Asset Type] = &quot;Term Deposit&quot;,
+        NOT ISBLANK(&#39;Account Holdings Monthly&#39;[FixedInterestAssetKey]) &amp;&amp;
+        &#39;Account Holdings Monthly&#39;[FixedInterestAssetKey] &lt;&gt; -1
+    )
+</pre>
+</div></div><p><strong>Measure: TotalTDAI</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalTDAI =
+VAR TargetDate = DATE(2025, 3, 31)
+VAR MaxAvailableDate =
+    CALCULATE(
+        MAX(&#39;account holdings Date&#39;[account holdings date]),
+        &#39;account holdings Date&#39;[account holdings date] &lt;= TargetDate
+    )
+RETURN
+    CALCULATE(
+        SUM(&#39;Account Holdings Monthly&#39;[NZD Accrued Interest]),
+        &#39;asset&#39;[valuation method] = &quot;Accumulation&quot;,
+        &#39;account holdings Date&#39;[account holdings date] = MaxAvailableDate,
+        &#39;asset&#39;[Asset Type] = &quot;Term Deposit&quot;,
+        NOT ISBLANK(&#39;Account Holdings Monthly&#39;[FixedInterestAssetKey]) &amp;&amp;
+        &#39;Account Holdings Monthly&#39;[FixedInterestAssetKey] &lt;&gt; -1
+    )
+</pre>
+</div></div><p><strong>Measure: TotalTDIncAILocal</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalTDIncAILocal =
+VAR TargetDate = DATE(2025, 3, 31)
+VAR MaxAvailableDate =
+    CALCULATE(
+        MAX(&#39;account holdings Date&#39;[account holdings date]),
+        &#39;account holdings Date&#39;[account holdings date] &lt;= TargetDate
+    )
+RETURN
+    CALCULATE(
+        SUM(&#39;Account Holdings Monthly&#39;[Holding Local Total]),
+        &#39;asset&#39;[valuation method] = &quot;Accumulation&quot;,
+        &#39;account holdings Date&#39;[account holdings date] = MaxAvailableDate,
+        &#39;asset&#39;[Asset Type] = &quot;Term Deposit&quot;,
+        NOT ISBLANK(&#39;Account Holdings Monthly&#39;[FixedInterestAssetKey]) &amp;&amp;
+        &#39;Account Holdings Monthly&#39;[FixedInterestAssetKey] &lt;&gt; -1
+    )
+</pre>
+</div></div><p><strong>Measure: TotalTDAILocal</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalTDAILocal =
+VAR TargetDate = DATE(2025, 3, 31)
+VAR MaxAvailableDate =
+    CALCULATE(
+        MAX(&#39;account holdings Date&#39;[account holdings date]),
+        &#39;account holdings Date&#39;[account holdings date] &lt;= TargetDate
+    )
+RETURN
+    CALCULATE(
+        SUM(&#39;Account Holdings Monthly&#39;[Local Accrued Interest]),
+        &#39;asset&#39;[valuation method] = &quot;Accumulation&quot;,
+        &#39;account holdings Date&#39;[account holdings date] = MaxAvailableDate,
+        &#39;asset&#39;[Asset Type] = &quot;Term Deposit&quot;,
+        NOT ISBLANK(&#39;Account Holdings Monthly&#39;[FixedInterestAssetKey]) &amp;&amp;
+        &#39;Account Holdings Monthly&#39;[FixedInterestAssetKey] &lt;&gt; -1
+    )
+</pre>
+</div></div><p><strong>Measure: TotalTDFaceValueLocal</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalTDFaceValueLocal =
+[TotalTDIncAILocal] - [TotalTDAILocal]
+</pre>
+</div></div><p><strong>Measure: TotalTDFaceValue</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalTDFaceValue =
+[TotalTDIncAI] - [TotalTDAI]
+</pre>
+</div></div><hr/><p><strong>Note:</strong> For the following measures, we'll need to handle the <code>@Year</code> parameter, which we'll define as <code>TargetYear</code>.</p><h4 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-TransactionMeasures"><strong>Transaction Measures</strong></h4><p><strong>Measure: TotalTDInterestPaid</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalTDInterestPaid =
+VAR TargetYear = 2025  // Replace with your desired year
+RETURN
+    CALCULATE(
+        SUM(&#39;Asset Transaction&#39;[Amount]),
+        &#39;Asset Transaction Type&#39;[Transaction Type Name] IN {&quot;Income&quot;, &quot;Coupon&quot;},
+        &#39;asset&#39;[Asset Type] = &quot;Term Deposit&quot;,
+        &#39;Traded Date&#39;[Traded Financial Year] = TargetYear
+    )
+</pre>
+</div></div><p><strong>Measure: TotalTDTaxPaid</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalTDTaxPaid =
+VAR TargetYear = 2025
+RETURN
+    CALCULATE(
+        SUM(&#39;Asset Transaction&#39;[Tax Amount NZD]),
+        &#39;Asset Transaction Type&#39;[Transaction Type Name] IN {&quot;Income&quot;, &quot;Coupon&quot;},
+        &#39;asset&#39;[Asset Type] = &quot;Term Deposit&quot;,
+        &#39;Traded Date&#39;[Traded Financial Year] = TargetYear
+    )
+</pre>
+</div></div><p><strong>Measure: TotalTDInterestGross</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalTDInterestGross =
+[TotalTDInterestPaid] + [TotalTDTaxPaid]
+</pre>
+</div></div><p><strong>Measure: TotalCMInterest</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalCMInterest =
+VAR TargetYear = 2025
+RETURN
+    CALCULATE(
+        SUM(&#39;Asset Transaction&#39;[Amount]),
+        &#39;asset&#39;[Is Cashman] = &quot;yes&quot;,
+        &#39;Asset Transaction Type&#39;[Transaction Type Name] IN {&quot;Income&quot;, &quot;Coupon&quot;},
+        &#39;Traded Date&#39;[Traded Financial Year] = TargetYear
+    )
+</pre>
+</div></div><p><strong>Measure: TotalCMTax</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalCMTax =
+VAR TargetYear = 2025
+RETURN
+    CALCULATE(
+        SUM(&#39;Asset Transaction&#39;[Tax Amount NZD]),
+        &#39;asset&#39;[Is Cashman] = &quot;yes&quot;,
+        &#39;Asset Transaction Type&#39;[Transaction Type Name] IN {&quot;Income&quot;, &quot;Coupon&quot;},
+        &#39;Traded Date&#39;[Traded Financial Year] = TargetYear
+    )
+</pre>
+</div></div><p><strong>Measure: TotalCMGross</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalCMGross =
+[TotalCMInterest] + [TotalCMTax]
+</pre>
+</div></div><p><strong>Measure: TotalCMBalance</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalCMBalance =
+VAR TargetDate = DATE(2025, 3, 31)
+VAR MaxAvailableDate =
+    CALCULATE(
+        MAX(&#39;account holdings Date&#39;[account holdings date]),
+        &#39;account holdings Date&#39;[account holdings date] &lt;= TargetDate
+    )
+RETURN
+    CALCULATE(
+        SUM(&#39;Account Holdings Monthly&#39;[Holding NZD Total]),
+        &#39;asset&#39;[valuation method] = &quot;Accumulation&quot;,
+        &#39;account holdings Date&#39;[account holdings date] = MaxAvailableDate,
+        &#39;asset&#39;[Is Cashman] = &quot;yes&quot;
+    )
+</pre>
+</div></div><hr/><p><strong>Measure: TotalCSLIntTax</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalCSLIntTax =
+VAR TargetYear = 2025
+RETURN
+    CALCULATE(
+        SUM(&#39;Asset Transaction&#39;[Tax Amount NZD]),
+        &#39;Asset Transaction Type&#39;[Transaction Type Name] IN {&quot;Income&quot;, &quot;Coupon&quot;},
+        &#39;asset&#39;[Is Cashman] = &quot;No&quot;,
+        &#39;asset&#39;[Asset Type] &lt;&gt; &quot;Term Deposit&quot;,
+        &#39;Asset Transaction&#39;[dataProviderID] = 20,
+        &#39;Traded Date&#39;[Traded Financial Year] = TargetYear
+    )
+</pre>
+</div></div><p><strong>Measure: TotalCSLIntNet</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalCSLIntNet =
+VAR TargetYear = 2025
+RETURN
+    CALCULATE(
+        SUM(&#39;Asset Transaction&#39;[Amount]),
+        &#39;Asset Transaction Type&#39;[Transaction Type Name] IN {&quot;Income&quot;, &quot;Coupon&quot;},
+        &#39;asset&#39;[Is Cashman] = &quot;No&quot;,
+        &#39;asset&#39;[Asset Type] &lt;&gt; &quot;Term Deposit&quot;,
+        &#39;Asset Transaction&#39;[dataProviderID] = 20,
+        &#39;Traded Date&#39;[Traded Financial Year] = TargetYear
+    )
+</pre>
+</div></div><p><strong>Measure: TotalCSLIntGross</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalCSLIntGross =
+[TotalCSLIntNet] + [TotalCSLIntTax]
+</pre>
+</div></div><p><strong>Measure: TotalCSLDivTax</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalCSLDivTax =
+VAR TargetYear = 2025
+RETURN
+    CALCULATE(
+        SUM(&#39;Asset Transaction&#39;[Tax Amount NZD]),
+        NOT (
+            &#39;Asset Transaction Type&#39;[Transaction Type Name] IN {&quot;Income&quot;, &quot;Coupon&quot;}
+        ),
+        &#39;asset&#39;[Is Cashman] = &quot;No&quot;,
+        &#39;asset&#39;[Asset Type] &lt;&gt; &quot;Term Deposit&quot;,
+        &#39;Asset Transaction&#39;[dataProviderID] = 20,
+        &#39;Traded Date&#39;[Traded Financial Year] = TargetYear
+    )
+</pre>
+</div></div><p><strong>Measure: TotalCSLDivNet</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalCSLDivNet =
+VAR TargetYear = 2025
+RETURN
+    CALCULATE(
+        SUM(&#39;Asset Transaction&#39;[Amount]),
+        NOT (
+            &#39;Asset Transaction Type&#39;[Transaction Type Name] IN {&quot;Income&quot;, &quot;Coupon&quot;}
+        ),
+        &#39;asset&#39;[Is Cashman] = &quot;No&quot;,
+        &#39;asset&#39;[Asset Type] &lt;&gt; &quot;Term Deposit&quot;,
+        &#39;Asset Transaction&#39;[dataProviderID] = 20,
+        &#39;Traded Date&#39;[Traded Financial Year] = TargetYear
+    )
+</pre>
+</div></div><p><strong>Measure: TotalCSLDivGross</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalCSLDivGross =
+[TotalCSLDivNet] + [TotalCSLDivTax]
+</pre>
+</div></div><hr/><p><strong>Measure: TotalHoldingMPS</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalHoldingMPS =
+VAR TargetDate = DATE(2025, 3, 31)
+VAR MaxAvailableDate =
+    CALCULATE(
+        MAX(&#39;account holdings Date&#39;[account holdings date]),
+        &#39;account holdings Date&#39;[account holdings date] &lt;= TargetDate
+    )
+RETURN
+    CALCULATE(
+        SUM(&#39;Account holdings monthly&#39;[Holding NZD Total]),
+        &#39;asset&#39;[Valuation Method] = &quot;Accumulation&quot;,
+        &#39;Asset&#39;[sedol] &lt;&gt; &quot;Unsupervised&quot;,
+        PATHCONTAINS({&quot;MPS&quot;, &quot;IAS&quot;, &quot;DIMS&quot;}, &#39;Service Levels&#39;[Service Level Display Name]),
+        &#39;asset&#39;[Market Code] &lt;&gt; &quot;Unlisted&quot;,
+        &#39;account holdings Date&#39;[account holdings date] = MaxAvailableDate
+    )
+</pre>
+</div></div><p><strong>Measure: TotalSTART</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalSTART =
+CALCULATE(
+    SUM(&#39;Account holdings monthly&#39;[Holding NZD Total]),
+    &#39;Service Levels&#39;[Service Level Type] = &quot;START&quot;
+)
+</pre>
+</div></div><p><strong>Measure: TotalHoldingSC</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalHoldingSC =
+VAR TargetDate = DATE(2025, 3, 31)
+VAR MaxAvailableDate =
+    CALCULATE(
+        MAX(&#39;account holdings Date&#39;[account holdings date]),
+        &#39;account holdings Date&#39;[account holdings date] &lt;= TargetDate
+    )
+RETURN
+    CALCULATE(
+        SUM(&#39;Account holdings monthly&#39;[Holding NZD SafeKeeping]),
+        &#39;Asset&#39;[sedol] &lt;&gt; &quot;Unsupervised&quot;,
+        &#39;asset&#39;[Valuation Method] = &quot;Accumulation&quot;,
+        &#39;asset&#39;[Market Code] &lt;&gt; &quot;Unlisted&quot;,
+        &#39;account holdings Date&#39;[account holdings date] = MaxAvailableDate
+    )
+</pre>
+</div></div><p><strong>Measure: TotalHolding</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalHolding =
+[TotalHoldingSC] + [TotalHoldingMPS] + [TotalSTART]
+</pre>
+</div></div><hr/><h3 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-Step2:CreatetheCalculatedTable"><strong>Step 2: Create the Calculated Table</strong></h3><p>Now, we'll create a calculated table in Power BI that summarizes the data as per your DAX query.</p><h4 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-2.1CreateaCalculatedTable"><strong>2.1 Create a Calculated Table</strong></h4><p>In Power BI, go to <strong>Modeling</strong> &gt; <strong>New Table</strong> and enter the following DAX code:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">HoldingsSummaryTable =
+VAR AccountTable =
+    SUMMARIZE(
+        &#39;Account&#39;,
+        &#39;Account&#39;[Account Number],
+        &#39;Service Levels&#39;[Service Level Display Name],
+        &#39;Service Levels&#39;[Service Level],
+        &#39;Service Levels&#39;[Service Level Short Name]
+    )
+RETURN
+    ADDCOLUMNS(
+        AccountTable,
+        &quot;TotalTDIncAI&quot;, [TotalTDIncAI],
+        &quot;TotalTDAI&quot;, [TotalTDAI],
+        &quot;TotalTDFaceValue&quot;, [TotalTDFaceValue],
+        &quot;TotalTDInterestPaid&quot;, [TotalTDInterestPaid],
+        &quot;TotalTDTaxPaid&quot;, [TotalTDTaxPaid],
+        &quot;TotalTDInterestGross&quot;, [TotalTDInterestGross],
+        &quot;TotalCMInterest&quot;, [TotalCMInterest],
+        &quot;TotalCMTax&quot;, [TotalCMTax],
+        &quot;TotalCMGross&quot;, [TotalCMGross],
+        &quot;TotalCMBalance&quot;, [TotalCMBalance],
+        &quot;TotalCSLIntTax&quot;, [TotalCSLIntTax],
+        &quot;TotalCSLIntNet&quot;, [TotalCSLIntNet],
+        &quot;TotalCSLIntGross&quot;, [TotalCSLIntGross],
+        &quot;TotalCSLDivTax&quot;, [TotalCSLDivTax],
+        &quot;TotalCSLDivNet&quot;, [TotalCSLDivNet],
+        &quot;TotalCSLDivGross&quot;, [TotalCSLDivGross],
+        &quot;TotalHolding&quot;, [TotalHolding]
+    )
+</pre>
+</div></div><h4 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-2.2ApplyFilters"><strong>2.2 Apply Filters</strong></h4><p>In your original DAX query, you use <code>FILTER</code> to include only rows where certain measures are not blank or not zero.</p><p>We can replicate this in the calculated table using the <code>FILTER</code> function.</p><p>Update the calculated table definition:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">HoldingsSummaryTable =
+VAR AccountTable =
+    SUMMARIZE(
+        &#39;Account&#39;,
+        &#39;Account&#39;[Account Number],
+        &#39;Service Levels&#39;[Service Level Display Name],
+        &#39;Service Levels&#39;[Service Level],
+        &#39;Service Levels&#39;[Service Level Short Name]
+    )
+VAR AccountMeasures =
+    ADDCOLUMNS(
+        AccountTable,
+        &quot;TotalTDIncAI&quot;, [TotalTDIncAI],
+        &quot;TotalTDAI&quot;, [TotalTDAI],
+        &quot;TotalTDFaceValue&quot;, [TotalTDFaceValue],
+        &quot;TotalTDInterestPaid&quot;, [TotalTDInterestPaid],
+        &quot;TotalTDTaxPaid&quot;, [TotalTDTaxPaid],
+        &quot;TotalTDInterestGross&quot;, [TotalTDInterestGross],
+        &quot;TotalCMInterest&quot;, [TotalCMInterest],
+        &quot;TotalCMTax&quot;, [TotalCMTax],
+        &quot;TotalCMGross&quot;, [TotalCMGross],
+        &quot;TotalCMBalance&quot;, [TotalCMBalance],
+        &quot;TotalCSLIntTax&quot;, [TotalCSLIntTax],
+        &quot;TotalCSLIntNet&quot;, [TotalCSLIntNet],
+        &quot;TotalCSLIntGross&quot;, [TotalCSLIntGross],
+        &quot;TotalCSLDivTax&quot;, [TotalCSLDivTax],
+        &quot;TotalCSLDivNet&quot;, [TotalCSLDivNet],
+        &quot;TotalCSLDivGross&quot;, [TotalCSLDivGross],
+        &quot;TotalHolding&quot;, [TotalHolding]
+    )
+RETURN
+    FILTER(
+        AccountMeasures,
+        NOT (
+            ISBLANK([TotalCMInterest]) &amp;&amp;
+            ISBLANK([TotalCMGross]) &amp;&amp;
+            ISBLANK([TotalCMTax]) &amp;&amp;
+            ISBLANK([TotalTDIncAI]) &amp;&amp;
+            ISBLANK([TotalTDInterestPaid]) &amp;&amp;
+            (ISBLANK([TotalCMBalance]) || [TotalCMBalance] &lt;= 0) &amp;&amp;
+            ISBLANK([TotalCSLIntTax]) &amp;&amp;
+            ISBLANK([TotalCSLIntNet]) &amp;&amp;
+            ISBLANK([TotalCSLIntGross]) &amp;&amp;
+            ISBLANK([TotalCSLDivTax]) &amp;&amp;
+            ISBLANK([TotalCSLDivNet]) &amp;&amp;
+            ISBLANK([TotalCSLDivGross]) &amp;&amp;
+            ISBLANK([TotalHolding]) &amp;&amp;
+            [TotalHolding] = 0
+        )
+    )
+</pre>
+</div></div><h4 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-Explanation:"><strong>Explanation:</strong></h4><ul><li><p><strong>AccountTable:</strong> Summarizes the accounts and service level information.</p></li><li><p><strong>AccountMeasures:</strong> Adds the calculated measures to each account.</p></li><li><p><strong>FILTER:</strong> Removes rows where all the specified measures are blank or zero.</p></li></ul><h4 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-AlternativeFilterLogic:"><strong>Alternative Filter Logic:</strong></h4><p>If you prefer to include only rows where at least one of the measures is not blank or not zero, you can adjust the <code>FILTER</code> condition accordingly.</p><hr/><h3 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-Step3:HandleDateParametersintheCalculatedTable"><strong>Step 3: Handle Date Parameters in the Calculated Table</strong></h3><p>Since the measures already handle the date parameters using <code>TargetDate</code> and <code>TargetYear</code>, the calculated table will automatically use these dates when evaluating the measures.</p><p>If you wish to make <code>TargetDate</code> and <code>TargetYear</code> dynamic across all measures, you can create them as separate measures or variables and reference them.</p><p>For example, create a measure:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TargetDate =
+DATE(2025, 3, 31)  // Or use a dynamic date
+</pre>
+</div></div><p>And in your other measures, reference <code>[TargetDate]</code> instead of defining <code>TargetDate</code> in each measure.</p><p>However, note that variables in DAX measures are scoped to the measure and cannot be shared across measures. To make a value reusable across measures, you need to create a separate measure or use parameters.</p><hr/><h3 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-Step4:TestandValidate"><strong>Step 4: Test and Validate</strong></h3><ul><li><p><strong>Test the Calculated Table:</strong> Ensure that the <code>HoldingsSummaryTable</code> shows the expected data.</p></li><li><p><strong>Validate Measures:</strong> Cross-check the measures against known values or the original SQL output.</p></li><li><p><strong>Handle Blanks and Zeros:</strong> Adjust the filter logic if needed to include or exclude certain rows.</p></li></ul><hr/><h3 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-Optional:UsingParametersforDates"><strong>Optional: Using Parameters for Dates</strong></h3><p>To make the date and year dynamic, you can use Power BI's <strong>What-If Parameters</strong>.</p><h4 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-CreateaDateParameter"><strong>Create a Date Parameter</strong></h4><ol start="1"><li><p>Go to <strong>Modeling</strong> &gt; <strong>New Parameter</strong> &gt; <strong>Fields</strong>.</p></li><li><p>Create a parameter named <code>TargetDateParameter</code> with a date range.</p></li><li><p>This will create a slicer in your report for the date.</p></li></ol><h4 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-UsetheParameterinMeasures"><strong>Use the Parameter in Measures</strong></h4><p>Update your measures to use the parameter:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalTDIncAI =
+VAR TargetDate = [TargetDateParameter]
+VAR MaxAvailableDate =
+    CALCULATE(
+        MAX(&#39;account holdings Date&#39;[account holdings date]),
+        &#39;account holdings Date&#39;[account holdings date] &lt;= TargetDate
+    )
+...
+</pre>
+</div></div><hr/><h3 id="ReconstructtheAEOIFinancialslusingDAXinPowerBI-Conclusion"><strong>Conclusion</strong></h3><p>By following these steps, you can reconstruct the table from your SQL script in Power BI using DAX measures and a calculated table. The date handling is adjusted to use variables or parameters within the DAX measures, ensuring consistency with your original script.</p><p><strong>Note:</strong> Ensure that all table and column names in the DAX formulas match exactly with those in your Power BI data model. Also, verify that relationships between tables are correctly set up.</p><hr/><p>If you have any questions or need further assistance with specific parts of this process, please let me know, and I'll be happy to help!</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

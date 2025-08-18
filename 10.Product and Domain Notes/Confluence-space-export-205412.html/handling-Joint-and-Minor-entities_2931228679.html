@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : handling Joint and Minor entities</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : handling Joint and Minor entities
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 08-01-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is a <strong>practical</strong> guide for handling <strong>Joint</strong> and <strong>Minor</strong> entities in your existing code—both <strong>why</strong> they might cause complications and <strong>how</strong> you can manage them within the same logic. We’ll also discuss how to use tools like <code>ROW_NUMBER()</code> if you need to limit or label rows in these scenarios.</p><hr/><h2 id="handlingJointandMinorentities-1.Why“Joint”and“Minor”AccountsCanBeTricky">1. Why “Joint” and “Minor” Accounts Can Be Tricky</h2><ol start="1"><li><p><strong>Joint Accounts</strong></p><ul><li><p>Often have <strong>two or more</strong> primary account holders, each potentially foreign or non-foreign.</p></li><li><p>You could end up with multiple rows for the same <code>EntityID</code> because each account holder is stored separately in <code>dsl_roles</code>.</p></li><li><p>In FATCA/CRS, you typically must report <em>all</em> holders if at least one is foreign.</p></li></ul></li><li><p><strong>Minor Under 18 yrs</strong></p><ul><li><p>The “minor” is typically the named beneficial owner.</p></li><li><p>A <strong>guardian</strong> or <strong>authorized person</strong> may be the actual controlling person (possibly foreign).</p></li><li><p>Like joint accounts, multiple individuals (the minor + guardian(s)) could appear.</p></li></ul></li></ol><p><strong>In short</strong>: You’ll naturally see multiple rows per entity—one for each person. This is <em>correct</em> if you’re building a “flat” output (one row per person). However, you may want to:</p><ul><li><p><strong>a)</strong> Keep multiple rows for complete detail, <strong>or</strong></p></li><li><p><strong>b)</strong> Collapse the data so you only see one “summary” row per entity (for certain reporting views).</p></li></ul><hr/><h2 id="handlingJointandMinorentities-2.HowtheCurrentCodeAlreadyHandlesTheseTypes">2. How the Current Code Already Handles These Types</h2><ol start="1"><li><p><strong>In </strong><code>#IndividualData</code></p><ul><li><p>You’re including rows where <code>TradingEntityType</code> is <code>'Individual', 'Joint', 'Minor Under 18 yrs'</code>.</p></li><li><p>That means foreign minors or foreign joint holders show up if they have a foreign TIN.</p></li><li><p>Guardians or co-holders who are foreign also appear if they meet the “authorized + foreign TIN” condition.</p></li></ul></li><li><p><strong>In </strong><code>#NonForeignAccHolderData</code></p><ul><li><p>You also include <code>'Minor', 'Individual','Bank Account Holder','Power of Attorney','Beneficiary'</code> roles for accounts flagged with at least one foreign person.</p></li><li><p>This ensures a <strong>non-foreign</strong> minor or joint holder is picked up as an <strong>account holder</strong> even if they themselves are not foreign.</p></li></ul></li></ol><p><strong>Result</strong>: For a “Joint” or “Minor” entity, your code naturally produces multiple rows—one per relevant contact. This is typical in “flat” reporting logic.</p><hr/><h2 id="handlingJointandMinorentities-3.IfYouNeedto“Limit”RowsforJointorMinorEntities">3. If You Need to “Limit” Rows for Joint or Minor Entities</h2><p>Sometimes, you only want <strong>one</strong> row per entity in a particular report (e.g., for quick summary tables). You can manage that with <strong>window functions</strong> like <code>ROW_NUMBER()</code>. For instance:</p><h3 id="handlingJointandMinorentities-ExampleUsingROW_NUMBER()"><strong>Example Using </strong><code>ROW_NUMBER()</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">WITH CTE AS 
+(
+    SELECT 
+        nfah.EntityID,
+        nfah.EntityName,
+        nfah.IndividualId        AS NonForeignAccHolderID,
+        nfah.AccHolderName       AS NonForeignAccHolderName,
+        id.IndividualId          AS ForeignPersonId,
+        id.IndividualName        AS ForeignPersonName,
+        -- Partition by EntityID and possibly ORDER BY something
+        ROW_NUMBER() OVER(
+            PARTITION BY nfah.EntityID 
+            ORDER BY nfah.AccHolderName
+        ) AS RowNum
+    FROM #NonForeignAccHolderData nfah
+    INNER JOIN #IndividualData id
+        ON nfah.EntityID = id.EntityID
+    WHERE nfah.dsl_tradingentitytype IN (&#39;Minor Under 18 yrs&#39;,&#39;Joint&#39;)
+)
+SELECT *
+FROM CTE
+WHERE RowNum = 1;  -- or some condition
+</pre>
+</div></div><ul><li><p><strong>Partition</strong>: <code>PARTITION BY nfah.EntityID</code> ensures each account starts counting at 1 again.</p></li><li><p><strong>Order</strong>: <code>ORDER BY nfah.AccHolderName</code> (or another column) decides <em>which</em> row is labeled as <code>RowNum=1</code>.</p></li><li><p><strong>Filter</strong>: <code>WHERE RowNum = 1</code> picks just the <em>first</em> row for each entity, effectively <strong>collapsing</strong> multiple holders into one row.</p></li></ul><p>If you want <strong>all</strong> rows but just want them labeled, remove the <code>WHERE RowNum = 1</code>.</p><hr/><h2 id="handlingJointandMinorentities-4.SpecialConsiderationsfor“MinorUnder18yrs”">4. Special Considerations for “Minor Under 18 yrs”</h2><ol start="1"><li><p><strong>Minor as Beneficial Owner</strong>:</p><ul><li><p>Usually flagged <code>dsl_BeneficialOwner=1</code>.</p></li></ul></li><li><p><strong>Guardian</strong> or <strong>Authorized Person</strong>:</p><ul><li><p>If the guardian is foreign, they appear in <strong>#IndividualData</strong> (because they have <code>dsl_Authorised=1</code>, a foreign TIN, etc.).</p></li><li><p>If the minor is not foreign, the minor appears in <strong>#NonForeignAccHolderData</strong> (non-foreign account holder) <em>if</em> the account is flagged by the guardian’s foreign status.</p></li></ul></li></ol><p><strong>Outcome</strong>: You can see <strong>2 rows</strong>: one for the minor, one for the guardian. If that’s correct for FATCA/CRS detail, keep it. If you only want a summary row, use <code>ROW_NUMBER()</code> as shown.</p><hr/><h2 id="handlingJointandMinorentities-5.SpecialConsiderationsfor“Joint”Entities">5. Special Considerations for “Joint” Entities</h2><ol start="1"><li><p><strong>Multiple Primary Holders</strong>:</p><ul><li><p>If multiple holders are foreign, you get multiple foreign controlling persons in <strong>#IndividualData</strong>.</p></li><li><p>If one holder is foreign and the other is local, the local one appears in <strong>#NonForeignAccHolderData</strong>.</p></li></ul></li><li><p><strong>Reporting</strong>: Typically, you do want both owners to appear in FATCA/CRS if at least one is foreign.</p></li></ol><p><strong>Outcome</strong>: You could end up with <strong>2 or more</strong> rows for the same entity. This is normal in a “flat” structure, but if you do <em>not</em> want duplicates in certain dashboards, again consider a <code>ROW_NUMBER()</code> approach or a grouping method.</p><hr/><h2 id="handlingJointandMinorentities-6.FinalRecommendations">6. Final Recommendations</h2><ol start="1"><li><p><strong>Keep Multiple Rows</strong> for “Joint” and “Minor” if:</p><ul><li><p>You want a <em>fully detailed listing</em>: one line per holder or guardian.</p></li><li><p>You’re eventually building an XML that supports multiple <code>&lt;ControllingPerson&gt;</code> or multiple <code>&lt;AccountHolder&gt;</code> nodes.</p></li></ul></li><li><p><strong>Use </strong><code>ROW_NUMBER()</code> or <strong>aggregate</strong> if:</p><ul><li><p>You only need a single row <strong>summary</strong> per entity (for quick checks or specialized reporting).</p></li><li><p>Then decide which row “wins” in the event of multiple holders.</p></li></ul></li><li><p><strong>Data Quality</strong>:</p><ul><li><p>Ensure the CRM flags are correct (e.g., <code>'Minor Under 18 yrs'</code>, <code>'Guardian'</code>, <code>dsl_Authorised=1</code>) so the code picks them up properly.</p></li><li><p>Watch for incomplete TIN data. If the guardian is foreign but missing the TIN, they’d be excluded by <code>AND ft2.cip_identification IS NOT NULL</code>.</p></li></ul></li></ol><p>By <strong>incorporating</strong> this logic (especially the ability to handle multiple rows) and possibly using <strong>window functions</strong> for deduplication or row selection, you’ll handle “Joint” and “Minor Under 18 yrs” entities smoothly in your FATCA/CRS flow.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : US Ax and fn Fucntions for Holdisng</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : US Ax and fn Fucntions for Holdisng
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 24-07-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h3 id="USAxandfnFucntionsforHoldisng-WhyCROSSAPPLYfn_Holdingfeelsslow">Why <code>CROSS APPLY fn_Holding</code> feels slow</h3><div class="table-wrap"><table data-table-width="1078" data-layout="center" data-local-id="bc5c46ce-1183-4393-90d2-713e95b78fc2" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>What happens under the hood</p></th><th class="confluenceTh"><p>Practical impact</p></th></tr><tr><td class="confluenceTd"><p><strong>Row‑by‑row execution.</strong> <code>CROSS APPLY</code> feeds <strong>one PortfolioID at a time</strong> into <code>fn_Holding</code>. SQL Server can’t batch them because the TVF takes a <em>single</em> scalar argument.</p></td><td class="confluenceTd"><p>50 portfolios ⇒ 50 separate executions. Each call spins up its own query plan (or CLR/Web‑service call) inside the TVF.</p></td></tr><tr><td class="confluenceTd"><p><strong>The TVF is almost certainly </strong><em><strong>multi‑statement</strong></em><strong> or CLR.</strong> You can check with:<code>SELECT is_inlineable, is_table_value_function, uses_ansi_nulls FROM sys.objects WHERE name = 'fn_Holding';</code></p></td><td class="confluenceTd"><p>Multi‑statement / CLR TVFs run like black‑box stored procs: no parallelism, no predicate push‑down, higher context‑switch cost.</p></td></tr><tr><td class="confluenceTd"><p><strong>Inside </strong><code>fn_Holding</code> there is usually one of two patterns:1. <em>Pure SQL</em>: it queries an internal <strong>Holdings</strong> table/view, aggregates settled + unsettled, converts currency, etc.2. <em>CLR wrapper</em>: it calls Chelmer’s “live holdings” web‑service and streams the JSON/XML back into rows.</p></td><td class="confluenceTd"><p>Pattern #2 is most common in Fusion sites. Each call does an HTTP request → waits on the API → parses results. Latency piles up almost linearly with portfolio count.</p></td></tr><tr><td class="confluenceTd"><p><strong>The calling query blocks on each call.</strong> Even if the TVF itself does I/O asynchronously, control doesn’t return to the outer query until the function finishes.</p></td><td class="confluenceTd"><p>Your SSMS window just sits there, so it <em>looks</em> like the <code>CROSS APPLY</code> is the slow bit—because it is.</p></td></tr></tbody></table></div><hr/><h3 id="USAxandfnFucntionsforHoldisng-Howtoseethehiddenwork">How to <em>see</em> the hidden work</h3><div class="table-wrap"><table data-table-width="1136" data-layout="center" data-local-id="1b8837de-73db-42ae-b248-f2b6500feeda" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Tool</p></th><th class="confluenceTh"><p>What to run</p></th><th class="confluenceTh"><p>What you’ll learn</p></th></tr><tr><td class="confluenceTd"><p><strong>View the TVF definition</strong></p></td><td class="confluenceTd"><p><code>sp_helptext 'DataServices.dbo.fn_Holding';</code></p></td><td class="confluenceTd"><p>Confirms whether it’s pure T‑SQL or CLR.</p></td></tr><tr><td class="confluenceTd"><p><strong>Actual execution plan</strong></p></td><td class="confluenceTd"><p>Enable <em>Include Actual Execution Plan</em> (Ctrl + M) <strong>before</strong> running the query. The plan will show one <code>Table‑valued function [fn_Holding]</code> operator repeated or nested looped.</p></td><td class="confluenceTd"><p>You’ll see <code>Actual Number of Rows = 50</code> (one per apply) and any waits (e.g., <code>ASYNC_NETWORK_IO</code>, <code>CLR_WAIT</code>).</p></td></tr><tr><td class="confluenceTd"><p><strong>Extended Events / Profiler</strong></p></td><td class="confluenceTd"><p>Trace <code>RPC:Completed</code> &amp; <code>SP:Completed</code> for <code>fn_Holding</code> or the underlying CLR proc.</p></td><td class="confluenceTd"><p>Measures per‑call latency and confirms if an HTTP call is made.</p></td></tr><tr><td class="confluenceTd"><p><strong>DMVs</strong></p></td><td class="confluenceTd"><p>While the query is running:<code>SELECT * FROM sys.dm_exec_requests WHERE session_id = @@SPID;</code>Look at <code>wait_type</code> and <code>wait_time</code>.</p></td><td class="confluenceTd"><p><code>EXTERNAL_WAIT</code> or <code>PREEMPTIVE_OS_WAITFORSINGLEOBJECT</code> usually = waiting on CLR / network.</p></td></tr></tbody></table></div><hr/><h3 id="USAxandfnFucntionsforHoldisng-Speed‑upoptions">Speed‑up options</h3><div class="table-wrap"><table data-table-width="1102" data-layout="center" data-local-id="7becd659-d09d-4528-aaa7-0fbe99e4230d" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Approach</p></th><th class="confluenceTh"><p>What to change</p></th><th class="confluenceTh"><p>Gain</p></th></tr><tr><td class="confluenceTd"><p><strong>Batch portfolios into one call</strong></p></td><td class="confluenceTd"><p>Ask Dev team for a new TVF <code>fn_HoldingBulk(@AsAt datetime, @List nvarchar(max))</code> that accepts a CSV / TVP of portfolios and returns all rows in one go.</p></td><td class="confluenceTd"><p>One HTTP trip instead of 50; allows set‑based execution and parallelism.</p></td></tr><tr><td class="confluenceTd"><p><strong>Cache live holdings locally</strong></p></td><td class="confluenceTd"><p>Schedule a job every n minutes: <code>SELECT * INTO dbo.LiveHoldingCache FROM fn_Holding(GETDATE(), 'trade', default, default, default);</code></p></td><td class="confluenceTd"><p>Compliance script becomes a simple join—no web‑service in the hot path.</p></td></tr><tr><td class="confluenceTd"><p><strong>Fallback to T‑1 snapshot</strong></p></td><td class="confluenceTd"><p>If “live to the second” isn’t mandatory, flip to <code>WebHoldings</code> (already bulk, already aggregated).</p></td><td class="confluenceTd"><p>Runs in a single I/O‑bound query, finishes in seconds.</p></td></tr><tr><td class="confluenceTd"><p><strong>Parallelise in T‑SQL</strong> (quick‑and‑dirty)</p></td><td class="confluenceTd"><p>Split <code>PortList</code> into 4‑8 ranges and fire the same <code>CROSS APPLY</code> in parallel via SQL Agent job steps or Service Broker.</p></td><td class="confluenceTd"><p>CPU &amp; network overlap can cut wall‑clock, but increases load.</p></td></tr><tr><td class="confluenceTd"><p><strong>Trim the ask</strong></p></td><td class="confluenceTd"><p>Pull only US markets + non‑zero balances directly inside <code>fn_Holding</code> (if you can edit it).</p></td><td class="confluenceTd"><p>Reduces payload size before it leaves the function.</p></td></tr></tbody></table></div><hr/><h3 id="USAxandfnFucntionsforHoldisng-TL;DR">TL;DR</h3><p><code>CROSS APPLY</code><em> is not slow in itself; it’s acting like a <strong>loop</strong> over </em><code>fn_Holding</code><em>, and that function calls a live holdings web‑service (or runs heavy SQL) once per portfolio.</em><br/>Until you batch those portfolios—or cache results—you’ll wait roughly <em>50 × (average TVF call time)</em>. Use the profiling steps above to confirm the internal call pattern, then pick the optimisation that best fits your latency vs. freshness trade‑off.</p><p /><p><strong>Short answer — yes, if you only ever run it for ~100 portfolios, the row‑by‑row </strong><code>CROSS APPLY</code><strong> is the simplest thing that will work, and the load on Chelmer’s API is unlikely to cause trouble.</strong><br/>Here’s what to check before you commit:</p><div class="table-wrap"><table data-layout="default" data-local-id="1467a500-0bf1-4b26-877d-b9b0a2ecca4a" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Check‑point</p></th><th class="confluenceTh"><p>Rule of thumb</p></th><th class="confluenceTh"><p>How to gauge it</p></th></tr><tr><td class="confluenceTd"><p><strong>Per‑call latency</strong></p></td><td class="confluenceTd"><p>≤ 500 ms is fine. 112 calls × 0.5 s ≈ 1 minute total runtime.</p></td><td class="confluenceTd"><p>Run:<code>SET STATISTICS TIME ON; SELECT COUNT(*) FROM fn_Holding(GETDATE(),'trade','234715','','');</code></p></td></tr><tr><td class="confluenceTd"><p><strong>API rate‑limit / throttling</strong></p></td><td class="confluenceTd"><p>Chelmer’s public guidance is usually ≥ 1 req/s. 112 serial calls sit well below that.</p></td><td class="confluenceTd"><p>Do you ever see HTTP 429 in Fusion logs? If not, you’re safe.</p></td></tr><tr><td class="confluenceTd"><p><strong>Compliance SLA</strong></p></td><td class="confluenceTd"><p>If “under 2 minutes” is acceptable, no need to optimise.</p></td><td class="confluenceTd"><p>Measure a full run with <code>TOP (112)</code> removed.</p></td></tr><tr><td class="confluenceTd"><p><strong>Future growth</strong></p></td><td class="confluenceTd"><p>Add a comment in the script: “&gt; ⚠️ If portfolio count exceeds 500, revisit batching/caching.”</p></td><td class="confluenceTd"><p>Keeps the next maintainer alert.</p></td></tr></tbody></table></div><hr/><h3 id="USAxandfnFucntionsforHoldisng-Tinytweaksthatcostnothing">Tiny tweaks that cost nothing</h3><ol start="1"><li><p><strong>Cap the run to portfolios that actually hold US securities</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">WITH PortList AS (
+    SELECT DISTINCT PortfolioID
+    FROM   ##USTAXPayers
+    WHERE  PortfolioID IS NOT NULL
+      AND  ps_HoldingsValue &gt; 0          -- already in your temp table
+)
+</pre>
+</div></div><p>Fewer calls, same outcome.</p></li><li><p><strong>Throttle very lightly</strong> (optional)</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">WAITFOR DELAY &#39;00:00:00.200&#39;;  -- 200 ms pause
+</pre>
+</div></div><p>inside the <code>CROSS APPLY</code> loop is over‑kill for 112 rows, but a nice guard if you ever jump to ~400.</p></li><li><p><strong>Log the runtime once</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">DECLARE @t datetime2 = SYSDATETIME();
+… your whole step 3 …
+PRINT &#39;fn_Holding sweep: &#39; 
+      + CONVERT(varchar(10), DATEDIFF(ms,@t,SYSDATETIME())) + &#39; ms&#39;;
+</pre>
+</div></div><p>Gives you proof of performance drift later.</p></li></ol><hr/><h3 id="USAxandfnFucntionsforHoldisng-Whenyouwouldswitchtoacache/bulkcall">When you <em>would</em> switch to a cache/bulk call</h3><div class="table-wrap"><table data-layout="default" data-local-id="a7227b4e-f5d2-40f2-8ec5-4a1e37b9d410" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Symptom</p></th><th class="confluenceTh"><p>Fix</p></th></tr><tr><td class="confluenceTd"><p>Run time creeps past 5 minutes.</p></td><td class="confluenceTd"><p>Bulk TVF or hourly cache.</p></td></tr><tr><td class="confluenceTd"><p>Ops flags “excessive API traffic.”</p></td><td class="confluenceTd"><p>Same as above, plus Δ in schedule.</p></td></tr><tr><td class="confluenceTd"><p>Ben starts asking for “live” numbers on 1 000+ portfolios.</p></td><td class="confluenceTd"><p>Definitely bulk or cache.</p></td></tr></tbody></table></div><hr/><p><strong>Bottom line:</strong> keep the current <code>CROSS APPLY</code> for your 112 portfolios, add one or two light safeguards, and note in the header comment that the design assumes &lt; 500 live API calls per run. You’ll meet the deadline without new moving parts, and you can always optimise later if the footprint grows.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:54</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

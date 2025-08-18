@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : CITI to CSL to CRM data explained</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : CITI to CSL to CRM data explained
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 05-02-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">     ┌─────────────────────────────┐
+     │    CitiImportFiles (CITI)   │
+     │  - Unique ISIN values       │
+     │  - Fin_Year, File_Type      │
+     └─────────────┬───────────────┘
+                   │   (CTE: CitiCTE)
+                   │   Extract Unique ISINs
+                   ▼
+     ┌─────────────────────────────┐
+     │   [CTE / Intended Filter]   │
+     │       Unique ISINs          │
+     └─────────────┬───────────────┘
+                   │
+                   │   (Optional Filter)
+                   ▼
+     ┌─────────────────────────────┐
+     │   Fusion System Data        │
+     │  (Issue, Asset, Exchange)   │
+     │  - ISIN                     │
+     │  - SecCode                  │
+     │  - Exchange                 │
+     └─────────────┬───────────────┘
+                   │
+                   │  (Mapping Join)
+                   ▼
+     ┌─────────────────────────────┐
+     │      Temporary Table        │
+     │         #Fusion             │
+     │  - ISIN, SecCode, Exchange  │
+     └─────────────┬───────────────┘
+                   │
+                   │  (Join on SecCode &amp; Exchange)
+                   ▼
+     ┌─────────────────────────────┐
+     │   Transaction Data          │
+     │  (tblTransaction from SQLCIP)│
+     │  - CRM AccID                │
+     │  - SecCode, Exchange        │
+     │  - Other transaction fields │
+     └─────────────┬───────────────┘
+                   │
+                   │   (Join: #Fusion ⋈ tblTransaction)
+                   ▼
+     ┌─────────────────────────────┐
+     │     Temporary Table         │
+     │          #CSL               │
+     │  - Enriched records with    │
+     │    ISIN, CRM AccID, etc.    │
+     └─────────────┬───────────────┘
+                   │
+                   │  (Insert data)
+                   ▼
+     ┌─────────────────────────────┐
+     │  CSLTransactionsStaging     │
+     │  - Final staging table      │
+     │    with enriched data       │
+     └─────────────┬───────────────┘
+                   │
+                   │  (Backup/Snapshot)
+                   ▼
+     ┌─────────────────────────────┐
+     │ CSLTransactionsStagingBackup│
+     │       Snapshot              │
+     └─────────────────────────────┘</pre>
+</div></div><h3 id="CITItoCSLtoCRMdataexplained-ExplanationoftheDiagram">Explanation of the Diagram</h3><ol start="1"><li><p><strong>CitiImportFiles (CITI Data):</strong></p><ul><li><p>The process begins with the <strong>CitiImportFiles</strong> table where unique ISIN values (and related file metadata) are selected for a given financial year and file type.</p></li><li><p>This data is intended to drive the selection of securities.</p></li></ul></li><li><p><strong>CTE / Intended Filter:</strong></p><ul><li><p>A CTE is used to extract unique ISINs. (Note: In the current version, the CTE is commented out in some joins, but it shows the original intention.)</p></li></ul></li><li><p><strong>Fusion System Data:</strong></p><ul><li><p>Data is then<span style="background-color: rgb(211,241,167);"> pulled from the Fusion system (via the Issue, Asset, and Exchange tables) to obtain security details such as ISIN, SecCode, and Exchange.</span></p></li><li><p>These details are stored in the temporary table <strong>#Fusion</strong>.</p></li></ul></li><li><p><strong>Join to Transaction Data (CRM Data):</strong></p><ul><li><p><span style="background-color: rgb(211,241,167);">The </span><strong><span style="background-color: rgb(211,241,167);">#Fusion</span></strong><span style="background-color: rgb(211,241,167);"> table is joined with the </span><strong><span style="background-color: rgb(211,241,167);">tblTransaction</span></strong><span style="background-color: rgb(211,241,167);"> table from SQLCIP.CSL</span>, where transaction records include the <span style="background-color: rgb(211,241,167);">CRM account identifier (</span><strong><span style="background-color: rgb(211,241,167);">AccID</span></strong><span style="background-color: rgb(211,241,167);">) along with other details</span>.</p></li><li><p>The join is performed using <strong>SecCode</strong> and <strong>Exchange</strong> to align the security details from Fusion with the transaction records.</p></li></ul></li><li><p><strong>Enriched Temporary Table (#CSL):</strong></p><ul><li><p>The resulting joined data (with ISIN from Fusion/CITI and AccID from the transactions) is stored in a temporary table <strong>#CSL</strong>.</p></li></ul></li><li><p><strong>Staging and Backup:</strong></p><ul><li><p>Finally, the enriched data is inserted into the staging table (<strong>CSLTransactionsStaging</strong>) and then backed up in <strong>CSLTransactionsStagingBackupSnapshot</strong>.</p></li></ul></li></ol><h3 id="CITItoCSLtoCRMdataexplained-WhyCan&#39;tCITIDataJointoCRMDataDirectlyviaISIN?"><strong>Why Can't CITI Data Join to CRM Data Directly via ISIN?</strong></h3><p>In the given SQL structure, <strong>CITI data</strong> (from <code>CitiImportFiles</code>) and <strong>CRM data</strong> (from <code>CRMClientDataSnapshot</code>) <strong>cannot be directly joined via ISIN</strong> because they represent two <strong>different business entities</strong> with no direct transactional link.</p><h4 id="CITItoCSLtoCRMdataexplained-UnderstandingtheBusinessLogic"><strong>Understanding the Business Logic</strong></h4><p>To understand why <strong>CITI data cannot directly join CRM data using ISIN</strong>, let’s analyze the <strong>business context</strong> behind each dataset:</p><hr/><h3 id="CITItoCSLtoCRMdataexplained-1️⃣WhatisCITIData?(CitiImportFiles)"><strong>1️⃣ What is CITI Data? (</strong><code>CitiImportFiles</code><strong>)</strong></h3><p>✅ <strong>Represents:</strong></p><ul><li><p>A file import containing <strong>financial transactions</strong> of securities (stocks, bonds, etc.).</p></li><li><p>Includes <strong>ISIN</strong> (International Securities Identification Number), which uniquely identifies a traded financial instrument.</p></li><li><p>Provides <strong>aggregated gross amounts, tax amounts</strong>, and <strong>income classification</strong>.</p></li></ul><p>🚨 <strong>What CITI data does NOT include:</strong></p><ul><li><p>It does <strong>not</strong> contain <strong>AccID</strong> (Account ID of CRM clients).</p></li><li><p>It does <strong>not</strong> store <strong>customer-specific</strong> transactions, only aggregated tax information per security.</p></li></ul><hr/><h3 id="CITItoCSLtoCRMdataexplained-2️⃣WhatisCRMData?(CRMClientDataSnapshot)"><strong>2️⃣ What is CRM Data? (</strong><code>CRMClientDataSnapshot</code><strong>)</strong></h3><p>✅ <strong>Represents:</strong></p><ul><li><p>A <strong>list of financial accounts &amp; entities</strong> that hold securities.</p></li><li><p>Includes <strong>AccID (PortfolioNo)</strong> as the unique customer/account identifier.</p></li><li><p>Stores <strong>tax country codes, addresses, and entity classifications</strong> for each account.</p></li></ul><p>🚨 <strong>What CRM data does NOT include:</strong></p><ul><li><p>It does <strong>not</strong> contain <strong>ISIN</strong> directly.</p></li><li><p>It does <strong>not</strong> track security transactions or tax amounts at the <strong>instrument level</strong>.</p></li></ul><hr/><h3 id="CITItoCSLtoCRMdataexplained-3️⃣WhatisCSLData?(CSLTransactionsStaging)"><strong>3️⃣ What is CSL Data? (</strong><code>CSLTransactionsStaging</code><strong>)</strong></h3><p>✅ <strong>Represents:</strong></p><ul><li><p>Actual <strong>customer transactions</strong> involving securities.</p></li><li><p>Connects <strong>CITI securities (ISIN)</strong> to <strong>CRM customers (AccID)</strong> via <strong>transactions</strong>.</p></li></ul><p>🚀 <strong>Why is CSL Important?</strong></p><ul><li><p>CSL acts as the <strong>bridge</strong> between CITI data and CRM data.</p></li><li><p>CSL contains <strong>both ISIN and AccID</strong>, making it the <strong>only way to link CITI and CRM data</strong>.</p></li></ul><hr/><h3 id="CITItoCSLtoCRMdataexplained-🔗TheCorrectJoinPath:"><strong>🔗 The Correct Join Path:</strong></h3><p>Since ISIN exists in CITI but <strong>not</strong> in CRM, and AccID exists in CRM but <strong>not</strong> in CITI, the <strong>only way to connect</strong> these datasets is through CSL:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">[CITI (ISIN)]  ← (JOIN on ISIN) →  [CSL Transactions (ISIN + AccID)]  ← (JOIN on AccID) →  [CRM (AccID)]
+</pre>
+</div></div><p>Thus, the <strong>correct way to link CITI data with CRM data</strong> is:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">FROM CITI citi
+LEFT JOIN CSL csl ON citi.ISIN = csl.ISIN AND citi.Fin_Year = csl.Fin_Year
+LEFT JOIN CRM crm ON csl.AccID = crm.AccID;
+</pre>
+</div></div><hr/><h3 id="CITItoCSLtoCRMdataexplained-❌WhyCan&#39;tWeDoCITIJOINCRMONISIN?"><strong>❌ Why Can't We Do </strong><code>CITI JOIN CRM ON ISIN</code><strong>?</strong></h3><ol start="1"><li><p><strong>CITI Data Only Tracks Securities (Not Clients)</strong></p><ul><li><p>ISIN belongs to <strong>securities</strong>, not customers/accounts.</p></li><li><p>There is no direct way to know which customer owns which security in CITI data.</p></li></ul></li><li><p><strong>CRM Data Tracks Clients (Not Securities)</strong></p><ul><li><p>CRM data is based on <strong>accounts</strong>, not <strong>individual securities</strong>.</p></li><li><p>It does not track which securities each account holds.</p></li></ul></li><li><p><strong>CSL is the Missing Link</strong></p><ul><li><p>CSL contains <strong>both ISIN (from securities) and AccID (from clients)</strong>.</p></li><li><p>It records actual <strong>transactions where customers buy/sell securities</strong>.</p></li></ul></li></ol><hr/><h3 id="CITItoCSLtoCRMdataexplained-📌FinalTakeaway"><strong>📌 Final Takeaway</strong></h3><ul><li><p><strong>You MUST use CSL transactions as the bridge</strong> to connect CITI (securities) to CRM (clients).</p></li><li><p><strong>ISIN belongs to securities</strong>, while <strong>AccID belongs to accounts</strong>—so they don’t directly match.</p></li><li><p><strong>CSL Transactions contain both ISIN and AccID</strong>, allowing for the correct join.</p></li></ul><p>🚀 <strong>By following this logic, you ensure accurate data relationships for Power BI analysis!</strong> 🎯</p><p /><p /><h3 id="CITItoCSLtoCRMdataexplained-Analysisofspr_LoadTransactionsCSL"><strong>Analysis of </strong><code>spr_LoadTransactionsCSL</code></h3><p>The stored procedure <code>spr_LoadTransactionsCSL</code> is responsible for <strong>loading transaction data</strong> into the <code>CSLTransactionsStaging</code> table. This staging table acts as an <strong>intermediate data store</strong> that enables joins between <strong>CITI data (securities)</strong> and <strong>CSL transactions (client accounts &amp; securities)</strong>.</p><hr/><h2 id="CITItoCSLtoCRMdataexplained-HowisCSLTransactionsStagingCreated?"><strong>How is </strong><code>CSLTransactionsStaging</code><strong> Created?</strong></h2><p>The stored procedure follows these steps to populate <code>CSLTransactionsStaging</code>:</p><h3 id="CITItoCSLtoCRMdataexplained-Step1:ExtractUniqueISINsfromCITIData"><strong>Step 1: Extract Unique ISINs from CITI Data</strong></h3><p>A <strong>Common Table Expression (CTE)</strong> extracts distinct <strong>ISINs</strong> from the <strong>CitiImportFiles</strong> table:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">;WITH CTE AS (
+    SELECT DISTINCT ISIN, Security_Description, File_Type
+    FROM dbo.CitiImportFiles
+    WHERE File_Type = @File_Type
+      AND Fin_Year = @Fin_Year
+)
+</pre>
+</div></div><ul><li><p>This ensures that <strong>only relevant securities</strong> (based on financial year and file type) are considered.</p></li><li><p><strong>Purpose</strong>: The CITI data provides a list of <strong>securities traded</strong> during the specified financial year.</p></li></ul><hr/><h3 id="CITItoCSLtoCRMdataexplained-Step2:MapCITIDatatoFusionSecurities"><strong>Step 2: Map CITI Data to Fusion Securities</strong></h3><p>A <strong>temporary table </strong><code>#Fusion</code> is created to <strong>enrich the extracted ISINs</strong> with additional details from the Fusion system.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT
+    @File_Type AS File_Type,
+    LTRIM(RTRIM(i.isin)) AS ISIN,
+    i.assetCode AS AssetCode, 
+    a.code AS SecCode,
+    i.name AS IssueName,
+    e.code AS Exchange
+INTO #Fusion
+FROM 
+    AACARPTSRV.fusion.dbo.Issue i 
+    LEFT JOIN AACARPTSRV.fusion.dbo.Asset a ON i.issueID = a.issueID
+    LEFT JOIN AACARPTSRV.fusion.dbo.Exchange e ON a.exchangeID = e.exchangeID
+WHERE 
+    a.currencyID = 1
+</pre>
+</div></div><ul><li><p><strong>Why is this important?</strong></p><ul><li><p>The <code>Fusion</code> system provides <strong>security details (Asset Code, Exchange, etc.)</strong> that are not present in the CITI files.</p></li><li><p>This ensures that each <strong>ISIN is mapped to a standard security identifier (</strong><code>SecCode</code><strong>)</strong>.</p></li></ul></li></ul><hr/><h3 id="CITItoCSLtoCRMdataexplained-Step3:JoinTransactionswithSecurities"><strong>Step 3: Join Transactions with Securities</strong></h3><p>After preparing the <strong>#Fusion</strong> table, the procedure <strong>loads actual CSL transaction data</strong> into <code>#CSL</code>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    c.ISIN, t.*
+INTO #CSL
+FROM SQLCIP.CSL.dbo.tblTransaction t 
+JOIN #Fusion c 
+    ON t.SecCode COLLATE DATABASE_DEFAULT = c.SecCode COLLATE DATABASE_DEFAULT 
+   AND t.Exchange COLLATE DATABASE_DEFAULT = c.Exchange COLLATE DATABASE_DEFAULT
+WHERE 
+    CAST(AsAtDate AS DATE) BETWEEN @DateFrom AND @DateTo
+    AND RecCurrency = 4
+</pre>
+</div></div><ul><li><p><strong>Purpose</strong>: This joins <strong>CSL transaction records (client trades)</strong> with their <strong>respective securities</strong> from the Fusion system.</p></li><li><p><strong>Key Join Condition</strong>: <code>SecCode</code> and <code>Exchange</code> ensure that <strong>each transaction is mapped to the correct security</strong>.</p></li></ul><hr/><h3 id="CITItoCSLtoCRMdataexplained-Step4:LoadDataintoCSLTransactionsStaging"><strong>Step 4: Load Data into </strong><code>CSLTransactionsStaging</code></h3><p>Finally, the staged transactions (<strong>#CSL</strong>) are inserted into the <strong>staging table </strong><code>CSLTransactionsStaging</code>.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">INSERT INTO dbo.CSLTransactionsStaging (
+    Fin_Year, ISIN, tblTransactionID, AsAtDate, Reconcile, HoldType, SecCode, Qty, Exchange, 
+    IssueAName, SecurityAName, AccID, ParentClientID, PayDate, Tax1, Tax2, Tax1Amount, Tax2Amount, 
+    IncType, ProcessDate, NetPaid, TotalTax, GrossAmount, RecCurrency, DRP, ImputationCredit, 
+    SupDiv, ChequeID, MFee, LetterPrinted, SchedulePrinted, HeaderID, ExpenseID, ExpenseAmount, 
+    NetAmount, OldAccID, OldParentClientID, JournalDate, Tax3, Tax3Amount, WrapportImportDate, 
+    IRDReportingDate, TransactionStatus, TransactionIDReplaced
+)
+SELECT 
+    @Fin_Year AS Fin_Year, ISIN, tblTransactionID, AsAtDate, Reconcile, HoldType, t.SecCode, Qty, 
+    t.Exchange, IssueAName, SecurityAName, AccID, ParentClientID, PayDate, Tax1, Tax2, 
+    Tax1Amount, Tax2Amount, IncType, ProcessDate, NetPaid, TotalTax, GrossAmount, RecCurrency, 
+    DRP, ImputationCredit, SupDiv, ChequeID, MFee, LetterPrinted, SchedulePrinted, HeaderID, 
+    ExpenseID, ExpenseAmount, NetAmount, OldAccID, OldParentClientID, JournalDate, Tax3, 
+    Tax3Amount, WrapportImportDate, IRDReportingDate, TransactionStatus, TransactionIDReplaced
+FROM #CSL t
+</pre>
+</div></div><ul><li><p><strong>Why is this important?</strong></p><ul><li><p>The <strong>final data set now includes both</strong>:</p><ol start="1"><li><p><strong>Security details from Fusion</strong> (mapped via <code>SecCode</code> and <code>Exchange</code>).</p></li><li><p><strong>Transaction details from CSL</strong> (including <code>AccID</code> for CRM mapping).</p></li></ol></li></ul></li></ul><hr/><h2 id="CITItoCSLtoCRMdataexplained-WhyCanCSLTransactionsStagingJoinwithCITIData?"><strong>Why Can </strong><code>CSLTransactionsStaging</code><strong> Join with CITI Data?</strong></h2><p>The key reason <strong>CSL transactions can be linked to CITI data</strong> is that <strong>they both use ISIN as a common identifier</strong>. However, they exist at <strong>different levels</strong> in the business process:</p><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="addd7718-8b57-4ec1-a765-0dc36e651d6f" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p><strong>Dataset</strong></p></th><th class="confluenceTh"><p><strong>Main Identifier</strong></p></th><th class="confluenceTh"><p><strong>What It Tracks</strong></p></th></tr><tr><td class="confluenceTd"><p><strong>CITI Import Files</strong></p></td><td class="confluenceTd"><p>ISIN</p></td><td class="confluenceTd"><p>Securities &amp; Gross Tax Data (aggregated)</p></td></tr><tr><td class="confluenceTd"><p><strong>Fusion Security Mapping</strong></p></td><td class="confluenceTd"><p>ISIN → SecCode</p></td><td class="confluenceTd"><p>Security Details (mapped from ISIN)</p></td></tr><tr><td class="confluenceTd"><p><strong>CSL Transactions</strong></p></td><td class="confluenceTd"><p>SecCode → ISIN</p></td><td class="confluenceTd"><p>Individual transactions per account (AccID)</p></td></tr><tr><td class="confluenceTd"><p><strong>CSLTransactionsStaging</strong></p></td><td class="confluenceTd"><p>ISIN + AccID</p></td><td class="confluenceTd"><p>Transactions enriched with securities info</p></td></tr></tbody></table></div><h3 id="CITItoCSLtoCRMdataexplained-1️⃣HowtheJoinWorks"><strong>1️⃣ How the Join Works</strong></h3><ul><li><p>The CITI file only provides <strong>securities (ISINs) and their tax data</strong>.</p></li><li><p>CSL transactions provide <strong>real-world transactions by clients</strong>, but they <strong>store securities as SecCode instead of ISIN</strong>.</p></li><li><p>The stored procedure <strong>maps ISIN → SecCode via Fusion</strong> and then <strong>SecCode → AccID via CSL Transactions</strong>.</p></li></ul><h3 id="CITItoCSLtoCRMdataexplained-2️⃣TheCorrectJoinPath"><strong>2️⃣ The Correct Join Path</strong></h3><p>To join CITI data (securities) with CSL (transactions), we must:</p><ol start="1"><li><p><strong>Extract ISINs from CITI data.</strong></p></li><li><p><strong>Use Fusion to map ISIN → SecCode</strong>.</p></li><li><p><strong>Use CSL Transactions to map SecCode → AccID</strong>.</p></li><li><p><strong>Insert this enriched data into </strong><code>CSLTransactionsStaging</code>.</p></li></ol><h3 id="CITItoCSLtoCRMdataexplained-3️⃣HowCSLTransactionsStagingEnablesCRMJoins"><strong>3️⃣ How CSLTransactionsStaging Enables CRM Joins</strong></h3><p>Once in <code>CSLTransactionsStaging</code>, the dataset now contains:</p><ul><li><p><code>ISIN</code> (from CITI data)</p></li><li><p><code>SecCode</code> (mapped via Fusion)</p></li><li><p><code>AccID</code> (mapped via CSL transactions)</p></li><li><p><code>GrossAmount</code> and <code>TaxAmount</code> (financial data)</p></li></ul><p>This allows <strong>linking to CRM</strong> via <code>AccID</code>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">LEFT JOIN dbo.CRMClientDataSnapshot crm ON csl.AccID = crm.AccID;
+</pre>
+</div></div><hr/><h2 id="CITItoCSLtoCRMdataexplained-🚀FinalConclusion"><strong>🚀 Final Conclusion</strong></h2><p>✅ <code>CSLTransactionsStaging</code><strong> is created by mapping ISINs from CITI data to CSL transactions using the Fusion system.</strong><br/>✅ <strong>It allows joins between CITI (securities) and CRM (clients) via transaction history.</strong><br/>✅ <strong>Without this process, we couldn't analyze how securities relate to specific accounts.</strong></p><p>🚀 <strong>This staging table is the key to unlocking security-to-client relationships for financial analysis in Power BI!</strong> 🎯</p><p /><h3 id="CITItoCSLtoCRMdataexplained-WhereDoesCSLGrossAmountComeFrom?"><strong>Where Does CSL Gross Amount Come From?</strong></h3><p>The <strong>CSL Gross Amount</strong> comes from the <code>GrossAmount</code> field in the <code>CSLTransactionsStaging</code> table. This field is derived from the <strong>CSL transaction data (</strong><code>tblTransaction</code><strong> table)</strong> when inserting records into the staging table.</p><hr/><h2 id="CITItoCSLtoCRMdataexplained-Step-by-StepBreakdown"><strong>Step-by-Step Breakdown</strong></h2><h3 id="CITItoCSLtoCRMdataexplained-1️⃣ExtractingTransactionsfromCSL(tblTransaction)"><strong>1️⃣ Extracting Transactions from CSL (</strong><code>tblTransaction</code><strong>)</strong></h3><p>In the stored procedure, the transaction data is first extracted from the <code>SQLCIP.CSL.dbo.tblTransaction</code> table and stored in a temporary table <code>#CSL</code>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    c.ISIN, t.*
+INTO #CSL
+FROM SQLCIP.CSL.dbo.tblTransaction t 
+JOIN #Fusion c 
+    ON t.SecCode COLLATE DATABASE_DEFAULT = c.SecCode COLLATE DATABASE_DEFAULT 
+   AND t.Exchange COLLATE DATABASE_DEFAULT = c.Exchange COLLATE DATABASE_DEFAULT
+WHERE 
+    CAST(AsAtDate AS DATE) BETWEEN @DateFrom AND @DateTo
+    AND RecCurrency = 4
+</pre>
+</div></div><h4 id="CITItoCSLtoCRMdataexplained-KeyTakeaways:"><strong>Key Takeaways:</strong></h4><ul><li><p><code>tblTransaction</code> contains <strong>all CSL transaction records</strong>.</p></li><li><p>It is filtered <strong>by date range</strong> (<code>@DateFrom</code> to <code>@DateTo</code>).</p></li><li><p>Only transactions where <code>RecCurrency = 4</code> (likely indicating a specific currency) are considered.</p></li><li><p>The join with <code>#Fusion</code> ensures that only <strong>securities (ISIN) mapped from CITI data</strong> are included.</p></li></ul><hr/><h3 id="CITItoCSLtoCRMdataexplained-2️⃣LoadingTransactionsintoCSLTransactionsStaging"><strong>2️⃣ Loading Transactions into </strong><code>CSLTransactionsStaging</code></h3><p>After extracting transactions into <code>#CSL</code>, the data is inserted into <code>CSLTransactionsStaging</code>, including <code>GrossAmount</code>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">INSERT INTO [dbo].[CSLTransactionsStaging] 
+    ([Fin_Year],[ISIN],[tblTransactionID],[AsAtDate],[Reconcile],[HoldType],
+     [SecCode],[Qty],[Exchange],[IssueAName],[SecurityAName],[AccID],
+     [ParentClientID],[PayDate],[Tax1],[Tax2],[Tax1Amount],[Tax2Amount],[IncType],
+     [ProcessDate],[NetPaid],[TotalTax],[GrossAmount],[RecCurrency],[DRP],[ImputationCredit],
+     [SupDiv],[ChequeID],[MFee],[LetterPrinted],[SchedulePrinted],[HeaderID],[ExpenseID],
+     [ExpenseAmount],[NetAmount],[OldAccID],[OldParentClientID],[JournalDate],[Tax3],[Tax3Amount],
+     [WrapportImportDate],[IRDReportingDate],[TransactionStatus],[TransactionIDReplaced]) 
+SELECT 
+    @Fin_Year, ISIN, [tblTransactionID], [AsAtDate], [Reconcile], [HoldType],
+    t.[SecCode], [Qty], t.[Exchange], [IssueAName], [SecurityAName], [AccID],
+    [ParentClientID], [PayDate], [Tax1], [Tax2], [Tax1Amount], [Tax2Amount], [IncType],
+    [ProcessDate], [NetPaid], [TotalTax], [GrossAmount], [RecCurrency], [DRP], [ImputationCredit],
+    [SupDiv], [ChequeID], [MFee], [LetterPrinted], [SchedulePrinted], [HeaderID], [ExpenseID],
+    [ExpenseAmount], [NetAmount], [OldAccID], [OldParentClientID], [JournalDate], [Tax3], [Tax3Amount],
+    [WrapportImportDate], [IRDReportingDate], [TransactionStatus], [TransactionIDReplaced]
+FROM #CSL t
+</pre>
+</div></div><h4 id="CITItoCSLtoCRMdataexplained-KeyTakeaways:.1"><strong>Key Takeaways:</strong></h4><ul><li><p><code>GrossAmount</code> is <strong>taken directly from </strong><code>#CSL</code><strong>, which originally comes from </strong><code>tblTransaction</code>.</p></li><li><p>This means <code>GrossAmount</code> <strong>is already calculated in </strong><code>tblTransaction</code>, and the stored procedure <strong>does not modify or recompute it</strong>.</p></li></ul><hr/><h3 id="CITItoCSLtoCRMdataexplained-3️⃣UnderstandingGrossAmountintblTransaction"><strong>3️⃣ Understanding </strong><code>GrossAmount</code><strong> in </strong><code>tblTransaction</code></h3><p>The <strong>CSL Gross Amount (</strong><code>GrossAmount</code><strong>)</strong> is <strong>not calculated within this stored procedure</strong>. Instead:</p><ol start="1"><li><p>It <strong>already exists</strong> in the <code>tblTransaction</code> table.</p></li><li><p>It is extracted into <code>#CSL</code> and then moved into <code>CSLTransactionsStaging</code>.</p></li></ol><h4 id="CITItoCSLtoCRMdataexplained-WhereDoesGrossAmountComeFromintblTransaction?"><strong>Where Does </strong><code>GrossAmount</code><strong> Come From in </strong><code>tblTransaction</code><strong>?</strong></h4><ul><li><p>The <code>tblTransaction</code> table is part of the <strong>CSL system</strong>.</p></li><li><p>It likely <strong>stores raw financial transactions</strong>, including:</p><ul><li><p><strong>Trade amounts</strong></p></li><li><p><strong>Dividends</strong></p></li><li><p><strong>Interest</strong></p></li><li><p><strong>Capital gains</strong></p></li></ul></li><li><p><strong>GrossAmount</strong> is typically the <strong>total amount before tax deductions</strong>.</p></li></ul><hr/><h2 id="CITItoCSLtoCRMdataexplained-📌FinalAnswer:"><strong>📌 Final Answer:</strong></h2><p>✅ <strong>CSL Gross Amount (</strong><code>GrossAmount</code><strong>) is sourced from </strong><code>tblTransaction</code><strong> in the CSL system.</strong><br/>✅ <strong>It is extracted into </strong><code>#CSL</code><strong> and inserted into </strong><code>CSLTransactionsStaging</code><strong> without modification.</strong><br/>✅ <strong>It represents the total amount of a security transaction before tax deductions.</strong></p><p>🚀 <strong>This Gross Amount can be used in Power BI for financial and tax analysis!</strong> 🎯</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

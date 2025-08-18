@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 09. CIP:0209441Cashman accounts balance report By Brenden</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 09. CIP:0209441Cashman accounts balance report By Brenden
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 05-09-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h3 id="id-09.CIP:0209441CashmanaccountsbalancereportByBrenden-FullImplementationPlanforSSRSReportwithData-DrivenSubscription"> Full Implementation Plan for SSRS Report with Data-Driven Subscription</h3><p class="media-group"><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/2688352258/2699493399.rdl" data-nice-type="null" data-file-src="/wiki/download/attachments/2688352258/New%20Issues%20Debtors%20Report%20-%20By%20Adviser%20and%20Issues%20Closed%20Date.rdl?version=1&amp;modificationDate=1725569941815&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="2699493399" data-linked-resource-type="attachment" data-linked-resource-container-id="2688352258" data-linked-resource-default-alias="New Issues Debtors Report - By Adviser and Issues Closed Date.rdl" data-mime-type="application/rdl" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="45987246-4252-4ebc-a6e2-ea57ccf001e4" data-media-type="file"><img src="attachments/thumbnails/2688352258/2699493399" height="250"/></a></span></p><p /><p class="media-group"><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/2688352258/2699526149.sql" data-nice-type="null" data-file-src="/wiki/download/attachments/2688352258/New%20Issues%20Debtors%20-%20JF%20reviewed%20%235%20-%20Bring%20in%20the%20Currency%20Logcis%20-NI%20Currency.sql?version=2&amp;modificationDate=1725569959104&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="2699526149" data-linked-resource-type="attachment" data-linked-resource-container-id="2688352258" data-linked-resource-default-alias="New Issues Debtors - JF reviewed #5 - Bring in the Currency Logcis -NI Currency.sql" data-mime-type="binary/octet-stream" data-has-thumbnail="true" data-linked-resource-version="2" data-media-id="4d69226c-c254-4325-ad52-c727be104b3b" data-media-type="file"><img src="attachments/thumbnails/2688352258/2699526149" height="250"/></a></span></p><h4 id="id-09.CIP:0209441CashmanaccountsbalancereportByBrenden-Objective:"><strong>Objective:</strong></h4><p>To automate the process of generating and distributing an SSRS report to advisers when a &quot;New Issue&quot; is closed and the issue date matches the current date. The report will be sent via email as an Excel attachment.</p><hr/><h3 id="id-09.CIP:0209441CashmanaccountsbalancereportByBrenden-Step1:SubscriptionTriggerQuery"><strong>Step 1: Subscription Trigger Query</strong></h3><p>The query provided is designed to check if any &quot;New Issue&quot; has a status of 'Closed' and the issue date is today. If these conditions are met, it fetches relevant adviser information to be used in the main report.</p><p><strong>Key Considerations:</strong></p><ul><li><p><strong>Performance:</strong> Ensure that the query is optimized for performance, especially when dealing with large datasets.</p></li><li><p><strong>Security:</strong> Make sure that only authorized users have access to the data-driven subscription setup to avoid unauthorized data distribution.</p></li></ul><hr/><h3 id="id-09.CIP:0209441CashmanaccountsbalancereportByBrenden-Step2:DataSourceSetup"><strong>Step 2: Data Source Setup</strong></h3><p><strong>2.1 Data Source Configuration:</strong></p><ul><li><p><strong>Shared Data Source:</strong> Create a shared data source in SSRS that points to the SQL Server where the <code>SQLCIP</code> and <code>Dynamics</code> databases are hosted.</p></li><li><p><strong>Connection String:</strong> Use a connection string that includes the server name and database name. Example:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: text; gutter: false; theme: Confluence" data-theme="Confluence">Data Source=SQLCIP_Server;Initial Catalog=NewIssues</pre>
+</div></div></li><li><p><strong>Credentials:</strong> Set up the data source to use stored credentials if the report needs to run unattended, such as during a scheduled data-driven subscription.</p></li></ul><hr/><h3 id="id-09.CIP:0209441CashmanaccountsbalancereportByBrenden-Step3:DatasetsSetup"><strong>Step 3: Datasets Setup</strong></h3><p><strong>3.1 Subscription Trigger Dataset:</strong></p><ul><li><p><strong>Dataset Name:</strong> <code>ds_SubscriptionTrigger</code></p></li><li><p><strong>Query:</strong> Use the <code>Subscription Trigger Query</code> provided.</p></li><li><p><strong>Parameters:</strong> None for this dataset.</p></li><li><p><strong>Data Source:</strong> Point to the shared data source configured earlier.</p></li></ul><p><strong>3.2 Main Report Dataset:</strong></p><ul><li><p><strong>Dataset Name:</strong> <code>ds_MainReport</code></p></li><li><p><strong>Query:</strong> Use the main query provided in the script.</p></li><li><p><strong>Parameters:</strong> </p><ul><li><p><code>@AdviserName</code> (Text)</p></li><li><p><code>@IssueDate</code> (Date)</p></li><li><p><code>@IssueName</code> (Text)</p></li><li><p>These will be populated dynamically based on the results of the subscription trigger.</p></li></ul></li></ul><p><strong>3.3 Parameter Mapping:</strong></p><ul><li><p><strong>@AdviserName:</strong> This parameter should be linked to the output of the <code>ds_SubscriptionTrigger</code> dataset.</p></li><li><p><strong>@IssueDate:</strong> Dynamically set to the current date using <code>CAST(GETDATE() AS DATE)</code>.</p></li><li><p><strong>@IssueName:</strong> Linked to the <code>IssueName</code> from <code>ds_SubscriptionTrigger</code>.</p></li></ul><hr/><h3 id="id-09.CIP:0209441CashmanaccountsbalancereportByBrenden-Step4:ReportParametersSetup"><strong>Step 4: Report Parameters Setup</strong></h3><p><strong>4.1 AdviserName Parameter:</strong></p><ul><li><p><strong>Name:</strong> <code>AdviserName</code></p></li><li><p><strong>Type:</strong> Text</p></li><li><p><strong>Available Values:</strong> Derived from <code>ds_SubscriptionTrigger</code> dataset.</p></li><li><p><strong>Default Value:</strong> Set to the value from <code>ds_SubscriptionTrigger</code>.</p></li></ul><p><strong>4.2 IssueDate Parameter:</strong></p><ul><li><p><strong>Name:</strong> <code>IssueDate</code></p></li><li><p><strong>Type:</strong> Date</p></li><li><p><strong>Available Values:</strong> None (it’s set dynamically).</p></li><li><p><strong>Default Value:</strong> <code>CAST(GETDATE() AS DATE)</code>.</p></li></ul><p><strong>4.3 IssueName Parameter:</strong></p><ul><li><p><strong>Name:</strong> <code>IssueName</code></p></li><li><p><strong>Type:</strong> Text</p></li><li><p><strong>Available Values:</strong> Derived from <code>ds_SubscriptionTrigger</code> dataset.</p></li><li><p><strong>Default Value:</strong> Set to the value from <code>ds_SubscriptionTrigger</code>.</p></li></ul><p><strong>4.4 AdviserCode Parameter:</strong></p><ul><li><p><strong>Name:</strong> <code>AdviserCode</code></p></li><li><p><strong>Type:</strong> Text</p></li><li><p><strong>Available Values:</strong> Hidden parameter populated dynamically based on <code>AdviserName</code>.</p></li><li><p><strong>Default Value:</strong> Set dynamically using the logic in the dataset.</p></li></ul><hr/><h3 id="id-09.CIP:0209441CashmanaccountsbalancereportByBrenden-Step5:ReportDesigninSSRS"><strong>Step 5: Report Design in SSRS</strong></h3><p><strong>5.1 Report Layout:</strong></p><ul><li><p><strong>Title:</strong> Dynamically display the <code>IssueName</code> and the date.</p></li><li><p><strong>Header:</strong> Include the <code>AdviserName</code> and <code>IssueName</code>.</p></li><li><p><strong>Conditional Formatting:</strong> Apply red text formatting to any negative balances.</p><ul><li><p><strong>Expression for Red Text:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">=IIf(Fields!ProjectedBalance.Value &lt; 0, &quot;Red&quot;, &quot;Black&quot;)</pre>
+</div></div></li><li><p><strong>Expression for Bold Text:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">=IIf(Fields!ProjectedBalance.Value &lt; 0, &quot;Bold&quot;, &quot;Normal&quot;)</pre>
+</div></div></li></ul></li></ul><p><strong>5.2 Report Items:</strong></p><ul><li><p><strong>Tables:</strong> Display the client allocation, share allocation, dollar allocation, cash balances, and other details.</p></li><li><p><strong>Grouping:</strong> Consider grouping by <code>AdviserName</code> if multiple advisers are involved.</p></li></ul><p /><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240830-032311.png" width="760" loading="lazy" src="attachments/2688352258/2690383915.png?width=760" data-image-src="attachments/2688352258/2690383915.png" data-height="786" data-width="2556" data-unresolved-comment-count="0" data-linked-resource-id="2690383915" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240830-032311.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2688352258" data-linked-resource-container-version="7" data-media-id="44a6ef8e-4fbb-4928-9450-7b0ea5dc67d0" data-media-type="file"></span><p /><hr/><h3 id="id-09.CIP:0209441CashmanaccountsbalancereportByBrenden-Step6:Data-DrivenSubscriptionSetup"><strong>Step 6: Data-Driven Subscription Setup</strong></h3><p><strong>6.1 Subscription Configuration:</strong></p><ul><li><p><strong>Subscription Type:</strong> Data-Driven Subscription</p></li><li><p><strong>Trigger Query:</strong> The query from <code>ds_SubscriptionTrigger</code>.</p></li><li><p><strong>Output Format:</strong> Excel</p></li><li><p><strong>File Name:</strong> Dynamic based on <code>IssueName</code> and date.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">=Parameters!IssueName.Value &amp; &quot;_Monthly_Application_Report_&quot; &amp; FormatDateTime(Now(), DateFormat.ShortDate)</pre>
+</div></div></li></ul><p><strong>6.2 Email Settings:</strong></p><ul><li><p><strong>To:</strong> Dynamically populated from <code>ds_SubscriptionTrigger</code> (using <code>EmailAddress</code> field).</p></li><li><p><strong>Subject:</strong> Include <code>IssueName</code> and <code>AdviserName</code>.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">=Parameters!IssueName.Value &amp; &quot; - Report for &quot; &amp; Parameters!AdviserName.Value</pre>
+</div></div></li></ul><hr/><h3 id="id-09.CIP:0209441CashmanaccountsbalancereportByBrenden-Step7:TestingandValidation"><strong>Step 7: Testing and Validation</strong></h3><p><strong>7.1 Report Testing:</strong></p><ul><li><p>Run the report manually using test data to ensure all parameters work correctly and the layout is as expected.</p></li><li><p>Verify the dynamic title, headers, and conditional formatting.</p></li></ul><p><strong>7.2 Subscription Testing:</strong></p><ul><li><p>Simulate a scenario where the subscription should trigger (e.g., set an issue’s close date to today).</p></li><li><p>Ensure that the subscription sends the correct report to the appropriate advisers.</p></li><li><p>Check the email content, attachment format, and that the correct file is sent.</p></li></ul><p><strong>7.3 Performance Testing:</strong></p><ul><li><p>Test the report execution with a large dataset to ensure the performance is acceptable.</p></li><li><p>Optimize queries and indexes as needed.</p></li></ul><hr/><h3 id="id-09.CIP:0209441CashmanaccountsbalancereportByBrenden-Step8:DeploymentandMonitoring"><strong>Step 8: Deployment and Monitoring</strong></h3><p><strong>8.1 Deploy the Report:</strong></p><ul><li><p>Deploy the report and shared data source to the production SSRS server.</p></li><li><p>Ensure proper security settings are in place.</p></li></ul><p><strong>8.2 Monitor the Subscription:</strong></p><ul><li><p>Monitor the first few runs of the subscription to ensure it behaves as expected.</p></li><li><p>Set up alerts for any errors or issues with the subscription.</p></li></ul><p><strong>8.3 Documentation:</strong></p><ul><li><p>Document the configuration and setup for future maintenance.</p></li></ul><p>By following this detailed implementation plan, you will ensure a successful setup of the SSRS report with a data-driven subscription, providing automated and accurate reporting to advisers.</p>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2688352258/2689302689.png">image-20240829-211418.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2688352258/2689564717.png">image-20240829-211451.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2688352258/2690383915.png">image-20240830-032311.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2688352258/2699493405.sql">New Issues Debtors - JF reviewed #5 - Bring in the Currency Logcis -NI Currency.sql</a> (binary/octet-stream)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2688352258/2699493399.rdl">New Issues Debtors Report - By Adviser and Issues Closed Date.rdl</a> (application/rdl)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2688352258/2699526149.sql">New Issues Debtors - JF reviewed #5 - Bring in the Currency Logcis -NI Currency.sql</a> (binary/octet-stream)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

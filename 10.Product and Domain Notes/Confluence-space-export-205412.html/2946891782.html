@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 16.01.2025-FATCA/CRS data flow USP_01 through USP_04</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 16.01.2025-FATCA/CRS data flow USP_01 through USP_04
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 15-01-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h1 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-FATCA/CRSDataProcess:USP_01→USP_04">FATCA/CRS Data Process: USP_01 → USP_04</h1><p><strong>Last Updated</strong>: January 16, 2025<br/><strong>Author</strong>: Jackson Fan</p><hr/><style type='text/css'>/*<![CDATA[*/
+div.rbtoc1755550413903 {padding: 0px;}
+div.rbtoc1755550413903 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1755550413903 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style><div class='toc-macro rbtoc1755550413903'>
+<ul class='toc-indentation'>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-FATCA/CRSDataProcess:USP_01→USP_04'>FATCA/CRS Data Process: USP_01 → USP_04</a>
+<ul class='toc-indentation'>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-1.Overview&amp;High-LevelPipeline'>1. Overview &amp; High-Level Pipeline</a>
+<ul class='toc-indentation'>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-1.1ConceptualFlow'>1.1 Conceptual Flow</a></li>
+</ul>
+</li>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-DiagramExplanation'>Diagram Explanation</a></li>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-2.USP_01_FATCA_CRS_ExtractAndPrepareData'>2. USP_01_FATCA_CRS_ExtractAndPrepareData</a>
+<ul class='toc-indentation'>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-2.1Purpose'>2.1 Purpose</a></li>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-2.2Parameters'>2.2 Parameters</a></li>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-2.3KeySteps(0–6)'>2.3 Key Steps (0–6)</a></li>
+</ul>
+</li>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-3.USP_02_FATCA_CRS_TransformRowtoColumnData'>3. USP_02_FATCA_CRS_TransformRowtoColumnData</a>
+<ul class='toc-indentation'>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-3.1Purpose'>3.1 Purpose</a></li>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-3.2StepBreakdown(7.0–7.5)'>3.2 Step Breakdown (7.0–7.5)</a></li>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-3.3OutputTables'>3.3 Output Tables</a></li>
+</ul>
+</li>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-4.USP_03_FinalCRSOutput'>4. USP_03_FinalCRSOutput</a>
+<ul class='toc-indentation'>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-4.1Purpose'>4.1 Purpose</a></li>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-4.2KeySteps(8.1–9.2)'>4.2 Key Steps (8.1–9.2)</a></li>
+</ul>
+</li>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-5.USP_04_FinalFATCAOutput'>5. USP_04_FinalFATCAOutput</a>
+<ul class='toc-indentation'>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-5.1Purpose'>5.1 Purpose</a></li>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-5.2DetailedSteps'>5.2 Detailed Steps</a></li>
+</ul>
+</li>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-6.Appendix:WhySplitintoNFAH,FAH,CP,andADforFATCA?'>6. Appendix: Why Split into NFAH, FAH, CP, and AD for FATCA?</a></li>
+<li><a href='#id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-EndofDocumentation'>End of Documentation</a></li>
+</ul>
+</li>
+</ul>
+</div><hr/><p /><h2 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-1.Overview&amp;High-LevelPipeline">1. Overview &amp; High-Level Pipeline</h2><h3 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-1.1ConceptualFlow">1.1 Conceptual Flow</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">┌─────────────────────────┐
+│ USP_01: Extract &amp; Stage │
+│  (Steps 0-6)            │
+└─────────────┬───────────┘
+              │ FATCA.Stage_crmdatafatcacrs_jf
+              ▼
+┌─────────────────────────┐
+│ USP_02: Pivot TIN Data  │
+│  (Steps 7.0-7.5)        │
+└─────────────┬───────────┘
+              │ FATCA.Stage_CRSPivotedData_jf,
+              │ FATCA.Stage_FATCAPivotedData_jf
+              ▼
+┌─────────────────────────────────┐
+│ USP_03: Validate &amp; Finalize CRS│
+│  (Steps 8.1-8.6, 9.1-9.2)      │
+└─────────────┬──────────────────┘
+              │ [FATCA].[CRS_Final_Output_..._jf]
+              ▼
+┌─────────────────────────────────┐
+│ USP_04: Final FATCA Output     │
+│  (Steps 10.1-10.6, 11.1-11.2)  │
+└─────────────────────────────────┘
+              FATCA_Final_Output_AccountHolders_
+              SubstantialUSOwner_Financeinfo_jf
+</pre>
+</div></div><ol start="1"><li><p><strong>USP_01</strong> → Gathers CRM data, builds recursive hierarchies, merges entity/individual into a single staging table.</p></li><li><p><strong>USP_02</strong> → Splits data into <strong>CRS</strong> vs. <strong>FATCA</strong> subsets, pivots multiple TINs into columns, handles “non-foreign account holders” logic.</p></li><li><p><strong>USP_03</strong> → Produces the <strong>CRS</strong> final output (about 143 columns) into <code>[FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf]</code>.</p></li><li><p><strong>USP_04</strong> → Produces the <strong>FATCA</strong> final output (~122 columns) into <code>[FATCA].[FATCA_Final_Output_AccountHolders_SubstantialUSOwner_Financeinfo_jf]</code>.</p></li></ol><p>Below is a <strong>multi-level conceptual diagram</strong> illustrating how each procedure (<strong>USP_01</strong> through <strong>USP_04</strong>) flows step by step, along with the key tables created at each stage. The diagram uses <strong>ASCII blocks</strong> labeled with the <strong>step numbers</strong> and sub-steps mentioned in your stored procedures.</p><hr/><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">                                   +-------------------------------------+
+                                   |       Start:   CRM &amp; CIP Data       |
+                                   | (Accounts, Contacts, Roles, TINs)   |
+                                   +-------------------------+-----------+
+                                                             |
+                                                             v
+          ┌────────────────────────────────────────────────────────────────┐
+          │                           USP_01                              │
+          │  FATCA/CRS Extract &amp; Prepare Data (Steps 0 - 6)               │
+          └───────────+────────────────────────────────────────────────────┘
+                      |
+                      | [ STEP 0: Setup, optional holdings refresh ]
+                      |
+                      +--&gt; STEP 1: #TaxRegimeMapping
+                      |
+                      +--&gt; STEP 2: #EntitiesWithFlaggedIndividuals
+                      |            + #RecursiveHierarchy (CTE recursion)
+                      |
+                      +--&gt; STEP 3: #HierarchyIndividuals (link entities→indiv)
+                      |
+                      +--&gt; STEP 4: #EntityData (filtered entity-level TINs)
+                      |
+                      +--&gt; STEP 5: #IndividualData (filtered individual TINs)
+                      |
+                      +--&gt; STEP 6: Union &amp; Final Filter
+                      |     +-&gt; ##crmdatafatcacrs
+                      |     +-&gt; ISO code mapping =&gt; ##crmdatafatcacrsiso
+                      |
+                      +--&gt; Output Table
+                            [FATCA].[Stage_crmdatafatcacrs_jf]
+                             (Staging for next procedures)
+</pre>
+</div></div><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">          ┌──────────────────────────────────────────────────────────────────┐
+          │                             USP_02                             │
+          │   FATCA/CRS Transform Row→Column (Steps 7.0 - 7.5)             │
+          └───────────+─────────────────────────────────────────────────────┘
+                      |
+                      | [ Based on FATCA.Stage_crmdatafatcacrs_jf ]
+                      |
+                      +--&gt; STEP 7.0: Identify &amp; Combine Non-Foreign Holders
+                      |       #EntitiesWithFlaggedIndividuals2
+                      |       → FATCA.NonForeignAccHolderData_jf
+                      |
+                      +--&gt; STEP 7.1: Split into #CRSOnlyData &amp; #FATCAOnlyData
+                      |
+                      +--&gt; STEP 7.2: CRS TIN RowNums 
+                      |      (#CRSDistinctTINs → #CRSTINRowNums → #CRSDataWithRowNum)
+                      |
+                      +--&gt; STEP 7.3: FATCA TIN RowNums
+                      |      (#FATCADistinctTINs → #FATCATINRowNums → #FATCADataWithRowNum)
+                      |
+                      +--&gt; STEP 7.4: Pivot TINs for CRS
+                      |       → #CRSPivotedData
+                      |       → [FATCA].[Stage_CRSPivotedData_jf]
+                      |
+                      +--&gt; STEP 7.5: Pivot TINs for FATCA
+                              → #FATCAPivotedData
+                              → [FATCA].[Stage_FATCAPivotedData_jf]
+</pre>
+</div></div><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">           ┌─────────────────────────────────────────────────────────────────┐
+           │                            USP_03                              │
+           │      Final CRS Output (Steps 8.1 - 8.6, 9.1 - 9.2)            │
+           └───────────+────────────────────────────────────────────────────┘
+                       |
+                       | [ Based on Stage_CRSPivotedData_jf, plus #NFAH, etc. ]
+                       |
+                       +--&gt; STEP 8.1:  #NFAH (Non-Foreign Acc. Holders)
+                       |
+                       +--&gt; STEP 8.2:  #IndividualAccountHolders
+                       |           +   #EntityAccountHolders
+                       |           +→  #AccountHolders
+                       |
+                       +--&gt; STEP 8.3:  #ALLAH = (#NFAH ∪ #AccountHolders)
+                       |
+                       +--&gt; STEP 8.4:  #ControllingPersons 
+                       |
+                       +--&gt; STEP 8.5:  ##CRSAccountDetails (Summarize Fin$)
+                       |
+                       +--&gt; STEP 8.6:  Join #ALLAH + #ControllingPersons + ##CRSAccountDetails
+                       |                → [FATCA].[CRS_AH_CP_AD_jf]
+                       |
+                       +--&gt; STEP 9.1:  Build final ~143 col → ##crsfinalselect
+                       |
+                       +--&gt; STEP 9.2:  Insert =&gt; [FATCA].[CRS_Final_Output_AccountHolders_
+                                         ControllingPerson_Financeinfo_jf]
+</pre>
+</div></div><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">           ┌─────────────────────────────────────────────────────────────────┐
+           │                            USP_04                              │
+           │    Final FATCA Output (Steps 10.1 - 10.6, 11.1 - 11.2)         │
+           └───────────+────────────────────────────────────────────────────┘
+                       |
+                       | [ Based on Stage_FATCAPivotedData_jf, plus #NFAH, etc. ]
+                       |
+                       +--&gt; STEP 10.1 to 10.5:  (#NFAH, #AccountHolders, #ALLAH,
+                       |                         #ControllingPersons, ##FATCAAccountDetails)
+                       |
+                       +--&gt; STEP 10.6:    =&gt; [FATCA].[FATCA_AH_CP_AD_jf]
+                       |
+                       +--&gt; STEP 11.1:    ~122-col final =&gt; ##fatcafinalselect
+                       |
+                       +--&gt; STEP 11.2:    Insert =&gt; [FATCA].[FATCA_Final_Output_AccountHolders_
+                                                     SubstantialUSOwner_Financeinfo_jf]
+</pre>
+</div></div><hr/><h2 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-DiagramExplanation">Diagram Explanation</h2><ol start="1"><li><p><strong>USP_01</strong> (Steps <strong>0–6</strong>):</p><ul><li><p>Creates <strong>temp tables</strong> (#TaxRegimeMapping, #RecursiveHierarchy, etc.).</p></li><li><p>Merges <strong>entity</strong> &amp; <strong>individual</strong> data → final staging: <code>FATCA.Stage_crmdatafatcacrs_jf</code>.</p></li></ul></li><li><p><strong>USP_02</strong> (Steps <strong>7.0–7.5</strong>):</p><ul><li><p>Splits the data into <strong>CRS</strong> vs. <strong>FATCA</strong> subsets.</p></li><li><p><strong>Pivot</strong> TINs from multiple rows into columns (TIN1..TIN5).</p></li><li><p>Outputs two main pivoted tables for next steps:</p><ul><li><p><code>[FATCA].[Stage_CRSPivotedData_jf]</code></p></li><li><p><code>[FATCA].[Stage_FATCAPivotedData_jf]</code>.</p></li></ul></li></ul></li><li><p><strong>USP_03</strong> (Steps <strong>8.1–9.2</strong>):</p><ul><li><p>Focuses on <strong>CRS</strong> final output.</p></li><li><p>Combines Non-Foreign Holders (#NFAH), Foreign AccountHolders (#AccountHolders), and <strong>Controlling Persons</strong> (#ControllingPersons).</p></li><li><p>Fetches <strong>financial/income</strong> details (#CRSAccountDetails).</p></li><li><p>Produces <code>[FATCA].[CRS_AH_CP_AD_jf]</code> → final selection → <code>[FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf]</code> (~143 columns).</p></li></ul></li><li><p><strong>USP_04</strong> (Steps <strong>10.1–11.2</strong>):</p><ul><li><p>Similar approach but for <strong>FATCA</strong> ~122 columns.</p></li><li><p>Splits data into NFAH, FAH, CP, AD, merges them → <code>[FATCA].[FATCA_AH_CP_AD_jf]</code>.</p></li><li><p>Final pivot/selection → <code>[FATCA].[FATCA_Final_Output_AccountHolders_SubstantialUSOwner_Financeinfo_jf]</code>.</p></li></ul></li></ol><hr/><p /><h2 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-2.USP_01_FATCA_CRS_ExtractAndPrepareData">2. USP_01_FATCA_CRS_ExtractAndPrepareData</h2><h3 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-2.1Purpose">2.1 Purpose</h3><p>This stored procedure <strong>initiates</strong> the reporting process by:</p><ul><li><p>Creating a <strong>tax regime</strong> mapping (#TaxRegimeMapping).</p></li><li><p>Building <strong>recursive</strong> entity hierarchies (#RecursiveHierarchy).</p></li><li><p>Extracting/combining entity + individual records (#EntityData, #IndividualData).</p></li><li><p>Applying <strong>complex</strong> filters (exclusions: NZ-only, winding-up estates, charities, etc.).</p></li><li><p>Loading the final <strong>staging table</strong> → <code>FATCA.Stage_crmdatafatcacrs_jf</code>.</p></li></ul><h3 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-2.2Parameters">2.2 Parameters</h3><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="55ce4088-d728-4e60-9e08-5c086c8c2e82" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Name</p></th><th class="confluenceTh"><p>Type</p></th><th class="confluenceTh"><p>Description</p></th></tr><tr><td class="confluenceTd"><p>@PeriodStartDate</p></td><td class="confluenceTd"><p>datetime</p></td><td class="confluenceTd"><p>Reporting start date.</p></td></tr><tr><td class="confluenceTd"><p>@PeriodEndDate</p></td><td class="confluenceTd"><p>datetime</p></td><td class="confluenceTd"><p>Reporting end date.</p></td></tr><tr><td class="confluenceTd"><p>@RefreshHoldingsData</p></td><td class="confluenceTd"><p>bit</p></td><td class="confluenceTd"><p>If <code>1</code>, refresh upstream holdings (~30 mins) via <code>[dbo].[spr_AEOI_Financials]</code>.</p></td></tr></tbody></table></div><h3 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-2.3KeySteps(0–6)">2.3 Key Steps (0–6)</h3><ol start="1"><li><p><strong>Step 0</strong>: <em>Setup &amp; Preliminaries</em></p><ul><li><p>Capture <code>@rptYear = YEAR(@PeriodEndDate)</code></p></li><li><p>If <code>@RefreshHoldingsData = 1</code>, calls <code>[dbo].[spr_AEOI_Financials] @rptYear</code>.</p></li></ul></li><li><p><strong>Step 1</strong>: <em>Create #TaxRegimeMapping</em></p><ul><li><p>A CTE enumerates possible flags → <code>'FATCA'</code>, <code>'CRS'</code>, or <code>'FATCA_CRS'</code>.</p></li><li><p>Writes to <code>#TaxRegimeMapping</code>.</p></li></ul></li><li><p><strong>Step 2</strong>: <em>Recursive Hierarchy (#RecursiveHierarchy)</em></p><ul><li><p>For layered trusts/companies up to <strong>3</strong> levels.</p></li><li><p>#EntitiesWithFlaggedIndividuals to catch hidden foreign individuals.</p></li></ul></li><li><p><strong>Step 3</strong>: <em>#HierarchyIndividuals</em></p><ul><li><p>Joins roles to find controlling persons (Trustee, Director, etc.).</p></li><li><p>Distills entity–individual relationships for further merges.</p></li></ul></li><li><p><strong>Step 4</strong>: <em>#EntityData</em></p><ul><li><p>Pulls TIN from <code>cip_foreigntaxrecord</code> (ft1 for entity level).</p></li><li><p>Excludes purely NZ TIN.</p></li></ul></li><li><p><strong>Step 5</strong>: <em>#IndividualData</em></p><ul><li><p>Identifies individuals with foreign TINs (ft2).</p></li><li><p>Classifies beneficial owners vs. controlling persons (authorized signatories).</p></li></ul></li><li><p><strong>Step 6</strong>: <em>Combine &amp; Filter → </em><code>##crmdatafatcacrs</code></p><ul><li><p>UNION ALL (#EntityData &amp; #IndividualData) → <em>global temp table</em>.</p></li><li><p>Complex filtering (exclude FI accounts, “Estate Winding-Up,” etc.).</p></li></ul></li><li><p><strong>Step 6.0/6.1</strong>: <em>ISO Country Code Standardization &amp; Final Output</em></p><ul><li><p>Joins <code>[SQLUAT].[DataServices].FATCA.CountryReference</code> to unify ISO codes.</p></li><li><p>Writes final table → <code>FATCA.Stage_crmdatafatcacrs_jf</code>.</p></li></ul></li></ol><p><strong>Total Run</strong>: ~6.5 minutes if <code>@RefreshHoldingsData=0</code>; ~30 min with data refresh.</p><hr/><p /><h2 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-3.USP_02_FATCA_CRS_TransformRowtoColumnData">3. USP_02_FATCA_CRS_TransformRowtoColumnData</h2><h3 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-3.1Purpose">3.1 Purpose</h3><ul><li><p>Splits <strong>FATCA vs. CRS</strong> data to avoid mixing US TIN in CRS flows.</p></li><li><p><strong>Pivot</strong> TIN data from multiple row records into columns (TIN1, TIN2, etc.).</p></li><li><p>Incorporates <strong>non-foreign</strong> account holders who share an account with foreign persons (important for correct “account-level” reporting).</p></li></ul><h3 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-3.2StepBreakdown(7.0–7.5)">3.2 Step Breakdown (7.0–7.5)</h3><ol start="1"><li><p><strong>Step 7.0</strong>: Identify Non-Foreign Account Holders</p><ul><li><p>#EntitiesWithFlaggedIndividuals2: All entities that have ≥1 foreign individual.</p></li><li><p><code>FATCA.NonForeignAccHolderData_jf</code>: The non-foreign holders on these “foreign” accounts.</p></li></ul></li><li><p><strong>Step 7.1</strong>: Split Data → <code>#CRSOnlyData</code> &amp; <code>#FATCAOnlyData</code></p><ul><li><p>#CRSOnlyData = Non-US TIN.</p></li><li><p>#FATCAOnlyData = US TIN only.</p></li></ul></li><li><p><strong>Steps 7.2 / 7.3</strong>: <strong>Assign TIN Row Numbers</strong></p><ul><li><p>Use <code>DENSE_RANK()</code> per IndividualId + TIN.</p></li><li><p>#CRSDataWithRowNum &amp; #FATCADataWithRowNum store TINRowNum.</p></li></ul></li><li><p><strong>Step 7.4</strong>: <strong>Pivot</strong> TINs → <em>CRS</em></p><ul><li><p>Self-join up to 5 times (TIN1..TIN5).</p></li><li><p>Output: <code>FATCA.Stage_CRSPivotedData_jf</code>.</p></li></ul></li><li><p><strong>Step 7.5</strong>: <strong>Pivot</strong> TINs → <em>FATCA</em></p><ul><li><p>Typically TINRowNum=1 is the US TIN.</p></li><li><p>Output: <code>FATCA.Stage_FATCAPivotedData_jf</code>.</p></li></ul></li></ol><h3 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-3.3OutputTables">3.3 Output Tables</h3><ul><li><p><code>FATCA.Stage_CRSPivotedData_jf</code></p></li><li><p><code>FATCA.Stage_FATCAPivotedData_jf</code></p></li><li><p>(Plus <code>FATCA.NonForeignAccHolderData_jf</code> for bridging non-foreign holders.)</p></li></ul><hr/><p /><h2 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-4.USP_03_FinalCRSOutput">4. USP_03_FinalCRSOutput</h2><h3 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-4.1Purpose">4.1 Purpose</h3><ul><li><p>Produces the <strong>CRS</strong> final (~143 columns) table.</p></li><li><p>Steps 8.1–9.2 bring together:</p><ul><li><p>#NFAH (non-foreign)</p></li><li><p>#AccountHolders (foreign)</p></li><li><p>#ControllingPersons</p></li><li><p><code>##CRSAccountDetails</code> (financial)</p></li><li><p>Merges all → <code>[FATCA].[CRS_AH_CP_AD_jf]</code></p></li><li><p>Then selects 143 columns into <code>##crsfinalselect</code>.</p></li><li><p>Finally writes <code>[FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf]</code>.</p></li></ul></li></ul><h3 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-4.2KeySteps(8.1–9.2)">4.2 Key Steps (8.1–9.2)</h3><ol start="1"><li><p><strong>Step 8.1</strong>: #NFAH → Mark non-foreign holders as <code>'NA'</code> for TIN.</p></li><li><p><strong>Step 8.2</strong>: #IndividualAccountHolders + #EntityAccountHolders → #AccountHolders (foreign).</p></li><li><p><strong>Step 8.3</strong>: <code>#ALLAH</code> = union of #NFAH &amp; #AccountHolders.</p></li><li><p><strong>Step 8.4</strong>: <code>#ControllingPersons</code>: entity-based controlling persons.</p></li><li><p><strong>Step 8.5</strong>: <code>##CRSAccountDetails</code>: interest, dividends, balance from <code>[tmpHoldingsPreload]</code>.</p></li><li><p><strong>Step 8.6</strong>: Join → <code>[FATCA].[CRS_AH_CP_AD_jf]</code>.</p></li><li><p><strong>Step 9.1</strong>: ~143-col final select → <code>##crsfinalselect</code>.</p></li><li><p><strong>Step 9.2</strong>: Insert into <code>[FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf]</code>.</p></li></ol><hr/><p /><h2 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-5.USP_04_FinalFATCAOutput">5. USP_04_FinalFATCAOutput</h2><h3 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-5.1Purpose">5.1 Purpose</h3><ul><li><p>Final procedure for <strong>FATCA</strong> (~122 columns) under IDES 2.0.</p></li><li><p>Splits data into:</p><ol start="1"><li><p><strong>NFAH</strong> (Non-Foreign)</p></li><li><p><strong>FAH</strong> (Foreign Ind + Entity)</p></li><li><p><strong>CP</strong> (Controlling Persons)</p></li><li><p><strong>AD</strong> (Account Details)</p></li></ol></li><li><p>Then merges them in Steps 10.6 → <code>[FATCA].[FATCA_AH_CP_AD_jf]</code>.</p></li><li><p>Step 11.1: Creates <code>##fatcafinalselect</code> (the 122 FATCA columns).</p></li><li><p>Step 11.2: Writes final to <code>[FATCA].[FATCA_Final_Output_AccountHolders_SubstantialUSOwner_Financeinfo_jf]</code>.</p></li></ul><h3 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-5.2DetailedSteps">5.2 Detailed Steps</h3><ol start="1"><li><p><strong>Step 10.1</strong>: #NFAH</p></li><li><p><strong>Step 10.2</strong>: #AccountHolders → split into #IndividualAccountHolders + #EntityAccountHolders.</p></li><li><p><strong>Step 10.3</strong>: #ALLAH = union (#NFAH, #AccountHolders).</p></li><li><p><strong>Step 10.4</strong>: #ControllingPersons (CP).</p></li><li><p><strong>Step 10.5</strong>: <code>##FATCAAccountDetails</code> (AD) for financial data.</p></li><li><p><strong>Step 10.6</strong>: <code>[FATCA].[FATCA_AH_CP_AD_jf]</code> after joining #ALLAH + CP + AD.</p></li><li><p><strong>Step 11.1</strong>: Pivot into <code>##fatcafinalselect</code> → fill ~122 columns.</p></li><li><p><strong>Step 11.2</strong>: Insert into <code>[FATCA].[FATCA_Final_Output_AccountHolders_SubstantialUSOwner_Financeinfo_jf]</code>.</p></li></ol><hr/><p /><h2 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-6.Appendix:WhySplitintoNFAH,FAH,CP,andADforFATCA?">6. Appendix: Why Split into NFAH, FAH, CP, and AD for FATCA?</h2><ol start="1"><li><p><strong>NFAH (Non-Foreign Account Holders)</strong></p><ul><li><p>Domestic holders who might be in “NZ” but must be included if they share an account with foreign controlling individuals.</p></li></ul></li><li><p><strong>FAH (Foreign Account Holders)</strong></p><ul><li><p>Individuals &amp; entities flagged as foreign for FATCA.</p></li><li><p>The logic for TIN and country codes differs from purely local holders.</p></li></ul></li><li><p><strong>CP (Controlling Persons)</strong></p><ul><li><p>Under FATCA, entity accounts must list “Substantial U.S. Owners.”</p></li><li><p>One entity can have multiple such controlling persons.</p></li></ul></li><li><p><strong>AD (Account Details)</strong></p><ul><li><p>Summaries of interest, dividends, and balances come from separate holdings data.</p></li><li><p>We only merge them at the final step for accuracy &amp; performance.</p></li></ul></li></ol><p><strong>Outcome</strong>: This four-way split ensures more robust transformations and avoids mixing “domestic-only” holders or failing to capture controlling persons. After splitting, we <strong>join</strong> them for a comprehensive final table.</p><hr/><h2 id="id-16.01.2025-FATCA/CRSdataflowUSP_01throughUSP_04-EndofDocumentation">End of Documentation</h2><p>Feel free to reach out to the <strong>FATCA/CRS Data Engineering team</strong> for clarifications on parameter usage, pivot logic, or new entity types not covered (e.g., “Foundation,” “Joint Ventures,” etc.).</p><p><strong>Run Times</strong>:</p><ul><li><p><em>USP_01</em>: ~6.5 minutes (or ~30 min if holdings are refreshed).</p></li><li><p><em>USP_02</em>: Typically ~5–10 minutes (depends on volume).</p></li><li><p><em>USP_03</em>: ~10–12 minutes with sub-joins &amp; validations.</p></li><li><p><em>USP_04</em>: ~10–15 minutes, especially if large # of NFAH or controlling persons.</p></li></ul><p><strong>Next Steps</strong>:</p><ul><li><p><strong>XML Generation</strong>: The final CRS &amp; FATCA output tables are typically consumed by XML-building scripts for IRD/IRS submission.</p></li><li><p><strong>Data QA</strong>: Check “ERROR” or “NA” placeholders for unusual or incomplete TIN data.</p></li></ul><p><strong>Contact</strong>: Jackson Fan, Data Engineering (FATCA/CRS).</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

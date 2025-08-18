@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : CRM AUDIT Logics</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : CRM AUDIT Logics
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 18-08-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>diagrams that map your script’s logic. They show the runtime params, data flow, temp tables, and the PS context enrichment &amp; filters.</p><hr/><h3 id="CRMAUDITLogics-1)High-leveldataflow(frominputs→finalresult)">1) High-level data flow (from inputs → final result)</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">flowchart TD
+  A[Runtime Params\n@StartDate/@EndDate\n@PortfolioIdLike/@PSLevelLike\n@AdvisorLike/@NameLike/@FieldLogicalNameLike] --&gt; B[@Targets (OTC, ColNum)]
+
+  B --&gt; C[Audit Scan\n dbo.Audit → #E\n(ActionLabel via StringMap)]
+  C --&gt; D[Split &amp; Align\n#Mask (AttributeMask CSV)\n#Vals (ChangeData ~)\n→ #Changes (per target field)]
+  D --&gt; E[Current Values\n@Phys/@Base → #Current]
+  D --&gt; F[Option Labels\nStringMap → #OptOld/#OptCur]
+  D --&gt; G[Lookup Names\nRef entity → #RefNamesOld/#RefNamesCur]
+  D --&gt; H[Target Names Cache\n@Phys + statecode → #ObjNames]
+
+  E &amp; F &amp; G &amp; H --&gt; I[#AuditRollup\n(OLD vs CURRENT resolved,\nIsDifferent flag)]
+
+  I --&gt; J[Entity Name Resolve\n(#EntityNames)]
+  J --&gt; K1[PS Self Link]
+  J --&gt; K2[Account → Role → PS]
+  J --&gt; K3[Contact → Role → Account → PS]
+
+  K1 &amp; K2 &amp; K3 --&gt; L[PS Context Enrichment\n(#PS_Context)\n+ Level/ShortCode/Advisor]
+
+  L --&gt; M[Final SELECT\nLIKE filters applied:\nPortfolioId, PSLevel,\nAdvisor, Name, FieldLogicalName]
+</pre>
+</div></div><hr/><h3 id="CRMAUDITLogics-2)Processingpipeline(technicalsequence)">2) Processing pipeline (technical sequence)</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">sequenceDiagram
+  participant User
+  participant SQL as SQL Engine
+  participant Meta as Metadata/Strings
+  participant CRM as CRM Tables
+
+  User-&gt;&gt;SQL: Set params (@StartDate/@EndDate, LIKE filters, @Targets)
+  SQL-&gt;&gt;CRM: Read dbo.Audit for OTC within window
+  SQL-&gt;&gt;SQL: Create #E (ActionLabel via StringMap)
+  SQL-&gt;&gt;SQL: Create #Mask (split AttributeMask), #Vals (split ChangeData)
+  SQL-&gt;&gt;SQL: Join by ordinal → #Changes (OldRaw, OldGuid, OldNumber)
+  SQL-&gt;&gt;CRM: Fetch current values from @Phys/@Base → #Current
+  SQL-&gt;&gt;Meta: Option labels for field → #OptOld/#OptCur
+  SQL-&gt;&gt;CRM: Lookup names for Old/Current GUIDs → #RefNamesOld/#RefNamesCur
+  SQL-&gt;&gt;CRM: Resolve target record names (+statecode) → #ObjNames
+  SQL-&gt;&gt;SQL: Merge to #AuditRollup (OldResolved vs CurrentResolved, IsDifferent)
+  SQL-&gt;&gt;CRM: Map ObjectId → friendly Name per entity → #EntityNames
+  SQL-&gt;&gt;CRM: Link PS (self / via Account / via Contact) → links
+  SQL-&gt;&gt;CRM: Enrich PS (level/shortcode/adviser) → #PS_Context
+  SQL-&gt;&gt;SQL: Apply LIKE filters &amp; order → Final resultset
+</pre>
+</div></div><hr/><h3 id="CRMAUDITLogics-3)Datamodel/tempobjects(ER-style)">3) Data model / temp objects (ER-style)</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">erDiagram
+  E { 
+    uniqueidentifier AuditId
+    uniqueidentifier ObjectId
+    datetime CreatedOn
+    nvarchar UserIdName
+    nvarchar AttributeMask
+    nvarchar ChangeData
+    nvarchar ActionLabel
+  }
+
+  Mask {
+    uniqueidentifier AuditId
+    uniqueidentifier ObjectId
+    datetime CreatedOn
+    int pos
+    int ColNum
+  }
+
+  Vals {
+    uniqueidentifier AuditId
+    uniqueidentifier ObjectId
+    datetime CreatedOn
+    int pos
+    nvarchar OldValueRaw
+  }
+
+  Changes {
+    uniqueidentifier AuditId
+    uniqueidentifier ObjectId
+    datetime CreatedOn
+    nvarchar OldValueRaw
+    uniqueidentifier OldGuid
+    int OldNumber
+  }
+
+  Current {
+    uniqueidentifier ObjectId
+    nvarchar CurrentRaw
+  }
+
+  OptOld {
+    int AttributeValue
+    nvarchar Value
+  }
+  OptCur {
+    int AttributeValue
+    nvarchar Value
+  }
+
+  RefNamesOld {
+    uniqueidentifier Id
+    nvarchar RefName
+  }
+  RefNamesCur {
+    uniqueidentifier Id
+    nvarchar RefName
+  }
+
+  ObjNames {
+    int OTC
+    uniqueidentifier ObjectId
+    nvarchar ObjectName
+  }
+
+  AuditRollup {
+    int OTC
+    nvarchar EntityLogicalName
+    int ColNum
+    nvarchar FieldLogicalName
+    datetime ChangeTimeLocal
+    nvarchar ChangedBy
+    uniqueidentifier ObjectId
+    nvarchar TargetRecordName
+    nvarchar OldResolved
+    nvarchar CurrentResolved
+    bit IsDifferent
+  }
+
+  EntityNames {
+    uniqueidentifier ObjectId
+    nvarchar EntityLogicalName
+    nvarchar Name
+    nvarchar FieldLogicalName
+    nvarchar OldValue
+    nvarchar NewValue
+  }
+
+  PS_Self      { uniqueidentifier ObjectId, uniqueidentifier PS_Id }
+  PS_FromAccount{ uniqueidentifier ObjectId, uniqueidentifier PS_Id }
+  PS_FromContact{ uniqueidentifier ObjectId, uniqueidentifier PS_Id }
+
+  PS_Context {
+    uniqueidentifier ObjectId
+    nvarchar PortfolioId
+    nvarchar PortfolioServiceLevel
+    nvarchar ShortCode
+    nvarchar Advisor
+    nvarchar Name
+    nvarchar FieldLogicalName
+    nvarchar OldValue
+    nvarchar NewValue
+    nvarchar ChangedBy
+    datetime ChangeTimeLocal
+    nvarchar EntityLogicalName
+  }
+
+  E ||--|| Mask : aligns-by(AuditId,ObjectId,CreatedOn)
+  E ||--|| Vals : splits-by(AuditId,ObjectId,CreatedOn)
+  Mask ||--|| Vals : pos-alignment
+  Mask ||--o{ Changes : filter-by-ColNum
+  Vals ||--o{ Changes : parsed-values
+
+  Changes ||--|| Current : ObjectId
+  Changes }o--|| OptOld : old-number→label
+  Current }o--|| OptCur : cur-number→label
+  Changes }o--|| RefNamesOld : OldGuid→name
+  Current }o--|| RefNamesCur : CurrentRaw→GUID→name
+  Changes }o--|| ObjNames : ObjectId→name
+  Changes }o--o{ AuditRollup : merged-values
+
+  AuditRollup }o--|| EntityNames : map-friendly-name
+  EntityNames }o--|| PS_Self : direct link
+  EntityNames }o--|| PS_FromAccount : via roles
+  EntityNames }o--|| PS_FromContact : via roles
+  PS_Self }o--|| PS_Context : union
+  PS_FromAccount }o--|| PS_Context : union
+  PS_FromContact }o--|| PS_Context : union
+</pre>
+</div></div><hr/><h3 id="CRMAUDITLogics-WhereyournewLIKEfiltersapply">Where your new LIKE filters apply</h3><ul><li><p>In <code>#PS_Context</code> build and the <strong>final SELECT</strong>, you can filter by:</p><ul><li><p><code>PortfolioId LIKE @PortfolioIdLike</code></p></li><li><p><code>PortfolioServiceLevel LIKE @PSLevelLike</code></p></li><li><p><code>Advisor LIKE @AdvisorLike</code></p></li><li><p><code>Name LIKE @NameLike</code></p></li><li><p><code>FieldLogicalName LIKE @FieldLogicalNameLike</code></p></li></ul></li></ul><p>This trio should make it crystal-clear to engineers and analysts what the script does, where to tune it, and how filters shape the final results. If you want these diagrams exported as a PNG/SVG (or embedded in a one-pager), say the word and I’ll package them up.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:54</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

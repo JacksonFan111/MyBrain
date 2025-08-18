@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 02. Continued Learning on NZXWT Fee</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 02. Continued Learning on NZXWT Fee
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 24-07-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>This is to records what i learn from NZXWT Fee.</p><p>there is a article on fee packages<a href="https://craigsip.atlassian.net/wiki/spaces/NZXWT/pages/818086744/Fee+Packages" data-linked-resource-id="818086744" data-linked-resource-version="4" data-linked-resource-type="page">Fee Packages</a> </p><h2 id="id-02.ContinuedLearningonNZXWTFee-Overview"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4d8" data-emoji-shortname=":blue_book:" data-emoji-fallback="\uD83D\uDCD8" src="images/icons/emoticons/72/1f4d8.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Overview</h2><p>So i was learning that the fee in NZXWT have different level, and the fee schedule data is actually in dbo.FeeScale  &gt;&gt; fs.FeeValue as AnnualisedFeeinpercentage.</p><p>thanks for helping me out i think we need to make a note that the fs.FeeValue is actually the percentage i would write soem tech docs for that.</p><p><strong>ERD Diagram</strong></p><p>Portfolio</p><p>  └── PortfolioFeePackage (Portfolio_ID)</p><p>        └── FeePackage (FeePackage_ID)</p><p>              └── Fee (FeePackage_ID)</p><p>                    └── FeeScale (Fee_Id) &gt;&gt; contain the actual percentage for each fee schedule by asset type</p><p /><hr/><p>After Trial and testing&gt;&gt; this scritps would provide similar data as the PDF showing in the fee schedule by Asset Type.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- Script to look at the actual percentage for each fee schedule
+--mySTART Fee Schedule
+--Craigs KS Fee Schedule
+--CIP Super Fee Schedule
+--superSTART Fee Schedule
+
+
+--FeePackageName = &#39;Craigs KS Fee Schedule&#39;
+--AND FeeName = &#39;Management Fee&#39;
+
+
+WITH AssetTypeMapping AS (
+    SELECT *
+    FROM (VALUES
+        (NULL, NULL, &#39;Cash Call Account&#39;),
+        (2, &#39;FIX&#39;, &#39;Term Deposits &amp; Debentures&#39;),
+        (4, &#39;UTR&#39;, &#39;Unitised&#39;),
+        (5, &#39;SHA&#39;, &#39;Shares&#39;),
+        (6, &#39;GOV&#39;, &#39;Government Bonds&#39;),
+        (7, &#39;BND&#39;, &#39;Bonds &amp; Notes&#39;)
+    ) AS AssetTypeMap (AssetType, ProductType, TypeName)
+),
+RankedFeeScales AS (
+    SELECT 
+        fp.Name AS FeePackageName,
+        FORMAT(fp.AuthorisedDate, &#39;yyyy-MM-dd&#39;) AS AuthorisedDate,
+        FORMAT(fp.CreatedDate, &#39;yyyy-MM-dd&#39;) AS CreatedDate,
+        f.ActualisationFrequency,
+        f.CalculationMethod,
+        f.Name AS FeeName,
+        atm.AssetType,
+        COALESCE(atm.TypeName, &#39;Cash Call Account&#39;) AS AssetTypeName,
+        fs.EndValue,
+        fs.FeeValue as AnnualisedFeeInPercentage,
+        ROW_NUMBER() OVER (PARTITION BY fp.Name, atm.TypeName ORDER BY fs.EndValue) AS RowNum
+    FROM
+        dbo.FeePackage fp
+    LEFT JOIN 
+        dbo.Fee f ON f.FeePackage_ID = fp.Id
+    LEFT JOIN 
+        dbo.FeeScale fs ON fs.Fee_Id = f.Id
+    LEFT JOIN 
+        AssetTypeMapping atm ON fs.AssetType = atm.AssetType
+    WHERE 
+        fp.Name NOT LIKE &#39;%DO NOT%&#39;
+),
+CalculatedRanges AS (
+    SELECT
+        FeePackageName,
+        AuthorisedDate,
+        CreatedDate,
+        ActualisationFrequency,
+        CalculationMethod,
+        FeeName,
+        AssetType,
+        AssetTypeName,
+        EndValue,
+        AnnualisedFeeInPercentage,
+        COALESCE(LAG(EndValue) OVER (PARTITION BY FeePackageName, AssetTypeName ORDER BY RowNum), 0) AS StartValue,
+        ROW_NUMBER() OVER (PARTITION BY FeePackageName, AssetTypeName ORDER BY RowNum) AS RowNum2
+    FROM
+        RankedFeeScales
+)
+SELECT
+    FeePackageName,
+    AuthorisedDate,
+    CreatedDate,
+    ActualisationFrequency,
+    CalculationMethod,
+    FeeName,
+    AssetType,
+    AssetTypeName,
+    CASE 
+        WHEN EndValue IS NULL AND AssetTypeName = &#39;Unitised&#39; THEN 0
+        WHEN EndValue IS NULL THEN (SELECT MAX(EndValue) FROM RankedFeeScales WHERE FeePackageName = cr.FeePackageName AND AssetTypeName = cr.AssetTypeName)
+        ELSE StartValue 
+    END AS StartValue,
+    EndValue,
+    AnnualisedFeeInPercentage
+FROM
+    CalculatedRanges cr
+	WHERE
+	1=1
+	AND FeePackageName = &#39;Craigs KS Fee Schedule&#39;
+	AND FeeName = &#39;Management Fee&#39;
+ORDER BY
+    FeePackageName, 
+	AssetTypeName,
+	StartValue;</pre>
+</div></div><p /><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240703-215120.png" width="760" loading="lazy" src="attachments/2592604223/2592899186.png?width=760" data-image-src="attachments/2592604223/2592899186.png" data-height="211" data-width="918" data-unresolved-comment-count="0" data-linked-resource-id="2592899186" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240703-215120.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2592604223" data-linked-resource-container-version="5" data-media-id="8ece0777-a587-4cad-b812-74d39a844f98" data-media-type="file"></span><p /><div class="confluence-information-macro confluence-information-macro-information"><span class="aui-icon aui-icon-small aui-iconfont-info confluence-information-macro-icon"></span><div class="confluence-information-macro-body"><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240703-213257.png" width="704" loading="lazy" src="attachments/2592604223/2592604281.png?width=704" data-image-src="attachments/2592604223/2592604281.png" data-height="136" data-width="792" data-unresolved-comment-count="0" data-linked-resource-id="2592604281" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240703-213257.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2592604223" data-linked-resource-container-version="5" data-media-id="da5af657-e796-4715-95d4-6844a1f6f919" data-media-type="file"></span><p>i got the correct value now.</p><p>thanks</p><p>it is the join</p><p>so it would need to join Fee_id to fee table then it will produce the correct percentage</p></div></div><hr/><p>Update on 24.07.2024:</p><p>more complicatation due to NZXWT side data issues.</p><p>have to develop futher to handle ege cases (people with DO NOT USE PACKGES)</p><p>My most up-to-date script is <span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/2592604223/2623504456.sql" data-nice-type="Text File" data-file-src="/wiki/download/attachments/2592604223/Work%20Script%208%20-%20Staff%20mgnt%20fee%20vs%20Norm%20completed%20bring%20in%20closed%20date%20and%20status.sql?version=1&amp;modificationDate=1721791262458&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="2623504456" data-linked-resource-type="attachment" data-linked-resource-container-id="2592604223" data-linked-resource-default-alias="Work Script 8 - Staff mgnt fee vs Norm completed bring in closed date and status.sql" data-mime-type="text/plain" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="a2c5803b-2ee7-4159-9cd6-9fc1baef68d1" data-media-type="file"><img src="attachments/thumbnails/2592604223/2623504456" height="250"/></a></span> <br/>i summarisd a full business rules mapping might help future developer.</p><p>Here is the business rules mapping table, particularly enriching the details around the <code>CASE WHEN</code> parts to clarify the logic and business rules they enforce:</p><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="96288125-a486-4086-b8ab-8da5065f38e7" data-table-display-mode="default" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p><strong>Business Rule</strong></p></th><th class="confluenceTh"><p><strong>Description</strong></p></th><th class="confluenceTh"><p><strong>Tables Involved</strong></p></th><th class="confluenceTh"><p><strong>Conditions/Calculations</strong></p></th></tr><tr><td class="confluenceTd"><p><strong>Variable Setup</strong>                           </p></td><td class="confluenceTd"><p>Define variables for date range and portfolio ID                                                                                                       </p></td><td class="confluenceTd"><p>N/A                                        </p></td><td class="confluenceTd"><p><code>DECLARE @StartDate DATETIME</code>, <code>DECLARE @EndDate DATETIME</code>, <code>DECLARE @PortfolioID VARCHAR(50)</code>                   </p></td></tr><tr><td class="confluenceTd"><p><strong>Check and Drop Temp Tables</strong>               </p></td><td class="confluenceTd"><p>Drop temporary tables if they exist to avoid conflicts                                                                                                </p></td><td class="confluenceTd"><p><code>tempdb..#AssetTypeMapping</code>, <code>tempdb..#RankedFeeScales</code>, <code>tempdb..#CalculatedRanges</code>, <code>tempdb..#FeeScheduleWithPercentage</code>, <code>tempdb..#TempValuationNZD</code>, <code>tempdb..#PrescribedPerson</code>, <code>tempdb..#StaffManagementFee</code>, <code>tempdb..#PortfolioValuationByAssetType</code>, <code>tempdb..#FinalStaffManagementFee</code>, <code>tempdb..#FinalNormalManagementFees</code> </p></td><td class="confluenceTd"><p><code>IF OBJECT_ID('tempdb..#TableName') IS NOT NULL DROP TABLE #TableName</code>                                               </p></td></tr><tr><td class="confluenceTd"><p><strong>PrescribedPerson Table</strong>                  </p></td><td class="confluenceTd"><p>Define and drop the <code>PrescribedPerson</code> temporary table, mapping prescribed person types                                                               </p></td><td class="confluenceTd"><p><code>#PrescribedPerson</code>                        </p></td><td class="confluenceTd"><p><code>SELECT 'Staff' AS Type, 1 AS Id</code>, etc.                                                                         </p></td></tr><tr><td class="confluenceTd"><p><strong>StaffManagementFee Calculation</strong>           </p></td><td class="confluenceTd"><p>Create and populate <code>StaffManagementFee</code> temporary table with staff management fee details by portfolio, branch, and fee package                       </p></td><td class="confluenceTd"><p><code>PortfolioCashTrade</code>, <code>TradeStatus</code>, <code>TradeTypeDM</code>, <code>PortfolioOrder</code>, <code>Portfolio</code>, <code>PortfolioStatus</code>, <code>OrganisationBranch</code>, <code>OrganisationAdvisorCode</code>, <code>Entity</code>, <code>FeeIncomeAndExpenseDetail</code>, <code>Fee</code>, <code>FeePackage</code>, <code>PortfolioFeePackage</code>, <code>#PrescribedPerson</code> </p></td><td class="confluenceTd"><p>Various joins and conditions (e.g., <code>fp.Name IN (...)</code>, <code>fed.DatePaid IS NULL OR ...</code>)                             </p></td></tr><tr><td class="confluenceTd"><p><strong>FinalStaffManagementFee Aggregation</strong>      </p></td><td class="confluenceTd"><p>Aggregate <code>StaffManagementFee</code> data to portfolio level                                                                                                </p></td><td class="confluenceTd"><p><code>#StaffManagementFee</code>                      </p></td><td class="confluenceTd"><p><code>SUM(StaffManagementFeecol)</code>, <code>GROUP BY ClientCode, ClientName, ...</code>                                            </p></td></tr><tr><td class="confluenceTd"><p><strong>AssetTypeMapping</strong>                         </p></td><td class="confluenceTd"><p>Define and drop <code>AssetTypeMapping</code> temporary table, mapping asset types to product types                                                              </p></td><td class="confluenceTd"><p><code>#AssetTypeMapping</code>                        </p></td><td class="confluenceTd"><p><code>VALUES (NULL, NULL, 'Cash Call Account'), ...</code>                                                                 </p></td></tr><tr><td class="confluenceTd"><p><strong>RankedFeeScales</strong>                          </p></td><td class="confluenceTd"><p>Build <code>RankedFeeScales</code> temporary table with ranked fee scales based on end values and fee percentages                                                </p></td><td class="confluenceTd"><p><code>FeePackage</code>, <code>Fee</code>, <code>FeeScale</code>, <code>#AssetTypeMapping</code> </p></td><td class="confluenceTd"><p>Various joins and conditions (e.g., <code>f.Name LIKE '%Management Fee%'</code>, <code>fp.Name IN (...)</code>)                           </p></td></tr><tr><td class="confluenceTd"><p><strong>CalculatedRanges</strong>                         </p></td><td class="confluenceTd"><p>Create <code>CalculatedRanges</code> temporary table to calculate start and end values for fee scales                                                            </p></td><td class="confluenceTd"><p><code>#RankedFeeScales</code>                         </p></td><td class="confluenceTd"><p><code>COALESCE(LAG(EndValue) OVER ..., 0) AS StartValue</code>, <code>ROW_NUMBER() OVER ...</code>                                     </p></td></tr><tr><td class="confluenceTd"><p><strong>FeeScheduleWithPercentage</strong>                </p></td><td class="confluenceTd"><p>Create <code>FeeScheduleWithPercentage</code> temporary table, handling null values for start values                                                             </p></td><td class="confluenceTd"><p><code>#CalculatedRanges</code>                        </p></td><td class="confluenceTd"><p>Various conditions and calculations (e.g., <code>CASE WHEN EndValue IS NULL ...</code>)                                     </p></td></tr><tr><td class="confluenceTd"><p><strong>TempValuationNZD Calculation</strong>             </p></td><td class="confluenceTd"><p>Populate <code>TempValuationNZD</code> temporary table with valuation data by portfolio and asset type                                                           </p></td><td class="confluenceTd"><p><code>PortfolioValuationHistoryDetail</code>, <code>asset</code>, <code>currency</code>, <code>portfoliovaluationhistoryheader</code>, <code>portfolio</code>, <code>PortfolioStatus</code>, <code>PortfolioFeePackage</code>, <code>FeePackage</code>, <code>OrganisationBranch</code>, <code>OrganisationAdvisorCode</code>, <code>Entity</code>, <code>#PrescribedPerson</code> </p></td><td class="confluenceTd"><p>Various joins and conditions (e.g., <code>fp.Name IN (...)</code>, <code>pvh.ValuationasAtDate BETWEEN @StartDate AND @EndDate</code>)   </p></td></tr><tr><td class="confluenceTd"><p><strong>PortfolioValuationByAssetType Aggregation</strong></p></td><td class="confluenceTd"><p>Aggregate <code>TempValuationNZD</code> data to a date level                                                                                                      </p></td><td class="confluenceTd"><p><code>#TempValuationNZD</code>                        </p></td><td class="confluenceTd"><p><code>SUM(ValuationNZD)</code>, <code>GROUP BY Portfolio_ID, ClientCode, ...</code>                                                   </p></td></tr><tr><td class="confluenceTd"><p><strong>Final Management Fee Calculation</strong>         </p></td><td class="confluenceTd"><p>Calculate normal management fee if staff were not staff, and aggregate results                                                                         </p></td><td class="confluenceTd"><p><code>#PortfolioValuationByAssetType</code>, <code>#FeeScheduleWithPercentage</code> </p></td><td class="confluenceTd"><p>Various conditions and calculations (e.g., <code>CASE WHEN ... THEN ...</code>, <code>SUM(NormalManagementFee)</code>)                   </p></td></tr><tr><td class="confluenceTd"><p><strong>Merge Staff and Normal Management Fees</strong>   </p></td><td class="confluenceTd"><p>Merge staff management fees with normal management fees by client code                                                                                </p></td><td class="confluenceTd"><p><code>#FinalStaffManagementFee</code>, <code>#FinalNormalManagementFees</code> </p></td><td class="confluenceTd"><p>Join on <code>ClientCode</code>, various conditions for filtering (e.g., <code>Branch IN (@Branch)</code>)                                </p></td></tr></tbody></table></div><h3 id="id-02.ContinuedLearningonNZXWTFee-DetailedCASEWHENLogic:">Detailed <code>CASE WHEN</code> Logic:</h3><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="15f17ff1-a7c5-41cd-92c8-34713ca10397" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p><strong>Condition</strong></p></th><th class="confluenceTh"><p><strong>Description</strong></p></th><th class="confluenceTh"><p><strong>Details</strong></p></th></tr><tr><td class="confluenceTd"><p><strong>Condition 1: Do Not Use Package and Closed</strong> </p></td><td class="confluenceTd"><p>Special handling for portfolios with &quot;Do Not Use&quot; package and closed status                                                                    </p></td><td class="confluenceTd"><ul><li><p><code>FeePackageName</code> LIKE '%Do Not Use%' &lt;br&gt; - <code>PortfolioClosedDate</code> IS NOT NULL &lt;br&gt; - <code>PortfolioStatus</code> &lt;&gt; 'Active' </p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>Sub-condition 1.1: Normal Calculation</strong>      </p></td><td class="confluenceTd"><p>Calculate normally before the closed date                                                                                                      </p></td><td class="confluenceTd"><ul><li><p>Check if <code>StartDate</code> &lt; <code>PortfolioClosedDate</code> AND <code>EndDate</code> &gt; <code>PortfolioClosedDate</code> &lt;br&gt; - Asset type-specific calculations</p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>Sub-condition 1.2: Shares</strong>                  </p></td><td class="confluenceTd"><p>Calculate fee for shares                                                                                                                       </p></td><td class="confluenceTd"><ul><li><p><code>ValuationNZD</code> &gt; <code>StartValue</code> AND (<code>ValuationNZD</code> &lt;= <code>EndValue</code> OR <code>EndValue</code> IS NULL) &lt;br&gt; - Math: ((ValuationNZD - StartValue) * AnnualisedFeeInPercentage / 100 / 365)</p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>Sub-condition 1.3: Cash Call Account</strong>       </p></td><td class="confluenceTd"><p>Calculate fee for cash call account                                                                                                            </p></td><td class="confluenceTd"><ul><li><p><code>ValuationNZD</code> &gt; 10000 &lt;br&gt; - Math: (ValuationNZD - 10000) * (AnnualisedFeeInPercentage / 100) / 365                 </p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>Sub-condition 1.4: Unitised</strong>                </p></td><td class="confluenceTd"><p>Calculate fee for unitised assets                                                                                                              </p></td><td class="confluenceTd"><ul><li><p><code>ValuationNZD</code> &gt; 0 &lt;br&gt; - Math: ValuationNZD * (AnnualisedFeeInPercentage / 100) / 365                             </p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>Condition 2: Do Not Use but Still Open</strong>     </p></td><td class="confluenceTd"><p>Handle portfolios in &quot;Do Not Use&quot; package but still open                                                                                       </p></td><td class="confluenceTd"><ul><li><p>Stick to normal calculations without special conditions                                                            </p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>Condition 3: Active Portfolios</strong>             </p></td><td class="confluenceTd"><p>Logic for active portfolios with normal package                                                                                                </p></td><td class="confluenceTd"><ul><li><p>Asset type-specific calculations - Similar logic as sub-conditions above                                     </p></li></ul></td></tr></tbody></table></div><p>This table provides a clear mapping of business rules with their detailed descriptions, involved tables, and specific conditions or calculations. It also includes an in-depth look at the <code>CASE WHEN</code> logic, explaining each sub-condition in a detailed manner for better understanding and traceability.             </p><h2 id="id-02.ContinuedLearningonNZXWTFee-Relatedarticles"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4cb" data-emoji-shortname=":clipboard:" data-emoji-fallback="\uD83D\uDCCB" src="images/icons/emoticons/72/1f4cb.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Related articles</h2><p></p>
+
+
+
+
+
+
+
+
+
+
+
+    
+    <ul class="content-by-label">
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="3021504564" data-linked-resource-type="page" data-linked-resource-version="3" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/3021504564/Power+BI+Dynamic+Subscriptions+Set+Up+Guide">Power BI Dynamic Subscriptions Set Up Guide</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2698248202" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2698248202/10.+Known+Issues+-+Ace+Holdings+Data+at+Month+End">10. Known Issues - Ace Holdings Data at Month End</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2703098031" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2703098031/12.+Minors+turning+18">12. Minors turning 18</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2702376988" data-linked-resource-type="page" data-linked-resource-version="5" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2702376988/11.+CRM+advisers+and+PWAs+complex+relationships">11. CRM advisers and PWAs complex relationships</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2688352258" data-linked-resource-type="page" data-linked-resource-version="7" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2688352258/09.+CIP+0209441Cashman+accounts+balance+report+By+Brenden">09. CIP:0209441Cashman accounts balance report By Brenden</a>
+                        
+                        
+                    </div>
+    </li>
+    </ul>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2592604223/2592604281.png">image-20240703-213257.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2592604223/2592899186.png">image-20240703-215120.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2592604223/2623504456.sql">Work Script 8 - Staff mgnt fee vs Norm completed bring in closed date and status.sql</a> (text/plain)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:52</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

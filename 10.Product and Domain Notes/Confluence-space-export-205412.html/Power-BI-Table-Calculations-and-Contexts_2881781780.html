@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Power BI Table Calculations and Contexts</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Power BI Table Calculations and Contexts
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 27-11-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <hr/><h4 id="PowerBITableCalculationsandContexts-1.IntroductiontoTableVisualsinPowerBI"><strong>1. Introduction to Table Visuals in Power BI</strong></h4><p>Power BI table visuals are commonly used for presenting row-by-row data with summary calculations. However, understanding the <strong>row context</strong> and <strong>filter context</strong> is essential to avoid pitfalls when building measures and ensuring correct results.</p><p>This guide explains the key calculations, technical considerations, and common pitfalls when working with table visuals in Power BI.</p><hr/><h4 id="PowerBITableCalculationsandContexts-2.KeyCalculations"><strong>2. Key Calculations</strong></h4><p><strong>2.1 Total Rolling 12 Months Spend</strong> This measure ensures the total sum of the <code>Rolling12MonthsSpend</code> column across the dataset, regardless of row-level or filter context applied to specific columns such as <code>ABEL Code</code> or <code>Key Supplier</code>.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TotalRolling12MonthsSpend = 
+CALCULATE(
+    SUM(&#39;SupplierSpending&#39;[Rolling12MonthsSpend]),
+    ALL(&#39;SupplierSpending&#39;[ABEL Code], &#39;SupplierSpending&#39;[Key Supplier - Top 50 Risk Tracker])
+)
+</pre>
+</div></div><p><strong>How It Works:</strong></p><ul><li><p><code>CALCULATE</code> modifies the filter context.</p></li><li><p><code>SUM</code> aggregates the <code>Rolling12MonthsSpend</code> values.</p></li><li><p><code>ALL</code> removes filters from <code>ABEL Code</code> and <code>Key Supplier - Top 50 Risk Tracker</code> but retains other filters, such as <code>ApplyYearMonth</code>.</p></li></ul><hr/><p><strong>2.2 Rolling 12 Months Spend Percentage</strong> This measure calculates the percentage of each row's <code>Rolling12MonthsSpend</code> relative to the total.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Rolling12MonthsSpendPercentage = 
+DIVIDE(
+    SUM(&#39;SupplierSpending&#39;[Rolling12MonthsSpend]),
+    [TotalRolling12MonthsSpend],
+    0
+)
+</pre>
+</div></div><p><strong>How It Works:</strong></p><ul><li><p>The numerator is the <code>Rolling12MonthsSpend</code> value for the current row (filtered by row context).</p></li><li><p>The denominator is the <code>TotalRolling12MonthsSpend</code> measure, which is unaffected by row context.</p></li><li><p><code>DIVIDE</code> ensures no divide-by-zero errors, returning <code>0</code> when the total is <code>0</code>.</p></li></ul><hr/><h4 id="PowerBITableCalculationsandContexts-3.TechnicalConsiderations"><strong>3. Technical Considerations</strong></h4><p><strong>3.1 Row Context vs. Filter Context</strong></p><ul><li><p><strong>Row Context</strong>: Each row in a table visual inherently has its own row context. For example, when summing <code>Rolling12MonthsSpend</code>, Power BI only considers the value for that row unless overridden by a measure.</p></li><li><p><strong>Filter Context</strong>: Filters applied via slicers, report pages, or measures affect the calculation. Explicit use of functions like <code>ALL</code>, <code>REMOVEFILTERS</code>, and <code>ALLEXCEPT</code> can manipulate the filter context.</p></li></ul><p><strong>3.2 Handling Grand Totals</strong></p><ul><li><p>Measures like <code>SUM</code> or <code>AVERAGE</code> calculate totals correctly in most cases. However, custom calculations using row-level data may lead to incorrect totals unless explicitly accounted for.</p></li><li><p>The <strong>grand total</strong> in a table visual is often a sum of the measure values, not a recalculated result over the entire dataset. Use <code>HASONEVALUE</code> or <code>ISINSCOPE</code> to handle these cases.</p></li></ul><p><strong>3.3 Use of </strong><code>REMOVEFILTERS</code><strong>, </strong><code>ALL</code><strong>, and </strong><code>ALLEXCEPT</code></p><ul><li><p><code>REMOVEFILTERS</code>: Removes filters from specific columns or tables but retains other filter context.</p></li><li><p><code>ALL</code>: Ignores all filters on the specified column or table.</p></li><li><p><code>ALLEXCEPT</code>: Removes all filters except for the specified columns.</p></li></ul><hr/><h4 id="PowerBITableCalculationsandContexts-4.CommonPitfalls"><strong>4. Common Pitfalls</strong></h4><p><strong>4.1 Incorrect Total Summation</strong></p><ul><li><p><strong>Symptom</strong>: Grand totals for measures show unexpected results.</p></li><li><p><strong>Cause</strong>: Measures using row context inadvertently aggregate values incorrectly.</p></li><li><p><strong>Solution</strong>: Use <code>CALCULATE</code> with <code>ALL</code> or <code>REMOVEFILTERS</code> to ensure the total is calculated across the entire dataset.</p></li></ul><p><strong>4.2 Filters Overwriting Context</strong></p><ul><li><p><strong>Symptom</strong>: Measures return incorrect results when slicers or filters are applied.</p></li><li><p><strong>Cause</strong>: Filters unintentionally modify the filter context for calculations.</p></li><li><p><strong>Solution</strong>: Use <code>REMOVEFILTERS</code> or <code>ALLEXCEPT</code> to manage filter dependencies explicitly.</p></li></ul><p><strong>4.3 Divide-by-Zero Errors</strong></p><ul><li><p><strong>Symptom</strong>: A measure fails when the denominator is zero.</p></li><li><p><strong>Cause</strong>: Division without error handling in DAX.</p></li><li><p><strong>Solution</strong>: Use the <code>DIVIDE</code> function, which gracefully handles divide-by-zero scenarios.</p></li></ul><p><strong>4.4 Misalignment of Row and Filter Context</strong></p><ul><li><p><strong>Symptom</strong>: Row-level measures don't match the expected column aggregations.</p></li><li><p><strong>Cause</strong>: Misuse of row context functions like <code>SUMX</code> within a filter context.</p></li><li><p><strong>Solution</strong>: Understand and manage the interaction between row and filter context explicitly.</p></li></ul><hr/><h4 id="PowerBITableCalculationsandContexts-5.PracticalExample"><strong>5. Practical Example</strong></h4><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="f1517e93-1da5-427f-98f6-1c87eb6189f0" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p><strong>Measure Name</strong></p></th><th class="confluenceTh"><p><strong>Expected Behavior</strong></p></th><th class="confluenceTh"><p><strong>DAX Formula</strong></p></th></tr><tr><td class="confluenceTd"><p><strong>TotalRolling12MonthsSpend</strong></p></td><td class="confluenceTd"><p>Grand total of <code>Rolling12MonthsSpend</code> across all rows, ignoring row-level filters.</p></td><td class="confluenceTd"><p><code>CALCULATE(SUM('SupplierSpending'[Rolling12MonthsSpend]), ALL('SupplierSpending'[ABEL Code], 'SupplierSpending'[Key Supplier - Top 50 Risk Tracker]))</code></p></td></tr><tr><td class="confluenceTd"><p><strong>Rolling12MonthsSpendPercentage</strong></p></td><td class="confluenceTd"><p>Row-level percentage contribution of <code>Rolling12MonthsSpend</code> relative to the total.</p></td><td class="confluenceTd"><p><code>DIVIDE(SUM('SupplierSpending'[Rolling12MonthsSpend]), [TotalRolling12MonthsSpend], 0)</code></p></td></tr></tbody></table></div><hr/><h4 id="PowerBITableCalculationsandContexts-6.TipsforTableVisuals"><strong>6. Tips for Table Visuals</strong></h4><ol start="1"><li><p><strong>Consistent Total Values</strong>: Use <code>REMOVEFILTERS</code> or <code>ALL</code> in measures to ensure grand totals reflect the entire dataset.</p></li><li><p><strong>Grand Total Debugging</strong>: Use <code>IF(HASONEVALUE(...))</code> to differentiate row-level and total-level calculations.</p></li><li><p><strong>Testing in Card Visuals</strong>: Validate measures in card visuals to isolate them from table row context issues.</p></li><li><p><strong>Avoid Overlapping Filters</strong>: Use <code>ALLEXCEPT</code> to manage filter interactions explicitly.</p></li><li><p><strong>Proper Error Handling</strong>: Always use <code>DIVIDE</code> for division operations to avoid errors with zero denominators.</p></li></ol><hr/><h4 id="PowerBITableCalculationsandContexts-7.Summary"><strong>7. Summary</strong></h4><p>This guide provides an end-to-end explanation of building reliable measures for table visuals in Power BI. By properly managing row and filter context, using the right DAX functions, and handling common pitfalls, you can ensure that calculations like totals and percentages are accurate and consistent.</p><p>Let me know if you need more examples or clarifications!</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 01. CIP Data Learning From Chris Church</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="1.-Internal_2555216013.html">1. Internal</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 01. CIP Data Learning From Chris Church
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 11-07-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <style type='text/css'>/*<![CDATA[*/
+div.rbtoc1755550318411 {padding: 0px;}
+div.rbtoc1755550318411 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1755550318411 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style><div class='toc-macro rbtoc1755550318411'>
+<ul class='toc-indentation'>
+<li><a href='#id-01.CIPDataLearningFromChrisChurch-Backgroud'>🐶 Backgroud</a></li>
+<li><a href='#id-01.CIPDataLearningFromChrisChurch-Overview'>🚗 Overview</a>
+<ul class='toc-indentation'>
+<li><a href='#id-01.CIPDataLearningFromChrisChurch-CurrentState:'>🗝️ Current State:</a></li>
+<li><a href='#id-01.CIPDataLearningFromChrisChurch-FutureState:'>⏲️ Future State:</a></li>
+</ul>
+</li>
+<li><a href='#id-01.CIPDataLearningFromChrisChurch-KeyLearnings'>📘 Key Learnings</a></li>
+<li><a href='#id-01.CIPDataLearningFromChrisChurch-MySummary'>😆 My Summary</a></li>
+<li><a href='#id-01.CIPDataLearningFromChrisChurch-Relatedarticles'>\uD83D\uDCCB Related articles</a></li>
+</ul>
+</div><h2 id="id-01.CIPDataLearningFromChrisChurch-Backgroud"><img class="emoticon emoticon-blue-star" data-emoji-id="1f436" data-emoji-shortname=":dog:" data-emoji-fallback="🐶" src="images/icons/emoticons/72/1f436.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Backgroud</h2><p>Chris Walk me through how CIP data architecture works and gave me some solid stuff</p><h2 id="id-01.CIPDataLearningFromChrisChurch-Overview"><img class="emoticon emoticon-blue-star" data-emoji-id="1f697" data-emoji-shortname=":red_car:" data-emoji-fallback="🚗" src="images/icons/emoticons/72/1f697.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Overview</h2><h3 id="id-01.CIPDataLearningFromChrisChurch-CurrentState:"><img class="emoticon emoticon-blue-star" data-emoji-id="1f5dd" data-emoji-shortname=":key2:" data-emoji-fallback="🗝️" src="images/icons/emoticons/72/1f5dd.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Current State: </h3><ul><li><p>Client Data</p><ul><li><p>Names, addresses, etc.</p></li></ul></li><li><p>Transactional Data</p><ul><li><p>Orders, contracts, etc.</p></li></ul></li><li><p>Market/Asset Data</p><ul><li><p>Asset name, prices, etc.</p></li></ul></li></ul><p>We got about a few On-prem SQLDB from the operation transnational level and Dynamic CRM Level. ingested and land into a Data Lake, ETL on Azure Synapse, Build model in a SSAS on-prem sever (54 GB – Really big), then output to those BI interface (Power BI, Client Portal, and SSRS Insights).</p><p>The Pinnacle projects are about replacing all the Chelmer Suites-related database and some part of the Dynamic CRM functionality and putting them into the SS&amp;C ALOHA system. </p><p><img class="emoticon emoticon-cheeky" data-emoji-id="1f61b" data-emoji-shortname=":stuck_out_tongue:" data-emoji-fallback="😛" src="images/icons/emoticons/tongue.png" width="16" height="16" data-emoticon-name="cheeky" alt="(tongue)"/> We called the Synapse&gt;&gt; Data Platforms &gt;&gt; I assume there would be quite a lot of pipelines on synaspe and there would be a few notebooks that linked to a spake pool to do some heavy lifting.</p><p><strong>** we use terraform for Iaac &gt;&gt; we got 4 environments DEV / UAT / PRE-PROD (it had actual data in it)/ PROD**</strong></p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="IMG20240612140320.jpg" width="388" loading="lazy" src="attachments/2555641857/2556002332.jpg?width=388" data-image-src="attachments/2555641857/2556002332.jpg" data-height="4624" data-width="3468" data-unresolved-comment-count="0" data-linked-resource-id="2556002332" data-linked-resource-version="2" data-linked-resource-type="attachment" data-linked-resource-default-alias="IMG20240612140320.jpg" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/jpeg" data-linked-resource-container-id="2555641857" data-linked-resource-container-version="8" data-media-id="07b65820-b14c-4f1b-b09b-4129bd093431" data-media-type="file"></span><p /><p>All the synapse data would, later on, sinking into a Data warehouse &gt;&gt; some sort of database &gt;&gt; and then go into this big SSAS model (54GB)</p><p>Data Sources:</p><p>the key SQL DB to remember <img class="emoticon emoticon-blue-star" data-emoji-id="1f436" data-emoji-shortname=":dog:" data-emoji-fallback="🐶" src="images/icons/emoticons/72/1f436.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/></p><p>Operational Side <img class="emoticon emoticon-blue-star" data-emoji-id="1f697" data-emoji-shortname=":red_car:" data-emoji-fallback="🚗" src="images/icons/emoticons/72/1f697.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> </p><p>Cherlmer Suite: <strong>ACE, Fusion (Asset data + Transactional data), Cashman</strong></p><p>NZXWT (NZX wealth technology) : they open the SQL DB for us to query mainly transactional data </p><p /><p>Client Service Side <img class="emoticon emoticon-blue-star" data-emoji-id="1f9d0" data-emoji-shortname=":face_with_monocle:" data-emoji-fallback="🧐" src="images/icons/emoticons/72/1f9d0.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> </p><p>Sharepoint Libray (Unstructured data)</p><p>Dynamic CRM &gt;&gt; Entity stores managed by Micrtososft (this got most the client data, accounts, names, roles etc.)</p><div class="confluence-information-macro confluence-information-macro-information"><span class="aui-icon aui-icon-small aui-iconfont-info confluence-information-macro-icon"></span><div class="confluence-information-macro-body"><p>Please note that holdings are real-time aggregations of client profolio:</p><p>take Microsoft shares as examples:</p><p>jackson buys and sells shares</p><p>Day 1 &gt;&gt; + 100</p><p>Day 2 &gt;&gt; +300</p><p>Day 3 &gt;&gt; -50</p><p>Day 4&gt;&gt; +500</p><p>Then when they do the holding they add up all these shares = 850 shares of Microsoft</p></div></div><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240612-212528.png" width="1076" loading="lazy" src="attachments/2555641857/2555543609.png?width=1076" data-image-src="attachments/2555641857/2555543609.png" data-height="3468" data-width="4624" data-unresolved-comment-count="0" data-linked-resource-id="2555543609" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240612-212528.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2555641857" data-linked-resource-container-version="8" data-media-id="076d260c-6923-47ea-9519-29fdcd2401da" data-media-type="file"></span><p>Our Client service model ERD hierarchy kind of looked like this</p><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="IMG20240612135822.jpg" width="760" loading="lazy" src="attachments/2555641857/2555937269.jpg?width=760" data-image-src="attachments/2555641857/2555937269.jpg" data-height="3468" data-width="4624" data-unresolved-comment-count="0" data-linked-resource-id="2555937269" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="IMG20240612135822.jpg" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/jpeg" data-linked-resource-container-id="2555641857" data-linked-resource-container-version="8" data-media-id="96e7351d-0681-4c58-b25f-749d065ae9ed" data-media-type="file"></span><ol start="1"><li><p><strong>Contacts Table</strong></p><ul><li><p><strong>Description</strong>: This table stores information about the contacts.</p></li><li><p><strong>Examples</strong>:</p><ul><li><p>Contact 1: Chris</p></li><li><p>Contact 2: Jackson</p></li></ul></li></ul></li><li><p><strong>Role Table</strong></p><ul><li><p><strong>Description</strong>: This table defines the roles associated with each contact. (One contacts might have multiple roles)</p></li><li><p><strong>Examples</strong>:</p><ul><li><p>Role 1: Client</p></li><li><p>Role 2: Online Client</p></li></ul></li></ul></li><li><p><strong>Accounts Table (Acc/Trading Entity (Te)) &gt;. This is all the advisor cares about &gt;. A 6 digits number</strong></p><ul><li><p><strong>Description</strong>: This table holds information about various accounts and their associated roles.</p></li><li><p><strong>Examples</strong>:</p><ul><li><p>Account 1: Mr. Chris &amp; Trust</p></li><li><p>Account 2: Mr. Jackson</p></li></ul></li></ul></li><li><p><strong>Portfolio Table ()</strong></p><ul><li><p><strong>Description</strong>: This table contains details about the portfolio associated with each account.</p></li><li><p><strong>Examples</strong>:</p><ul><li><p>Portfolio for Mr. Chris</p></li><li><p>Portfolio for Mr. Jackson</p></li></ul></li></ul></li></ol><p>Here's a more detailed breakdown of how these tables might be connected:</p><ul><li><p>The <strong>Contacts</strong> table contains basic information about each contact.</p></li><li><p>The <strong>Role</strong> table assigns specific roles to these contacts (e.g., whether they are clients or online clients).</p></li><li><p>The <strong>Accounts</strong> table links the contacts with their respective roles and any additional account details.</p></li><li><p>The <strong>Portfolio</strong> table provides further details related to each account, such as investments or services.</p></li></ul><p /><hr/><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240612-213038.png" width="1800" loading="lazy" src="attachments/2555641857/2555281568.png?width=1800" data-image-src="attachments/2555641857/2555281568.png" data-height="501" data-width="1284" data-unresolved-comment-count="0" data-linked-resource-id="2555281568" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240612-213038.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2555641857" data-linked-resource-container-version="8" data-media-id="7c143de7-fa9d-4d3d-8481-38e9ed6a53e8" data-media-type="file"></span><h3 id="id-01.CIPDataLearningFromChrisChurch-FutureState:"><img class="emoticon emoticon-blue-star" data-emoji-id="23f2" data-emoji-shortname=":timer:" data-emoji-fallback="⏲️" src="images/icons/emoticons/72/23f2.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Future State: </h3><p>After upgrading to ALOHA, all the Aloha data would be sunk into a Managed Azure DB, </p><p>On ss&amp;c side is a MongoDB &gt;&gt; and Sinks into ADS (ALOHA Data Store) &gt;&gt; and then sinks into a RADS (R-ALOHA data store)</p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240612-213106.png" width="1442" loading="lazy" src="attachments/2555641857/2555543638.png?width=1442" data-image-src="attachments/2555641857/2555543638.png" data-height="534" data-width="1030" data-unresolved-comment-count="0" data-linked-resource-id="2555543638" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240612-213106.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2555641857" data-linked-resource-container-version="8" data-media-id="bb6ac378-460d-47ab-bd22-f099c2a87c4a" data-media-type="file"></span><p /><h2 id="id-01.CIPDataLearningFromChrisChurch-KeyLearnings"> <img class="emoticon emoticon-blue-star" data-emoji-id="1f4d8" data-emoji-shortname=":blue_book:" data-emoji-fallback="📘" src="images/icons/emoticons/72/1f4d8.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Key Learnings</h2><ol start="1"><li><p><strong>We have some old DBs</strong></p></li><li><p>We are going to use a completely new ALOHA system, not sure would impact the integration much</p></li><li><p>we are replacing the Chelmers DBs and some of the CRM functionality into ALOHA suite</p></li><li><p>we going to have some issues modernising the client interface or even swapping to a better interface.</p></li><li><p>We might want to move to an API based architecture so we could get data from real time</p></li></ol><h2 id="id-01.CIPDataLearningFromChrisChurch-MySummary"><img class="emoticon emoticon-blue-star" data-emoji-id="1f606" data-emoji-shortname=":laughing:" data-emoji-fallback="😆" src="images/icons/emoticons/72/1f606.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> My Summary</h2><p><strong>Current State:</strong></p><ul><li><p><strong>Client Data:</strong> Names, addresses.</p></li><li><p><strong>Transactional Data:</strong> Orders, contracts.</p></li><li><p><strong>Market/Asset Data:</strong> Asset names, prices.</p></li><li><p>Data from on-prem SQLDBs (operational, CRM) ingested into a Data Lake, processed in Azure Synapse, modelled in on-prem SSAS (54GB), and output to BI interfaces (Power BI, Client Portal, SSRS Insights).</p></li></ul><p><strong>Future State:</strong></p><ul><li><p>Transition to SS&amp;C ALOHA system.</p></li><li><p>Data flow: MongoDB (SS&amp;C) → ALOHA Data Store (ADS) → R-ALOHA Data Store (RADS). ** R stand for (Replicated)</p></li><li><p>Potential integration challenges and need for API-based architecture for real-time data access.</p></li></ul><h2 id="id-01.CIPDataLearningFromChrisChurch-Relatedarticles"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4cb" data-emoji-shortname=":clipboard:" data-emoji-fallback="\uD83D\uDCCB" src="images/icons/emoticons/72/1f4cb.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Related articles</h2><p></p>
+
+
+
+
+
+
+
+
+
+
+
+    
+    <ul class="content-by-label">
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="3021504564" data-linked-resource-type="page" data-linked-resource-version="3" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/3021504564/Power+BI+Dynamic+Subscriptions+Set+Up+Guide">Power BI Dynamic Subscriptions Set Up Guide</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2698248202" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2698248202/10.+Known+Issues+-+Ace+Holdings+Data+at+Month+End">10. Known Issues - Ace Holdings Data at Month End</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2703098031" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2703098031/12.+Minors+turning+18">12. Minors turning 18</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2702376988" data-linked-resource-type="page" data-linked-resource-version="5" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2702376988/11.+CRM+advisers+and+PWAs+complex+relationships">11. CRM advisers and PWAs complex relationships</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2688352258" data-linked-resource-type="page" data-linked-resource-version="7" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2688352258/09.+CIP+0209441Cashman+accounts+balance+report+By+Brenden">09. CIP:0209441Cashman accounts balance report By Brenden</a>
+                        
+                        
+                    </div>
+    </li>
+    </ul>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2555641857/2555543609.png">image-20240612-212528.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2555641857/2555543632.png">image-20240612-213015.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2555641857/2555281568.png">image-20240612-213038.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2555641857/2555543638.png">image-20240612-213106.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2555641857/2555937269.jpg">IMG20240612135822.jpg</a> (image/jpeg)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2555641857/2555871257.jpg">IMG20240612140320.jpg</a> (image/jpeg)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2555641857/2556002332.jpg">IMG20240612140320.jpg</a> (image/jpeg)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:51</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

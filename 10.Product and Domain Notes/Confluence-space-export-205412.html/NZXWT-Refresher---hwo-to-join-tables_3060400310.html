@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : NZXWT Refresher - hwo to join tables</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : NZXWT Refresher - hwo to join tables
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 05-03-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is a step-by-step approach to untangling the schema and relationships in a large, complex SQL data warehouse such as <strong>[CRAIGS_PROD_Main]</strong> (and related linked databases). I’ve also included a simplified example ERD-style diagram (in text) to illustrate some of the relationships you can infer from the queries you shared.</p><hr/><h2 id="NZXWTRefresher-hwotojointables-1.IdentifytheCoreTablesandKeyColumns">1. Identify the Core Tables and Key Columns</h2><p>From the SQL extracts you provided, some key tables and columns appear repeatedly and are likely the main anchors of your schema. For instance:</p><ol start="1"><li><p><strong>Portfolio</strong></p><ul><li><p><code>Portfolio.Id</code> (Primary Key)</p></li><li><p><code>PortfolioReference</code> (Another key that shows up in multiple queries, often 6-digit references or appended with suffixes like <code>_KP</code>, <code>_KD</code>)</p></li></ul></li><li><p><strong>Entity</strong></p><ul><li><p><code>Entity.Id</code> (Primary Key)</p></li><li><p><code>EntityName</code> (Name / login ID)</p></li><li><p><code>IdentityUser_Id</code> (links to UserModel)</p></li></ul></li><li><p><strong>UserModel</strong></p><ul><li><p><code>UserModel.Id</code> (Primary Key, matches <code>Entity.IdentityUser_Id</code>)</p></li></ul></li><li><p><strong>Asset</strong></p><ul><li><p><code>Asset.Id</code> (Primary Key)</p></li></ul></li><li><p><strong>PortfolioValuationHistoryHeader</strong></p><ul><li><p><code>PortfolioValuationHistoryHeader.Id</code> (Primary Key)</p></li><li><p><code>PortfolioValuationHistoryHeader.Portfolio_id</code> (FK to <code>Portfolio.Id</code>)</p></li></ul></li><li><p><strong>PortfolioValuationHistoryDetail</strong></p><ul><li><p><code>PortfolioValuationHistoryDetail.PortfolioValuationHistoryHeader_Id</code> (FK to <code>PortfolioValuationHistoryHeader.Id</code>)</p></li><li><p><code>PortfolioValuationHistoryDetail.Asset_Id</code> (FK to <code>Asset.Id</code>)</p></li></ul></li><li><p><strong>Currency</strong>, <strong>CurrencyRate</strong>, <strong>ProductPrice</strong></p><ul><li><p>These handle FX rates and product pricing. Typically, you see:</p><ul><li><p><code>Currency.Id</code> (PK)</p></li><li><p><code>CurrencyRate.From_Id</code>, <code>CurrencyRate.To_Id</code> → both FKs to <code>Currency.Id</code></p></li><li><p><code>ProductPrice.Product_Id</code> → likely references <code>Asset.Id</code> or something similar.</p></li></ul></li></ul></li><li><p><strong>Role</strong>, <strong>RoleEntityLink</strong></p><ul><li><p><code>Role.Id</code> (PK)</p></li><li><p><code>RoleEntityLink.Role_Id</code> (FK to <code>Role.Id</code>)</p></li><li><p><code>RoleEntityLink.Entity_Id</code> (FK to <code>Entity.Id</code>)</p></li></ul></li><li><p><strong>CRM_MSCRM</strong>-based tables (e.g. <code>[Dynamics]...Contact</code>, <code>[Dynamics]...Account</code>)</p><ul><li><p>These often store client data, addresses, and other CRM fields.</p></li><li><p>There is an implied link via a “PortfolioID” or “PortfolioReference” that is also stored in CRM (6-digit IDs or references).</p></li></ul></li></ol><p>Because of the multiple environments (the <code>[Dynamics]</code> server for CRM, <code>[CRAIGS_PROD_Main]</code> for core portfolio data, <code>[NZXWTrptsrv]</code> linked server for reporting queries, etc.), you see many cross-server JOINs.</p><hr/><h2 id="NZXWTRefresher-hwotojointables-2.ExaminetheJoinsintheQueriestoUnderstandRelationships">2. Examine the Joins in the Queries to Understand Relationships</h2><p>Look at how the queries JOIN or <code>LEFT JOIN</code> tables; each join clause reveals a relationship. For example:</p><h3 id="NZXWTRefresher-hwotojointables-ExampleA:ValuationQuery">Example A: Valuation Query</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">FROM PortfolioValuationHistoryDetail pvhd
+LEFT JOIN asset a ON a.id = pvhd.Asset_ID
+JOIN currency c ON c.id = pvhd.Currency_Id
+JOIN portfoliovaluationhistoryheader pvh 
+       ON pvhd.PortfolioValuationHistoryHeader_Id = pvh.id
+JOIN portfolio p ON p.id = pvh.Portfolio_id
+</pre>
+</div></div><p>From this snippet, you can infer:</p><ul><li><p><strong>PortfolioValuationHistoryDetail</strong> → <code>pvhd.Asset_ID</code> → <strong>Asset</strong>.<code>Id</code></p></li><li><p><strong>PortfolioValuationHistoryDetail</strong> → <code>pvhd.Currency_Id</code> → <strong>Currency</strong>.<code>Id</code></p></li><li><p><strong>PortfolioValuationHistoryDetail</strong> → <code>pvhd.PortfolioValuationHistoryHeader_Id</code> → <strong>PortfolioValuationHistoryHeader</strong>.<code>Id</code></p></li><li><p><strong>PortfolioValuationHistoryHeader</strong> → <code>pvh.Portfolio_id</code> → <strong>Portfolio</strong>.<code>Id</code></p></li></ul><h3 id="NZXWTRefresher-hwotojointables-ExampleB:UserAccessQuery">Example B: User Access Query</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">FROM [CRAIGS_PROD_MAIN].[dbo].Entity e
+JOIN [CRAIGS_PROD_MAIN].[dbo].UserModel um 
+     ON e.IdentityUser_Id = um.Id
+</pre>
+</div></div><ul><li><p><strong>Entity</strong> → <code>Entity.IdentityUser_Id</code> → <strong>UserModel</strong>.<code>Id</code></p></li></ul><h3 id="NZXWTRefresher-hwotojointables-ExampleC:RolesQuery">Example C: Roles Query</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">FROM [CRAIGS_PROD_MAIN].[dbo].[Entity] e
+JOIN [CRAIGS_PROD_MAIN].[dbo].RoleEntityLink re 
+     ON re.Entity_ID = e.ID
+JOIN [CRAIGS_PROD_MAIN].[dbo].Role r 
+     ON r.id = re.Role_ID
+</pre>
+</div></div><ul><li><p><strong>RoleEntityLink</strong> → <code>re.Entity_ID</code> → <strong>Entity</strong>.<code>Id</code></p></li><li><p><strong>RoleEntityLink</strong> → <code>re.Role_ID</code> → <strong>Role</strong>.<code>Id</code></p></li></ul><h3 id="NZXWTRefresher-hwotojointables-ExampleD:CRMJoins">Example D: CRM Joins</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">FROM OPENQUERY([Dynamics], &#39;SELECT * FROM [CRM_MSCRM].dbo.[Account] &#39;) ac
+</pre>
+</div></div><p>Then joined to your local temp or permanent tables in <code>[CRAIGS_PROD_Main]</code>. Typically the link is on a matching “AccountId” or “PortfolioServiceId,” etc.</p><hr/><h2 id="NZXWTRefresher-hwotojointables-3.UseaDedicatedTool(orSQLServerFeatures)toInspectForeignKeys">3. Use a Dedicated Tool (or SQL Server Features) to Inspect Foreign Keys</h2><p>If you have direct access to the database (especially <code>[CRAIGS_PROD_Main]</code>), you can run built-in SQL queries to discover relationships:</p><ol start="1"><li><p><strong>Use </strong><code>sys.foreign_keys</code> (and <code>sys.foreign_key_columns</code>) in SQL Server to list all FK constraints. For example:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    fk.name AS ForeignKeyName,
+    t.name  AS TableName,
+    c.name  AS ColumnName,
+    rt.name AS ReferencedTableName,
+    rc.name AS ReferencedColumnName
+FROM sys.foreign_keys fk
+INNER JOIN sys.foreign_key_columns fkc 
+        ON fkc.constraint_object_id = fk.object_id
+INNER JOIN sys.tables t 
+        ON t.object_id = fk.parent_object_id
+INNER JOIN sys.columns c 
+        ON c.object_id = t.object_id 
+       AND c.column_id = fkc.parent_column_id
+INNER JOIN sys.tables rt 
+        ON rt.object_id = fk.referenced_object_id
+INNER JOIN sys.columns rc 
+        ON rc.object_id = rt.object_id 
+       AND rc.column_id = fkc.referenced_column_id
+ORDER BY t.name, c.name;
+</pre>
+</div></div><p>This returns a complete map of foreign keys for the entire DB.</p></li><li><p><strong>Use “Database Diagram”</strong> in SSMS (if permitted in your environment). Right-click the database → “Tasks” → “Database Diagrams” → “New Database Diagram” → select the key tables. SSMS will attempt to auto-link them based on existing foreign key constraints.</p></li><li><p><strong>Check the </strong><code>INFORMATION_SCHEMA.TABLE_CONSTRAINTS</code> and <code>INFORMATION_SCHEMA.KEY_COLUMN_USAGE</code> views if you prefer a more standard approach:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+  TC.TABLE_NAME, 
+  TC.CONSTRAINT_NAME, 
+  KC.COLUMN_NAME, 
+  RC.UNIQUE_CONSTRAINT_NAME
+FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC
+JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE KC 
+     ON TC.CONSTRAINT_NAME = KC.CONSTRAINT_NAME
+LEFT JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS RC 
+     ON TC.CONSTRAINT_NAME = RC.CONSTRAINT_NAME
+WHERE TC.CONSTRAINT_TYPE IN (&#39;PRIMARY KEY&#39;,&#39;FOREIGN KEY&#39;);
+</pre>
+</div></div></li></ol><hr/><h2 id="NZXWTRefresher-hwotojointables-4.SketchaSimplifiedRelationshipDiagram">4. Sketch a Simplified Relationship Diagram</h2><p>From your queries, here’s a <strong>very rough</strong> textual diagram of the main relationships. (Note: Many more tables exist, so this is just an illustration.)</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">                   ┌───────────────────────────┐
+                   │         UserModel         │
+                   │  PK: Id                   │
+                   │  ...                      │
+                   └─────────┬─────────────────┘
+                             │
+                             │  e.IdentityUser_Id = um.Id
+                             │
+                   ┌─────────┴─────────────────┐
+                   │          Entity           │
+                   │  PK: Id                   │
+                   │  IdentityUser_Id (FK)     │
+                   │  ...                      │
+                   └─────────┬─────────────────┘
+                             │  e.id = p.Client_Id
+                             │
+                   ┌─────────┴─────────────────┐
+                   │        Portfolio          │
+                   │  PK: Id                   │
+                   │  PortfolioReference       │
+                   │  Client_Id (FK -&gt; Entity) │
+                   └─────────┬─────────────────┘
+                             │  p.id = pvh.Portfolio_Id
+                             │
+      ┌──────────────────────┴───────────────────────────┐
+      │                      │                           │
+      │                      │                           │
+┌──────┴─────────────────┐   │                ┌──────────┴────────────────────┐
+│ PortfolioValuation      │   │                │   PortfolioAssetHolding       │
+│ HistoryHeader (pvh)     │   │                │ (or PortfolioCashHolding)     │
+│  PK: Id                 │   │                │  PK: ???                      │
+│  Portfolio_id (FK) -----┘   │                │  Portfolio_Id (FK -&gt; p.Id)    │
+│                           (and so on...)     │  Asset_Id (FK -&gt; Asset.Id?)   │
+└──────┬──────────────────┘                    └──────────┬────────────────────┘
+       │                                               │
+       │ pvh.Id = pvhd.PortfolioValuationHistoryHeader_Id
+       │                                               │
+┌───────┴────────────────────┐                        │
+│ PortfolioValuationHistory  │                        │
+│ Detail (pvhd)              │                        │
+│  PK: ???                   │                        │
+│  PortfolioValuationHistory │                        │
+│      Header_Id (FK)        │                        │
+│  Asset_Id (FK -&gt; Asset.Id) │                        │
+└───────┬────────────────────┘                        │
+        │                                             │
+        │ a.id = pvhd.Asset_Id                        │
+        │                                             │
+   ┌─────┴─────────────┐
+   │       Asset       │
+   │  PK: Id           │
+   │  Currency_Id (FK) │
+   └───────────────────┘
+</pre>
+</div></div><p>You can imagine similarly linking in <strong>Role</strong>, <strong>RoleEntityLink</strong>, <strong>TaxDetails</strong>, <strong>ServiceDM</strong>, <strong>PortfolioStatus</strong>, etc. Once you gather more detail, you’d keep expanding this diagram.</p><hr/><h2 id="NZXWTRefresher-hwotojointables-5.ConfirmtheRelationshiptoCRM">5. Confirm the Relationship to CRM</h2><p>Because your environment also references <code>[Dynamics]..[CRM_MSCRM].dbo.*</code> tables:</p><ul><li><p>Typically, <strong>CRM “Account”</strong> ↔ <strong>Portfolio</strong> might be matched by:</p><ul><li><p><code>AccountId</code> in CRM = some 6-digit <code>PortfolioReference</code> or a custom field storing that reference.</p></li></ul></li><li><p>Or the link is stored in an intersection table (like <code>dsl_PortfolioService</code> in your code) that references a CRM <code>AccountId</code> plus a <code>dsl_PortfolioId</code>.</p></li></ul><p>In your code, for example:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">FROM temp_syn_CRM_Account a
+JOIN temp_syn_CRM_dsl_PortfolioService ps 
+    ON a.[External System Key] = ps.dsl_PortfolioServiceId
+</pre>
+</div></div><p>and then possibly linking that to the <code>[CRAIGS_PROD_Main].dbo.Portfolio</code> table on <code>[Portfolio].PortfolioReference = ps.dsl_PortfolioIDName</code> or something similar.</p><hr/><h2 id="NZXWTRefresher-hwotojointables-6.PracticalTipsfor“BestWay”toExplore">6. Practical Tips for “Best Way” to Explore</h2><ol start="1"><li><p><strong>Start with a Diagramming Tool</strong></p><ul><li><p>If you have access, run “Database Diagram” in SSMS or use a 3rd-party tool (e.g. DBeaver, DataGrip, ER/Studio, or SQL Power Architect).</p></li><li><p>Reverse-engineer the schema from <code>[CRAIGS_PROD_Main]</code> and also from <code>[CRM_MSCRM]</code>.</p></li></ul></li><li><p><strong>Use System Tables</strong></p><ul><li><p>As mentioned, <code>sys.foreign_keys</code> and <code>sys.foreign_key_columns</code> are your friends in SQL Server.</p></li></ul></li><li><p><strong>Search for Joins in the Code Base</strong></p><ul><li><p>Because not all tables may have enforced foreign keys, the code itself can reveal “implicit” relationships. You’ll see them in queries like <code>FROM tableA a JOIN tableB b ON a.SomeID = b.SomeID</code>. That indicates a real relationship, even if not declared as a formal FK.</p></li></ul></li><li><p><strong>Check Primary Keys</strong></p><ul><li><p>If the database is well-designed, each table’s <code>Id</code> or <code>[TableName].Id</code> is the PK. If you see a repeated pattern of referencing that <code>Id</code> in other tables, you know that is the main relationship.</p></li></ul></li><li><p><strong>Look at Sample Data</strong></p><ul><li><p>If possible, run small SELECT queries or top 100 rows from each table to confirm how IDs line up. For instance, you might see the same 6-digit “PortfolioReference” in both <code>[CRAIGS_PROD_Main].dbo.Portfolio</code> and <code>[Dynamics].dbo.Account</code>.</p></li></ul></li><li><p><strong>Document</strong></p><ul><li><p>Start building your own data dictionary: for each table, note the primary key(s), foreign keys, any synonyms (e.g. “PortfolioReference” might also be called “PortfolioIDName” in CRM, or “External System Key” in other systems).</p></li></ul></li></ol><hr/><h2 id="NZXWTRefresher-hwotojointables-7.Example:SimpleSELECTWithKeyJoins">7. Example: Simple SELECT With Key Joins</h2><p>As a quick illustration, you might do something like:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    p.Id AS PortfolioID,
+    p.PortfolioReference,
+    e.Id AS EntityID,
+    e.EntityName,
+    a.Id AS AssetID,
+    a.Description AS AssetDescription,
+    pvhd.ValuationRootAmount
+FROM dbo.PortfolioValuationHistoryDetail pvhd
+JOIN dbo.PortfolioValuationHistoryHeader pvh
+    ON pvhd.PortfolioValuationHistoryHeader_Id = pvh.Id
+JOIN dbo.Portfolio p
+    ON pvh.Portfolio_Id = p.Id
+JOIN dbo.Entity e
+    ON e.Id = p.Client_Id
+JOIN dbo.Asset a
+    ON a.Id = pvhd.Asset_Id
+WHERE p.Id = 123456; -- or p.PortfolioReference = &#39;123456&#39;
+</pre>
+</div></div><p>This single query ties <strong>PortfolioValuationHistoryDetail</strong> back to the <strong>Portfolio</strong> and the <strong>Entity</strong> that owns it, plus the <strong>Asset</strong>.</p><hr/><h2 id="NZXWTRefresher-hwotojointables-Summary">Summary</h2><p><strong>The best way</strong> to understand a complex data warehouse with many references is:</p><ol start="1"><li><p><strong>Identify</strong> the key tables (Portfolio, Entity, Asset, etc.) and their PK columns.</p></li><li><p><strong>Inspect</strong> the foreign key constraints in the system tables (if they exist) or from the code.</p></li><li><p><strong>Build</strong> or generate an ER diagram (using SSMS or another tool).</p></li><li><p><strong>Search</strong> your queries to see which columns are joined to which, especially if some relationships are not formally declared in the DB but enforced only in code.</p></li><li><p><strong>Document</strong> everything in a data dictionary or cheat sheet for quick reference.</p></li></ol><p>Over time, you’ll piece together the complete puzzle of how <code>[CRAIGS_PROD_Main]</code>, <code>[CRM_MSCRM]</code>, and other linked servers (like <code>[NZXWTrptsrv]</code>) connect to each other via IDs, references, and “service” tables.</p><p /><p>Below is a sample set of <strong>T-SQL</strong> scripts you can run in <strong>SQL Server</strong> to help you extract <strong>primary keys (PK)</strong> and <strong>foreign keys (FK)</strong> across the main tables you mentioned. Then, I’ll include a quick summary of how those tables typically join together in the <strong>[CRAIGS_PROD_Main]</strong> database.</p><hr/><h2 id="NZXWTRefresher-hwotojointables-1.ScripttoListPrimaryKeysforSpecificTables">1. Script to List <strong>Primary Keys</strong> for Specific Tables</h2><p>This query uses the <code>sys.indexes</code> and <code>sys.index_columns</code> metadata tables (joined to <code>sys.columns</code>) to find columns that belong to <strong>PRIMARY KEY</strong> constraints.<br/>You can adapt the <code>WHERE</code> clause to include or exclude specific tables.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    t.name AS TableName,
+    c.name AS ColumnName,
+    i.name AS PrimaryKeyName
+FROM sys.tables t
+JOIN sys.indexes i 
+    ON t.object_id = i.object_id
+JOIN sys.index_columns ic 
+    ON i.object_id = ic.object_id
+   AND i.index_id = ic.index_id
+JOIN sys.columns c 
+    ON ic.object_id = c.object_id
+   AND ic.column_id = c.column_id
+WHERE i.is_primary_key = 1
+  AND t.name IN (
+       &#39;Portfolio&#39;,
+       &#39;Entity&#39;,
+       &#39;UserModel&#39;,
+       &#39;Asset&#39;,
+       &#39;PortfolioValuationHistoryHeader&#39;,
+       &#39;PortfolioValuationHistoryDetail&#39;,
+       &#39;Role&#39;,
+       &#39;RoleEntityLink&#39;,
+       &#39;Currency&#39;,
+       &#39;CurrencyRate&#39;,
+       &#39;ProductPrice&#39;,
+       &#39;PortfolioAssetHolding&#39;,
+       &#39;PortfolioCashHolding&#39;,
+       &#39;ServiceDM&#39;,
+       &#39;PortfolioStatus&#39;,
+       &#39;ContactDetail&#39;,
+       &#39;Country&#39;,
+       &#39;OrganisationAdvisorCode&#39;,
+       &#39;OrganisationBranch&#39;,
+       &#39;TaxDetails&#39;
+       -- Add any other relevant table names
+  )
+ORDER BY t.name, ic.index_column_id;
+</pre>
+</div></div><p><strong>What this does</strong>:</p><ul><li><p>It finds all indexes that are marked as <strong>is_primary_key = 1</strong>.</p></li><li><p>Joins the index columns to the columns in the table to list the actual PK columns.</p></li><li><p>Filters on a set of table names you care about.</p></li></ul><hr/><h2 id="NZXWTRefresher-hwotojointables-2.ScripttoListForeignKeys(FK)forThoseTables">2. Script to List <strong>Foreign Keys</strong> (FK) for Those Tables</h2><p>This query uses <code>sys.foreign_keys</code> and <code>sys.foreign_key_columns</code>. It will show you each FK name, the referencing table/column, and the referenced table/column.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    fk.name AS ForeignKeyName,
+    OBJECT_NAME(fk.parent_object_id) AS [FK_Table],
+    COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS [FK_Column],
+    OBJECT_NAME(fk.referenced_object_id) AS [PK_Table],
+    COL_NAME(fkc.referenced_object_id, fkc.referenced_column_id) AS [PK_Column]
+FROM sys.foreign_keys fk
+JOIN sys.foreign_key_columns fkc
+    ON fk.object_id = fkc.constraint_object_id
+WHERE OBJECT_NAME(fk.parent_object_id) IN (
+       &#39;Portfolio&#39;,
+       &#39;Entity&#39;,
+       &#39;UserModel&#39;,
+       &#39;Asset&#39;,
+       &#39;PortfolioValuationHistoryHeader&#39;,
+       &#39;PortfolioValuationHistoryDetail&#39;,
+       &#39;Role&#39;,
+       &#39;RoleEntityLink&#39;,
+       &#39;Currency&#39;,
+       &#39;CurrencyRate&#39;,
+       &#39;ProductPrice&#39;,
+       &#39;PortfolioAssetHolding&#39;,
+       &#39;PortfolioCashHolding&#39;,
+       &#39;ServiceDM&#39;,
+       &#39;PortfolioStatus&#39;,
+       &#39;ContactDetail&#39;,
+       &#39;Country&#39;,
+       &#39;OrganisationAdvisorCode&#39;,
+       &#39;OrganisationBranch&#39;,
+       &#39;TaxDetails&#39;
+       -- Add any other relevant table names
+)
+OR OBJECT_NAME(fk.referenced_object_id) IN (
+       &#39;Portfolio&#39;,
+       &#39;Entity&#39;,
+       &#39;UserModel&#39;,
+       &#39;Asset&#39;,
+       &#39;PortfolioValuationHistoryHeader&#39;,
+       &#39;PortfolioValuationHistoryDetail&#39;,
+       &#39;Role&#39;,
+       &#39;RoleEntityLink&#39;,
+       &#39;Currency&#39;,
+       &#39;CurrencyRate&#39;,
+       &#39;ProductPrice&#39;,
+       &#39;PortfolioAssetHolding&#39;,
+       &#39;PortfolioCashHolding&#39;,
+       &#39;ServiceDM&#39;,
+       &#39;PortfolioStatus&#39;,
+       &#39;ContactDetail&#39;,
+       &#39;Country&#39;,
+       &#39;OrganisationAdvisorCode&#39;,
+       &#39;OrganisationBranch&#39;,
+       &#39;TaxDetails&#39;
+       -- Add any other relevant table names
+)
+ORDER BY [FK_Table], [ForeignKeyName];
+</pre>
+</div></div><p><strong>What this does</strong>:</p><ul><li><p>It looks up <strong>all foreign keys</strong> where either the referencing table (<code>fk.parent_object_id</code>) or the referenced table (<code>fk.referenced_object_id</code>) is in your list of interest.</p></li><li><p>Returns the name of the foreign key, the referencing table/column, and the referenced table/column.</p></li></ul><hr/><h2 id="NZXWTRefresher-hwotojointables-3.(Alternative)UsingINFORMATION_SCHEMAViews">3. (Alternative) Using <code>INFORMATION_SCHEMA</code> Views</h2><p>If you prefer more standard SQL or are dealing with an environment that might also have different naming, you can use <code>INFORMATION_SCHEMA</code>. For example, to list <strong>Foreign Keys</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT
+    TC.TABLE_NAME AS FK_Table,
+    KCU.COLUMN_NAME AS FK_Column,
+    RC.UNIQUE_CONSTRAINT_NAME AS PK_Name,
+    TC2.TABLE_NAME AS PK_Table
+FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC
+JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE KCU
+    ON TC.CONSTRAINT_NAME = KCU.CONSTRAINT_NAME
+JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS RC
+    ON TC.CONSTRAINT_NAME = RC.CONSTRAINT_NAME
+JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS TC2
+    ON RC.UNIQUE_CONSTRAINT_NAME = TC2.CONSTRAINT_NAME
+WHERE TC.CONSTRAINT_TYPE = &#39;FOREIGN KEY&#39;
+  AND TC.TABLE_NAME IN (
+       &#39;Portfolio&#39;,
+       &#39;Entity&#39;,
+       &#39;UserModel&#39;,
+       &#39;Asset&#39;,
+       &#39;PortfolioValuationHistoryHeader&#39;,
+       &#39;PortfolioValuationHistoryDetail&#39;,
+       &#39;Role&#39;,
+       &#39;RoleEntityLink&#39;,
+       &#39;Currency&#39;,
+       &#39;CurrencyRate&#39;,
+       &#39;ProductPrice&#39;,
+       &#39;PortfolioAssetHolding&#39;,
+       &#39;PortfolioCashHolding&#39;,
+       &#39;ServiceDM&#39;,
+       &#39;PortfolioStatus&#39;,
+       &#39;ContactDetail&#39;,
+       &#39;Country&#39;,
+       &#39;OrganisationAdvisorCode&#39;,
+       &#39;OrganisationBranch&#39;,
+       &#39;TaxDetails&#39;
+       -- etc.
+  )
+ORDER BY TC.TABLE_NAME, KCU.COLUMN_NAME;
+</pre>
+</div></div><hr/><h2 id="NZXWTRefresher-hwotojointables-4.Example:HowTheseTablesTypicallyJoin">4. Example: How These Tables Typically Join</h2><p>From your earlier queries, here’s a <strong>simplified</strong> overview:</p><ol start="1"><li><p><code>Portfolio</code></p><ul><li><p>PK: <code>Id</code></p></li><li><p>Often references a client or entity via <code>Client_Id</code> (FK → <code>Entity.Id</code>)</p></li><li><p>Also has a unique or near-unique reference <code>PortfolioReference</code>.</p></li></ul></li><li><p><code>Entity</code></p><ul><li><p>PK: <code>Id</code></p></li><li><p>Often has <code>IdentityUser_Id</code> referencing <code>UserModel.Id</code>.</p></li></ul></li><li><p><code>UserModel</code></p><ul><li><p>PK: <code>Id</code>.</p></li></ul></li><li><p><code>PortfolioValuationHistoryHeader</code></p><ul><li><p>PK: <code>Id</code></p></li><li><p>FK: <code>Portfolio_Id</code> → <code>Portfolio.Id</code>.</p></li></ul></li><li><p><code>PortfolioValuationHistoryDetail</code></p><ul><li><p>PK: (Not always clear from your snippet, but possibly <code>[Id]</code> or a composite)</p></li><li><p>FK: <code>PortfolioValuationHistoryHeader_Id</code> → <code>PortfolioValuationHistoryHeader.Id</code></p></li><li><p>FK: <code>Asset_Id</code> → <code>Asset.Id</code></p></li><li><p>FK: <code>Currency_Id</code> → <code>Currency.Id</code>.</p></li></ul></li><li><p><code>Asset</code></p><ul><li><p>PK: <code>Id</code>.</p></li></ul></li><li><p><code>PortfolioAssetHolding</code> and <code>PortfolioCashHolding</code></p><ul><li><p>Typically have an FK to <code>Portfolio.Id</code> (often <code>Portfolio_Id</code>).</p></li><li><p>Possibly an FK to <code>Asset.Id</code> (for <code>PortfolioAssetHolding</code>).</p></li></ul></li><li><p><code>Currency</code> and <code>CurrencyRate</code></p><ul><li><p><code>Currency.Id</code> is PK.</p></li><li><p><code>CurrencyRate.From_Id</code>, <code>CurrencyRate.To_Id</code> → both reference <code>Currency.Id</code>.</p></li></ul></li><li><p><code>Role</code> / <code>RoleEntityLink</code></p><ul><li><p><code>RoleEntityLink.Role_ID</code> → <code>Role.Id</code></p></li><li><p><code>RoleEntityLink.Entity_ID</code> → <code>Entity.Id</code>.</p></li></ul></li></ol><p>In textual form, a partial relationship diagram might look like this:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">UserModel (PK: Id)
+   ↑
+   └─(UserModel.Id = Entity.IdentityUser_Id)
+Entity (PK: Id)
+   ↑
+   └─(Entity.Id = Portfolio.Client_Id)
+Portfolio (PK: Id)
+   ↑
+   └─(Portfolio.Id = PortfolioValuationHistoryHeader.Portfolio_Id)
+PortfolioValuationHistoryHeader (PK: Id)
+   ↑
+   └─(PortfolioValuationHistoryHeader.Id = PortfolioValuationHistoryDetail.PortfolioValuationHistoryHeader_Id)
+PortfolioValuationHistoryDetail (PK: ???)
+   ├─(PortfolioValuationHistoryDetail.Asset_Id = Asset.Id)
+   └─(PortfolioValuationHistoryDetail.Currency_Id = Currency.Id)
+
+PortfolioAssetHolding
+   └─(Portfolio_Id → Portfolio.Id)
+PortfolioCashHolding
+   └─(Portfolio_Id → Portfolio.Id)
+
+Asset (PK: Id)
+Currency (PK: Id)
+   └─(CurrencyRate.From_Id/To_Id → Currency.Id)
+
+Role (PK: Id)
+RoleEntityLink
+   └─(Entity_ID → Entity.Id, Role_ID → Role.Id)
+</pre>
+</div></div><hr/><h2 id="NZXWTRefresher-hwotojointables-5.Wrap-Up">5. Wrap-Up</h2><ol start="1"><li><p><strong>Run the PK &amp; FK scripts</strong> above in your <strong>[CRAIGS_PROD_Main]</strong> database (and similarly in <code>[CRM_MSCRM]</code> if you have permissions) to systematically retrieve all relationships.</p></li><li><p><strong>Review the output</strong> to confirm which columns link which tables.</p></li><li><p><strong>Document</strong> these relationships in an ERD or data dictionary.</p></li><li><p><strong>Cross-reference</strong> them with the queries you already have to see if there are any “implicit” relationships that are not declared as formal foreign keys.</p></li></ol><p>By combining these queries with the real usage patterns in your T-SQL code, you’ll get a solid understanding of how all the key tables join together.</p><p /><hr/><p>Below are <strong>four</strong> example T-SQL queries illustrating <strong>basic joins</strong> across some of the tables in your schema, based on the foreign keys you listed in <code>#Temp1</code>. Each query demonstrates how you can bring related data together by following the PK-FK relationships.</p><hr/><h2 id="NZXWTRefresher-hwotojointables-1.Portfolio→Entity→UserModel">1. Portfolio → Entity → UserModel</h2><p><strong>Goal</strong>: Show how a <strong>Portfolio</strong> is tied to a <strong>Client</strong> (in <code>Entity</code>), and how that <code>Entity</code> is tied to a <strong>UserModel</strong> (if it has one).</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    p.Id AS PortfolioId,
+    p.PortfolioReference,
+    e.Id AS ClientEntityId,
+    e.EntityName AS ClientName,
+    um.Id AS UserId,
+    um.LoginID AS UserLogin
+FROM dbo.Portfolio p
+    -- Link Portfolio to Entity (the &quot;Client&quot; or &quot;Client_Id&quot; FK)
+    JOIN dbo.Entity e 
+        ON p.Client_Id = e.Id
+    -- Link Entity to UserModel (the &quot;IdentityUser_Id&quot; FK)
+    LEFT JOIN dbo.UserModel um
+        ON e.IdentityUser_Id = um.Id
+WHERE p.RecordStatus = 1  -- or p.Status = 30, or any other filter
+ORDER BY p.Id;
+</pre>
+</div></div><ul><li><p><strong>FK</strong>: <code>Portfolio.Client_Id</code> → <code>Entity.Id</code></p></li><li><p><strong>FK</strong>: <code>Entity.IdentityUser_Id</code> → <code>UserModel.Id</code></p></li></ul><hr/><h2 id="NZXWTRefresher-hwotojointables-2.PortfolioValuationHistoryHeader→PortfolioValuationHistoryDetail→Asset">2. PortfolioValuationHistoryHeader → PortfolioValuationHistoryDetail → Asset</h2><p><strong>Goal</strong>: Retrieve valuation data by linking the “Header” (one row per valuation run) to the “Detail” (breakdown per asset), and then to the <strong>Asset</strong> table itself.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    pvh.Id AS ValuationHeaderId,
+    pvh.ValuationAsAtDate,
+    pvh.CalculatedDate,
+    p.Id AS PortfolioId,
+    p.PortfolioReference,
+    pvhd.Id AS ValuationDetailId,
+    a.Id AS AssetId,
+    a.Description AS AssetDescription,
+    pvhd.ValuationRootAmount AS ValuationNZD
+FROM dbo.PortfolioValuationHistoryHeader pvh
+    JOIN dbo.PortfolioValuationHistoryDetail pvhd
+        ON pvh.Id = pvhd.PortfolioValuationHistoryHeader_Id
+    JOIN dbo.Portfolio p
+        ON pvh.Portfolio_Id = p.Id
+    JOIN dbo.Asset a
+        ON pvhd.Asset_Id = a.Id
+WHERE pvh.ValuationAsAtDate &gt;= &#39;2025-01-01&#39;  -- example date filter
+ORDER BY pvh.ValuationAsAtDate DESC, p.PortfolioReference;
+</pre>
+</div></div><ul><li><p><strong>FK</strong>: <code>PortfolioValuationHistoryDetail.PortfolioValuationHistoryHeader_Id</code> → <code>PortfolioValuationHistoryHeader.Id</code></p></li><li><p><strong>FK</strong>: <code>PortfolioValuationHistoryHeader.Portfolio_Id</code> → <code>Portfolio.Id</code></p></li><li><p><strong>FK</strong>: <code>PortfolioValuationHistoryDetail.Asset_Id</code> → <code>Asset.Id</code></p></li></ul><hr/><h2 id="NZXWTRefresher-hwotojointables-3.RoleEntityLink→Role→Entity">3. RoleEntityLink → Role → Entity</h2><p><strong>Goal</strong>: Show how a <strong>RoleEntityLink</strong> connects an <code>Entity</code> (e.g., a person) to a <code>Role</code> (e.g., “Admin”, “Advisor”, etc.).</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    e.EntityName,
+    r.Name AS RoleName,
+    re.CreatedDateTime_Local,
+    re.RecordStatus
+FROM dbo.RoleEntityLink re
+    JOIN dbo.Entity e
+        ON re.Entity_Id = e.Id
+    JOIN dbo.Role r
+        ON re.Role_Id = r.Id
+WHERE e.RecordStatus = 1  -- active entities
+  AND r.RecordStatus = 1  -- active roles
+ORDER BY e.EntityName, r.Name;
+</pre>
+</div></div><ul><li><p><strong>FK</strong>: <code>RoleEntityLink.Entity_Id</code> → <code>Entity.Id</code></p></li><li><p><strong>FK</strong>: <code>RoleEntityLink.Role_Id</code> → <code>Role.Id</code></p></li></ul><hr/><h2 id="NZXWTRefresher-hwotojointables-4.PortfolioAssetHolding&amp;PortfolioCashHolding→Portfolio→Asset/Currency">4. PortfolioAssetHolding &amp; PortfolioCashHolding → Portfolio → Asset/Currency</h2><p><strong>Goal</strong>: Pull current holdings (both asset and cash) for each Portfolio, linking back to the <strong>Asset</strong> or <strong>Currency</strong> used. This is a simplified example.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- A) PortfolioAssetHolding
+SELECT
+    pah.Id AS AssetHoldingId,
+    p.PortfolioReference,
+    a.Description AS AssetDescription,
+    pah.CurrentUnits,
+    pah.SystemDateCostAW_AssetCCY,
+    pah.CreatedDateTime_Local
+FROM dbo.PortfolioAssetHolding pah
+    JOIN dbo.Portfolio p
+        ON pah.Portfolio_Id = p.Id
+    JOIN dbo.Asset a
+        ON pah.Asset_Id = a.Id
+WHERE pah.CurrentUnits &lt;&gt; 0
+ORDER BY p.PortfolioReference;
+
+-- B) PortfolioCashHolding
+SELECT
+    pch.Id AS CashHoldingId,
+    p.PortfolioReference,
+    c.Code AS CurrencyCode,
+    pch.CurrentConfirmedBalance,
+    pch.CreatedDateTime_Local
+FROM dbo.PortfolioCashHolding pch
+    JOIN dbo.Portfolio p
+        ON pch.Portfolio_Id = p.Id
+    JOIN dbo.Currency c
+        ON pch.Currency_Id = c.Id
+WHERE pch.CurrentConfirmedBalance &lt;&gt; 0
+ORDER BY p.PortfolioReference;
+</pre>
+</div></div><ul><li><p><strong>FK</strong>: <code>PortfolioAssetHolding.Portfolio_Id</code> → <code>Portfolio.Id</code></p></li><li><p><strong>FK</strong>: <code>PortfolioAssetHolding.Asset_Id</code> → <code>Asset.Id</code></p></li><li><p><strong>FK</strong>: <code>PortfolioCashHolding.Portfolio_Id</code> → <code>Portfolio.Id</code></p></li><li><p><strong>FK</strong>: <code>PortfolioCashHolding.Currency_Id</code> → <code>Currency.Id</code></p></li></ul><hr/><h3 id="NZXWTRefresher-hwotojointables-AdditionalNotes">Additional Notes</h3><ol start="1"><li><p><strong>Filtering</strong>:<br/>Each query shows a common pattern of joining from the “child” table to the “parent” table. Depending on your data, you may want to add filters on record status, date ranges, or specific portfolio IDs.</p></li><li><p><strong>LEFT vs. INNER JOIN</strong>:</p><ul><li><p>Use <strong>INNER JOIN</strong> when you only want rows that exist in both tables.</p></li><li><p>Use <strong>LEFT JOIN</strong> if you still want the “parent” row even when there’s no matching “child” row.</p></li></ul></li><li><p><strong>Performance</strong>:</p><ul><li><p>In a production environment with millions of rows, consider adding indexes on the join columns (especially the foreign keys) for better performance.</p></li></ul></li><li><p><strong>Data Dictionary</strong>:</p><ul><li><p>You can also combine the queries from <code>#Temp1</code> (the foreign key listing) with your knowledge of these joins to build a reference table or data dictionary describing each relationship.</p></li></ul></li></ol><p>These sample queries should give you a good starting point for exploring how the various <strong>Portfolio</strong>, <strong>Entity</strong>, <strong>UserModel</strong>, <strong>Asset</strong>, <strong>Currency</strong>, and other tables <strong>join</strong> together in your environment.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

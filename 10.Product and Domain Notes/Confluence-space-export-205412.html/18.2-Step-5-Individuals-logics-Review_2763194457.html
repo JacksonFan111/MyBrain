@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 18.2 Step 5 Individuals logics Review</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="2762113156.html">18. Rebuild FATCA/CRS step 1 - 10</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 18.2 Step 5 Individuals logics Review
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 17-10-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <style type='text/css'>/*<![CDATA[*/
+div.rbtoc1755550407350 {padding: 0px;}
+div.rbtoc1755550407350 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1755550407350 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style><div class='toc-macro rbtoc1755550407350'>
+<ul class='toc-indentation'>
+<li><a href='#id-18.2Step5IndividualslogicsReview-Step5.1:CalculateTINCountsPerPartitionUsingaTemporaryTable'>Step 5.1: Calculate TIN Counts Per Partition Using a Temporary Table</a></li>
+<li><a href='#id-18.2Step5IndividualslogicsReview-Step5:ExtractIndividualDataRelatedtoFATCAandCRS'>Step 5: Extract Individual Data Related to FATCA and CRS</a></li>
+<li><a href='#id-18.2Step5IndividualslogicsReview-StreamliningandCompatibility'>Streamlining and Compatibility</a></li>
+<li><a href='#id-18.2Step5IndividualslogicsReview-ValidationScript'>Validation Script</a></li>
+</ul>
+</div><p>Step 2- 4 and 5 and 6 they are all in the same workscrtips</p><p class="media-group"><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/2763194457/2779119833.sql" data-nice-type="null" data-file-src="/wiki/download/attachments/2763194457/Workscipt%20%235.1%20FATCACRS%2010%20steps%20rebuild%20v2.sql?version=1&amp;modificationDate=1729195400500&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="2779119833" data-linked-resource-type="attachment" data-linked-resource-container-id="2763194457" data-linked-resource-default-alias="Workscipt #5.1 FATCACRS 10 steps rebuild v2.sql" data-mime-type="binary/octet-stream" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="6529c2ff-7c8f-49c9-a720-07fd6196c979" data-media-type="file"><img src="attachments/thumbnails/2763194457/2779119833" height="250"/></a></span></p><p><strong>Rewriting Steps 5.1 and 5 Using Temporary Tables for Streamlining</strong></p><hr/><p><strong>Objective:</strong></p><ul><li><p><strong>Streamline Steps 5.1 and 5</strong> by replacing Common Table Expressions (CTEs) with temporary tables.</p></li><li><p><strong>Ensure compatibility</strong> with SQL Server 2008 by avoiding unsupported syntax.</p></li><li><p><strong>Maintain functionality</strong> for determining <code>AccountType</code> based on the number of TINs an individual has within correct partitions.</p></li></ul><hr/><h3 id="id-18.2Step5IndividualslogicsReview-Step5.1:CalculateTINCountsPerPartitionUsingaTemporaryTable"><strong>Step 5.1: Calculate TIN Counts Per Partition Using a Temporary Table</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Step 5.1: Calculate TIN counts per partition and store in a temporary table
+
+-- Drop the temporary table if it already exists
+IF OBJECT_ID(&#39;tempdb..#TIN_Counts&#39;) IS NOT NULL DROP TABLE #TIN_Counts;
+
+-- Create temporary table #TIN_Counts
+SELECT
+    a.AccountId,
+    ps.dsl_PortfolioIdName AS PortfolioNo,
+    ps.dsl_PortfolioServiceLevelName,
+    i.ContactId AS IndividualId,
+    COUNT(DISTINCT ft2.cip_identification) AS TIN_Count
+INTO #TIN_Counts
+FROM 
+    [Dynamics].[CRM_MSCRM].dbo.Account AS a
+INNER JOIN 
+    [Dynamics].[CRM_MSCRM].dbo.dsl_roles AS r
+        ON a.AccountId = r.dsl_TradingEntityID
+        AND r.statuscode = 1
+        AND r.dsl_BeneficialOwner = 1
+INNER JOIN 
+    [Dynamics].[CRM_MSCRM].dbo.Contact AS i
+        ON i.ContactId = r.dsl_IndividualId
+LEFT JOIN 
+    [Dynamics].[CRM_MSCRM].dbo.dsl_portfolioservice AS ps
+        ON ps.dsl_TradingEntityId = a.AccountId
+LEFT JOIN 
+    [Dynamics].[CRM_MSCRM].[dbo].[cip_foreigntaxrecord] AS ft2
+        ON ft2.cip_Individual = i.ContactId
+WHERE
+    -- Ensure the individual&#39;s TIN and country jurisdiction are not null
+    ft2.cip_CountryJurisdiction IS NOT NULL
+    AND ft2.cip_Identification IS NOT NULL
+    AND (
+        -- FATCA Individuals may have multiple citizenships, which means multiple TINs
+        i.dsl_USCitizensforTaxPurposes = 1
+        OR
+        -- CRS Individuals may also have multiple citizenships
+        i.ots_foreigntaxresident = 1
+    )
+GROUP BY
+    a.AccountId,
+    ps.dsl_PortfolioIdName,
+    ps.dsl_PortfolioServiceLevelName,
+    i.ContactId;</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Temporary Table Creation:</strong></p><ul><li><p>Replaced the CTE <code>TIN_Counts</code> with a temporary table <code>#TIN_Counts</code>.</p></li></ul></li><li><p><strong>Joins and Filters:</strong></p><ul><li><p>Included necessary joins and filters to ensure accurate TIN counts per individual.</p></li></ul></li><li><p><strong>Grouping:</strong></p><ul><li><p>Grouped by <code>AccountId</code>, <code>PortfolioNo</code>, <code>PortfolioServiceLevelName</code>, and <code>IndividualId</code> to calculate <code>TIN_Count</code> within the correct partitions.</p></li></ul></li></ul><hr/><h3 id="id-18.2Step5IndividualslogicsReview-Step5:ExtractIndividualDataRelatedtoFATCAandCRS"><strong>Step 5: Extract Individual Data Related to FATCA and CRS</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Step 5: Extract Individual Data related to FATCA and CRS
+
+-- Drop the temporary table if it already exists
+IF OBJECT_ID(&#39;tempdb..#IndividualData&#39;) IS NOT NULL DROP TABLE #IndividualData;
+
+-- Create temporary table #IndividualData
+SELECT DISTINCT
+    -- Determine AccountType based on the number of TINs an individual has within the correct partitions.
+    CASE 
+        WHEN tc.TIN_Count &gt; 1 THEN &#39;Multiple TINs Individual&#39; 
+        ELSE &#39;Single TIN Individual&#39; 
+    END AS AccountType,
+    -- The individual&#39;s ContactId serves as the AccountID in this context.
+    i.ContactId AS AccountID,
+    -- Individual Details
+    i.ContactId AS IndividualId,
+    i.FullName AS IndividualName,
+    i.FirstName,
+    i.MiddleName,
+    i.LastName,
+    i.Telephone1 AS Tel1,
+    i.Telephone2 AS Tel2,
+    i.Telephone3 AS Tel3,
+    -- Residential Address Information
+    ISNULL(i.Address1_Line1, &#39;&#39;) AS ResidentialAddressLine1,
+    ISNULL(i.Address1_Line2, &#39;&#39;) AS ResidentialAddressLine2,
+    ISNULL(i.Address1_Line3, &#39;&#39;) AS ResidentialAddressLine3,
+    ISNULL(i.Address1_City, &#39;&#39;) AS ResidentialCity,
+    ISNULL(i.Address1_PostalCode, &#39;&#39;) AS ResidentialPostalCode,
+    -- Postal Address Information
+    ISNULL(i.Address2_Line1, &#39;&#39;) AS PostalAddressLine1,
+    ISNULL(i.Address2_Line2, &#39;&#39;) AS PostalAddressLine2,
+    ISNULL(i.Address2_Line3, &#39;&#39;) AS PostalAddressLine3,
+    ISNULL(i.Address2_City, &#39;&#39;) AS PostalCity,
+    ISNULL(i.Address2_PostalCode, &#39;&#39;) AS PostalPostCode,
+    -- Country Information
+    i.dsl_Address1CountryLookupIdName AS ResidentialCountry1,
+    i.dsl_Address2CountryLookupIdName AS PostalCountry2,
+    i.dsl_countryofresidenceidname AS ResidentialCountry2,
+    i.dsl_CountryofCitizenshipIdName AS CountryofCitizenship,
+    i.dsl_CountryofTaxResidencyName AS CountryofTaxResidency,
+    -- Entity Information (for individuals, EntityName may be their own name or account name)
+    a.Name AS EntityName,
+    a.AccountId AS EntityID,
+    -- Determine the Reporting Regime based on individual flags
+    trm.TaxRegime,
+    -- Entity Tax Identification Number (TIN) - Deliberately left empty for individuals
+    &#39;&#39; AS EntityTIN,
+    &#39;&#39; AS EntityIDTypeName,
+    &#39;&#39; AS EntityCountryJurisdictionName,
+    &#39;&#39; AS EntityTaxCodeCountryISO,
+    &#39;&#39; AS EntityTaxCodeCountryName,
+    -- Individual Tax Identification Number (TIN)
+    ft2.cip_identification AS cip_Identification,
+    ft2.cip_IDTypeName AS IndividualIDTypeName,
+    ft2.cip_CountryJurisdictionName AS IndividualCountryJurisdictionName,
+    cc2.cip_ISOcode COLLATE DATABASE_DEFAULT AS Ind_TaxCodeCountryISO,
+    cc2.dsl_countryname COLLATE DATABASE_DEFAULT AS Ind_TaxCodeCountryName,
+    -- Portfolio Information
+    ps.dsl_portfolioid,
+    ps.dsl_PortfolioIdName AS PortfolioNo,
+    ps.dsl_PortfolioServiceLevelName,
+    -- Role Information
+    r.dsl_RoleTypeIdName,
+    r.dsl_BeneficialOwner,
+    r.dsl_BeneficiaryOwnership,
+    -- Determine Substantial Controlling Interest
+    CASE
+        WHEN r.dsl_BeneficialOwner = 1 AND r.dsl_BeneficiaryOwnership &gt; 25 AND sm.Value = &#39;Company&#39; THEN 1
+        WHEN sm.Value NOT IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;, &#39;Company&#39;) AND r.dsl_BeneficialOwner = 1 THEN 1
+        ELSE 0
+    END AS SubstantialControllingInterest,
+    r.dsl_applicant,
+    r.dsl_Authorised,
+    -- Trading Entity Type and Portfolio Service Status
+    sm.Value AS TradingEntityType,
+    smPS.Value AS PortfolioServiceStatus,
+    -- Self-Certification and Passive/Active Status
+    sm1.Value AS CRSCert,
+    sm2.Value AS PassiveActive,
+    -- Portfolio Dates
+    ps.dsl_inceptiondate,
+    ps.dsl_CloseDate,
+    -- Additional Individual Information like birth place and closure date
+    i.dsl_CountryOfBirthIdName COLLATE DATABASE_DEFAULT AS CountryofBirthIdName,
+    a.dsl_USCitizensforTaxPurposes AS USCitizensforTaxPurposes_acc,
+    i.dsl_USCitizensforTaxPurposes AS USCitizensforTaxPurposes_ind,
+    CONVERT(VARCHAR(19), DATEADD(HOUR, 13, i.BirthDate), 101) COLLATE DATABASE_DEFAULT AS DOB,
+    ps.dsl_CloseDate AS ClosureDate,
+    i.cip_TownCityofBirth COLLATE DATABASE_DEFAULT AS TownCityofBirth
+INTO #IndividualData
+FROM 
+    [Dynamics].[CRM_MSCRM].dbo.Account AS a
+INNER JOIN 
+    [Dynamics].[CRM_MSCRM].dbo.dsl_roles AS r
+        ON a.AccountId = r.dsl_TradingEntityID
+        AND r.statuscode = 1
+        AND r.dsl_BeneficialOwner = 1
+INNER JOIN 
+    [Dynamics].[CRM_MSCRM].dbo.Contact AS i
+        ON i.ContactId = r.dsl_IndividualId
+LEFT JOIN 
+    [Dynamics].[CRM_MSCRM].dbo.dsl_portfolioservice AS ps
+        ON ps.dsl_TradingEntityId = a.AccountId
+LEFT JOIN 
+    [Dynamics].[CRM_MSCRM].dbo.StringMap AS sm
+        ON sm.AttributeValue = a.dsl_TradingEntityType
+        AND sm.AttributeName = &#39;dsl_tradingentitytype&#39;
+LEFT JOIN 
+    [Dynamics].[CRM_MSCRM].dbo.StringMap AS sm1
+        ON sm1.objecttypecode = 2
+        AND sm1.AttributeName = &#39;cip_SelfCertification&#39;
+        AND sm1.AttributeValue = i.cip_SelfCertification
+LEFT JOIN 
+    [Dynamics].[CRM_MSCRM].dbo.StringMap AS sm2
+        ON sm2.AttributeName = &#39;dsl_passiveoractive&#39;
+        AND sm2.AttributeValue = a.dsl_PassiveorActive
+LEFT JOIN 
+    [Dynamics].[CRM_MSCRM].dbo.StringMap AS smPS
+        ON smPS.AttributeName = &#39;dsl_PortfolioServiceStatus&#39;
+        AND smPS.AttributeValue = ps.dsl_PortfolioServiceStatus
+LEFT JOIN 
+    [Dynamics].[CRM_MSCRM].[dbo].[cip_foreigntaxrecord] AS ft2
+        ON ft2.cip_Individual = i.ContactId
+LEFT JOIN 
+    [Dynamics].[CRM_MSCRM].[dbo].[dsl_countryBase] AS cc2
+        ON cc2.dsl_countryid = ft2.cip_CountryJurisdiction
+        AND cc2.statuscode = 1
+LEFT JOIN 
+    #TaxRegimeMapping AS trm
+        ON trm.ReportCode = (
+            (CASE WHEN a.ots_foreigntaxresident = 1 THEN 1 ELSE 0 END * 8) +
+            (CASE WHEN a.dsl_USCitizensforTaxPurposes = 1 THEN 1 ELSE 0 END * 4) +
+            (CASE WHEN i.ots_foreigntaxresident = 1 THEN 1 ELSE 0 END * 2) +
+            (CASE WHEN i.dsl_USCitizensforTaxPurposes = 1 THEN 1 ELSE 0 END)
+        )
+LEFT JOIN -- Use TIN_Counts to get the correct partitions for Individuals&#39; TINs
+    #TIN_Counts AS tc
+        ON tc.AccountId = a.AccountId
+        AND tc.PortfolioNo = ps.dsl_PortfolioIdName
+        AND tc.dsl_PortfolioServiceLevelName = ps.dsl_PortfolioServiceLevelName
+        AND tc.IndividualId = i.ContactId
+WHERE
+    -- Exclude New Zealand TINs for individuals
+    ISNULL(cc2.cip_ISOCode, &#39;&#39;) &lt;&gt; &#39;NZL&#39;
+    -- Exclude certain trusts (e.g., charities)
+    AND NOT (
+        sm.Value = &#39;Trust&#39;
+        AND ISNULL(sm2.Value, &#39;&#39;) = &#39;Passive&#39;
+        AND a.cip_CharityNumber IS NOT NULL
+    )
+    -- Exclude &#39;Estate Winding-Up&#39; entity types
+    AND sm.Value &lt;&gt; &#39;Estate Winding-Up&#39;
+    -- Ensure the individual&#39;s TIN and country jurisdiction are not null
+    AND ft2.cip_CountryJurisdiction IS NOT NULL
+    AND ft2.cip_Identification IS NOT NULL
+    -- Include only specified trading entity types
+    AND sm.Value IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;)
+    -- Exclude tax regimes that are logically inconsistent
+    AND trm.TaxRegime NOT IN (&#39;CRS (Individual) &amp; FATCA (Entity)&#39;, &#39;CRS (Entity) &amp; FATCA (Individual)&#39;)
+    AND (
+        -- FATCA Individuals may have multiple citizenships, which means multiple TINs
+        i.dsl_USCitizensforTaxPurposes = 1
+        OR
+        -- CRS Individuals may also have multiple citizenships
+        i.ots_foreigntaxresident = 1
+    );</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Temporary Table Creation:</strong></p><ul><li><p>Replaced the CTE <code>IndividualData</code> with a temporary table <code>#IndividualData</code>.</p></li></ul></li><li><p><strong>Joins and Data Retrieval:</strong></p><ul><li><p>Included all necessary joins to retrieve individual and account information.</p></li></ul></li><li><p><strong>AccountType Determination:</strong></p><ul><li><p>Joined with <code>#TIN_Counts</code> to determine the <code>AccountType</code> based on the <code>TIN_Count</code> for each individual within the partitions.</p></li></ul></li><li><p><strong>Filters:</strong></p><ul><li><p>Applied filters to include only relevant individuals based on FATCA and CRS requirements.</p></li></ul></li><li><p><strong>Data Consistency:</strong></p><ul><li><p>Ensured that column names and data types remain consistent for downstream processing.</p></li></ul></li></ul><hr/><h3 id="id-18.2Step5IndividualslogicsReview-StreamliningandCompatibility"><strong>Streamlining and Compatibility</strong></h3><ul><li><p><strong>Elimination of CTEs:</strong></p><ul><li><p>Replaced CTEs with temporary tables to streamline the code and improve readability.</p></li></ul></li><li><p><strong>SQL Server 2008 Compatibility:</strong></p><ul><li><p>Avoided using <code>COUNT(DISTINCT ...) OVER (...)</code> syntax, which is unsupported in SQL Server 2008.</p></li></ul></li><li><p><strong>Improved Maintainability:</strong></p><ul><li><p>Using temporary tables allows for easier debugging and potential indexing for performance optimization.</p></li></ul></li></ul><hr/><h3 id="id-18.2Step5IndividualslogicsReview-ValidationScript"><strong>Validation Script</strong></h3><p>You can use the following script to validate that the <code>AccountType</code> is correctly assigned:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Validation Script to Check AccountType Assignment
+
+SELECT
+    tc.AccountId,
+    tc.PortfolioNo,
+    tc.dsl_PortfolioServiceLevelName,
+    tc.IndividualId,
+    tc.TIN_Count,
+    CASE 
+        WHEN tc.TIN_Count &gt; 1 THEN &#39;Multiple TINs Individual&#39; 
+        ELSE &#39;Single TIN Individual&#39; 
+    END AS CalculatedAccountType,
+    id.AccountType AS OriginalAccountType
+FROM
+    #TIN_Counts AS tc
+INNER JOIN
+    #IndividualData AS id
+        ON id.AccountID = tc.IndividualId
+        AND id.EntityID = tc.AccountId
+        AND id.PortfolioNo = tc.PortfolioNo
+        AND id.dsl_PortfolioServiceLevelName = tc.dsl_PortfolioServiceLevelName
+WHERE
+    id.AccountType &lt;&gt; (CASE WHEN tc.TIN_Count &gt; 1 THEN &#39;Multiple TINs Individual&#39; ELSE &#39;Single TIN Individual&#39; END)
+ORDER BY
+    tc.TIN_Count DESC, id.IndividualName;</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Purpose:</strong></p><ul><li><p>Compares the <code>AccountType</code> assigned in <code>#IndividualData</code> with the <code>CalculatedAccountType</code> based on <code>TIN_Count</code>.</p></li></ul></li><li><p><strong>Use:</strong></p><ul><li><p>Identifies any discrepancies that may require further investigation.</p></li></ul></li></ul>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2763194457/2779119833.sql">Workscipt #5.1 FATCACRS 10 steps rebuild v2.sql</a> (binary/octet-stream)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : OnLearn APIs For SSRS data driven subscription</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : OnLearn APIs For SSRS data driven subscription
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 10-02-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p><strong>Summary:</strong></p><p>Dynamic (per recipient) subscriptions are now available for Power BI reports and paginated reports—but only in workspaces that are backed by capacity (such as Microsoft Fabric or Power BI Premium). In a Fabric content workspace, you can set up these dynamic subscriptions to automatically send personalized report copies (filtered for each recipient) via email.</p><p>However, this feature isn’t available on the standard Power BI Pro license. To use dynamic subscriptions at the lowest possible cost, you might consider starting with a Microsoft Fabric trial or selecting the entry‑level capacity option that meets your needs.</p><p>Below is a high‐level summary along with the key steps to achieve the requirement using our Microsoft Fabric context workspace:</p><hr/><p><strong>Summary for Your Line Manager:</strong></p><p>We want to automatically send <span style="background-color: rgb(211,241,167);">two email reminders</span> to any employee who hasn’t completed their mandatory CIP eLearn modules. </p><p>The first reminder should be sent one month after the employee’s join date and the second two months after—each email going to the employee and CC’ing their manager.</p><p><span style="background-color: rgb(211,241,167);">Using our existing Power BI eLearn Module Completion workspace (which is hosted in Microsoft Fabric/Premium capacity)</span>, we can implement this automation by leveraging our Power BI dataset along with a scheduled automation process (such as a Power Automate flow or a Fabric pipeline). This solution will dynamically query our CIP eLearn data to identify employees with outstanding modules and then send personalized reminder emails according to the defined timeframes.</p><hr/><p><strong>Key Steps to Implement:</strong></p><ol start="1"><li><p><strong>Data Source &amp; Model Setup:</strong></p><ul><li><p><strong>Confirm Data Availability:</strong> Ensure the CIP eLearn dataset in the Power BI workspace contains the following:</p><ul><li><p>Employee join date (from the Executive Summary page)</p></li><li><p>Employee email address and manager email address</p></li><li><p>Completion status for each mandatory module (for all employees and, if applicable, additional modules for specific occupations)</p></li><li><p>Occupation (to conditionally check for additional Private Wealth modules)</p></li></ul></li><li><p><strong>Data Preparation:</strong> If needed, create calculated columns or measures in the dataset to flag whether an employee has completed all required modules.</p></li></ul></li><li><p><strong>Define Reminder Conditions:</strong></p><ul><li><p><strong>Reminder 1:</strong> Create a flag (or calculation) that identifies employees whose join date is at least one month ago and who have incomplete eLearn modules.</p></li><li><p><strong>Reminder 2:</strong> Similarly, create a flag for employees with a join date of two months (or more) ago who still haven’t completed all the modules.</p></li><li><p>These calculations will drive the selection of recipients.</p></li></ul></li><li><p><strong>Automation Setup Using Microsoft Fabric / Power Automate:</strong></p><ul><li><p><strong>Scheduled Query:</strong> Set up a scheduled process (for example, a daily run using Power Automate or a Fabric pipeline) that queries the dataset to extract the list of employees meeting the Reminder 1 or Reminder 2 conditions.</p></li><li><p><strong>Dynamic Email Trigger:</strong> For each employee record that meets the criteria, the process will:</p><ul><li><p>Generate an email using the appropriate template (Reminder 1 or Reminder 2).</p></li><li><p>Populate the email subject and body dynamically (for example, “CIP eLearn - outstanding eLearn module(s) to complete” along with the relevant reminder message).</p></li><li><p>Send the email to the employee with the manager’s email added in CC.</p></li></ul></li></ul></li><li><p><strong>Email Template Details:</strong></p><ul><li><p><strong>Reminder 1 (1 month post join date):</strong></p><ul><li><p><em>Subject:</em> CIP eLearn - outstanding eLearn module(s) to complete</p></li><li><p><em>Body:</em> A friendly reminder stating that mandatory modules must be completed within the first month.</p></li></ul></li><li><p><strong>Reminder 2 (2 months post join date):</strong></p><ul><li><p><em>Subject:</em> CIP eLearn - outstanding eLearn module(s) to complete</p></li><li><p><em>Body:</em> A second reminder highlighting the urgency if modules are still outstanding.</p></li></ul></li><li><p>The templates provided will be used as the content of the emails.</p></li></ul></li><li><p><strong>Testing and Monitoring:</strong></p><ul><li><p><strong>Pilot Test:</strong> Run the automation on a test subset of data to verify that the correct employees are identified and the right email is sent at the appropriate time.</p></li><li><p><strong>Deploy &amp; Monitor:</strong> Once validated, schedule the process (e.g., daily) and monitor the execution logs to ensure reminders are sent as expected.</p></li></ul></li></ol><hr/><p><strong>Cost Considerations:</strong></p><ul><li><p><strong>Capacity Requirement:</strong> This solution leverages a Fabric content workspace (or Premium capacity), which is required for dynamic subscriptions or advanced scheduling features.</p></li><li><p><strong>Low-Cost Options:</strong> We can start with a Microsoft Fabric trial or choose the lowest‑tier capacity option available to keep costs minimal while meeting the requirements.</p></li></ul><hr/><p>This approach will ensure that our Learning and Development team automatically reminds employees (and their managers) about outstanding compulsory eLearn modules based on each employee’s join date, without manual intervention.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

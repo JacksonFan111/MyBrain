@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 06. Learning CIP Data Delivery process</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="1.-Internal_2555216013.html">1. Internal</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 06. Learning CIP Data Delivery process
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 20-06-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Original confluence link <a href="https://craigsip.atlassian.net/wiki/spaces/DAC/pages/2438430725/Data+Delivery+Mediums" data-linked-resource-id="2438430725" data-linked-resource-version="5" data-linked-resource-type="page">Data Delivery Mediums</a>  </p><style type='text/css'>/*<![CDATA[*/
+div.rbtoc1755550335057 {padding: 0px;}
+div.rbtoc1755550335057 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1755550335057 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style><div class='toc-macro rbtoc1755550335057'>
+<ul class='toc-indentation'>
+<li><a href='#id-06.LearningCIPDataDeliveryprocess-Overview'>Overview</a>
+<ul class='toc-indentation'>
+<li><a href='#id-06.LearningCIPDataDeliveryprocess-OurGitprocess'>Our Git process</a></li>
+<li><a href='#id-06.LearningCIPDataDeliveryprocess-OurGeneralworkflow'>Our General workflow</a></li>
+<li><a href='#id-06.LearningCIPDataDeliveryprocess-whereisthedatadeliveryfrom'>where is the data delivery from</a></li>
+<li><a href='#id-06.LearningCIPDataDeliveryprocess-whereisthedatadeliveryto'>where is the data delivery to</a></li>
+<li><a href='#id-06.LearningCIPDataDeliveryprocess-whereisdatadeliveryto(ad-hoc)'>where is data delivery to (ad-hoc)</a></li>
+<li><a href='#id-06.LearningCIPDataDeliveryprocess-Standardsfordelviery'>Standards for delviery</a></li>
+</ul>
+</li>
+<li><a href='#id-06.LearningCIPDataDeliveryprocess-ImportantPoints'>Important Points</a></li>
+</ul>
+</div><h1 id="id-06.LearningCIPDataDeliveryprocess-Overview">Overview</h1><p> CIP got so many data tickets I would need to learn how Chris’s data delivery process to cover myself.</p><h2 id="id-06.LearningCIPDataDeliveryprocess-OurGitprocess">Our Git process</h2><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240620-024415.png" width="760" loading="lazy" src="attachments/2568683521/2567929897.png?width=760" data-image-src="attachments/2568683521/2567929897.png" data-height="659" data-width="2000" data-unresolved-comment-count="0" data-linked-resource-id="2567929897" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240620-024415.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2568683521" data-linked-resource-container-version="4" data-media-id="8a0a2a4b-df24-4bf2-aaf8-2b308b5ee0a1" data-media-type="file"></span><p>eg. All development methodologies (apart from Power BI) leverage off of Bitbucket for version control and release management, as well as Source Tree for development itself.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence"># Step 1 Analysis: Determine if changes are required.
+# If No, Close the tickets make comments
+#If yes, proceed to create a feature branch.
+
+# Step 2: Create Feature Branch
+git checkout -b feature-branch-name
+
+# Step 3: Develop, Test, and Commit Changes
+git add .
+git commit -m &quot;Description of changes&quot;
+
+# Step 4: Push Feature Branch and Create Pull Request
+git push origin feature-branch-name
+
+# Step 5: Address Peer Review Feedback
+# (Make necessary changes, then commit and push)
+git add .
+git commit -m &quot;Addressed feedback: Description of changes&quot;
+git push origin feature-branch-name
+
+# Step 6: Merge to Master
+git checkout master
+git merge feature-branch-name
+git push origin master</pre>
+</div></div><h2 id="id-06.LearningCIPDataDeliveryprocess-OurGeneralworkflow">Our General workflow </h2><ol start="1"><li><p>Define types of work:</p><ol start="1"><li><p>Dashboard or Report Development &gt;&gt; (what, where is source)</p></li><li><p>Ad-hoc Data Pull &gt;&gt;(Usually run some sort of sp)</p></li></ol></li><li><p>BI Enhancement (New field or Calculation required in DW and BI, it could column evolution too, like name changes, column type changes)</p></li></ol><div class="confluence-information-macro confluence-information-macro-information"><span class="aui-icon aui-icon-small aui-iconfont-info confluence-information-macro-icon"></span><div class="confluence-information-macro-body"><p>BI Enhancements include:</p><ul><li><p>Adding new source tables to the framework</p></li><li><p>Adding new columns to the framework</p></li><li><p>Making amendments to the existing tables or columns within the framework</p></li></ul></div></div><ol start="3"><li><p> Automated Data Delivery Process </p><ol start="1"><li><p>(SSIS or using Synapse pipeline or even notebooks)</p></li><li><p>SQL Agent Jobs</p></li><li><p>Task Schedulers</p></li></ol></li><li><p>Stakeholders</p><ol start="1"><li><p>Should include reps from each area of the business</p></li><li><p> key Technical person (Infrastructure, Old employee that had knowledge)</p></li></ol></li><li><p>Prioritization formula for work pipeline (get weightings)</p><ol start="1"><li><p>Utility to the business (Ask Why?)</p></li><li><p>Strategic vs Tactical </p><ol start="1"><li><p><strong>Strategic Work</strong>:</p><ul><li><p>Long-term impact on business goals.</p></li><li><p>Aligns with the company's vision and strategic plan.</p></li><li><p>Typically involves projects that create sustainable competitive advantages.</p></li><li><p>Examples: Implementing a new BI tool, designing a comprehensive data governance framework.</p></li></ul><p><strong>Tactical Work</strong>:</p><ul><li><p>Short-term focus, aimed at achieving immediate results.</p></li><li><p>Often operational in nature and supports day-to-day business functions.</p></li><li><p>Examples: Generating weekly sales reports, fixing a bug in a dashboard.</p></li></ul></li></ol></li><li><p>Difficulty/Complexity (how complext)</p></li><li><p>Estimated Time to Build/implement (How long it going to take)</p></li><li><p>Regulatory requirement</p></li></ol></li></ol><p>Example:</p><div class="table-wrap"><table data-table-width="1422" data-layout="default" data-local-id="ab12ebda-bcd3-4aba-bf12-751616802eca" class="confluenceTable"><colgroup><col style="width: 70.0px;"/><col style="width: 284.0px;"/><col style="width: 169.0px;"/><col style="width: 184.0px;"/><col style="width: 177.0px;"/><col style="width: 177.0px;"/><col style="width: 177.0px;"/><col style="width: 177.0px;"/></colgroup><tbody><tr><th class="confluenceTh"><p>Task ID</p></th><th class="confluenceTh"><p>Task Description</p></th><th class="confluenceTh"><p>Utility to Business (25%)</p></th><th class="confluenceTh"><p>Strategic vs Tactical (20%)</p></th><th class="confluenceTh"><p>Difficulty/Complexity (15%)</p></th><th class="confluenceTh"><p>Estimated Time (20%)</p></th><th class="confluenceTh"><p>Regulatory Requirement (20%)</p></th><th class="confluenceTh"><p>Total Score</p></th></tr><tr><td class="confluenceTd"><p>1</p></td><td class="confluenceTd"><p>Task A</p></td><td class="confluenceTd"><p>5 (1.25)</p></td><td class="confluenceTd"><p>5 (1.00)</p></td><td class="confluenceTd"><p>3 (0.45)</p></td><td class="confluenceTd"><p>5 (1.00)</p></td><td class="confluenceTd"><p>5 (1.00)</p></td><td class="confluenceTd"><p>4.70</p></td></tr><tr><td class="confluenceTd"><p>2</p></td><td class="confluenceTd"><p>Task B</p></td><td class="confluenceTd"><p>3 (0.75)</p></td><td class="confluenceTd"><p>1 (0.20)</p></td><td class="confluenceTd"><p>1 (0.15)</p></td><td class="confluenceTd"><p>3 (0.60)</p></td><td class="confluenceTd"><p>0 (0.00)</p></td><td class="confluenceTd"><p>1.70</p></td></tr></tbody></table></div><h2 id="id-06.LearningCIPDataDeliveryprocess-whereisthedatadeliveryfrom">where is the data delivery from</h2><ol start="1"><li><p>Typically exists in SQL Servers or the <strong>CIP Tabular Models &gt;&gt; big one developed by Chris Andrew</strong></p></li><li><p>SQL Servers are either internal (i.e. CIP CRM) or external (i.e. Chelmer)</p></li></ol><h2 id="id-06.LearningCIPDataDeliveryprocess-whereisthedatadeliveryto">where is the data delivery to</h2><ol start="1"><li><p>wherever they want to view the data like </p><ol start="1"><li><p>Power BI Service (Portal)</p></li><li><p>Insights Reports Portal (SSRS)</p></li><li><p>Applications &gt;&gt; soon would be Scrapped and replaced by ALOHA</p><ul><li><p>Applications (where data is integrated using APIs or direct SQL connections for the end users to see data within an application)</p><ul><li><p>i.e. Bob2, CSL, VCA.</p></li></ul></li></ul></li></ol></li><li><p>Using some sort of automated system&gt;&gt; minimise people checking excel One By One</p></li></ol><h2 id="id-06.LearningCIPDataDeliveryprocess-whereisdatadeliveryto(ad-hoc)">where is data delivery to (ad-hoc)</h2><ol start="1"><li><p>PBI desktop</p></li><li><p>Excel &gt;&gt; like SWAT team or Profolio Analytics Team</p></li></ol><h2 id="id-06.LearningCIPDataDeliveryprocess-Standardsfordelviery">Standards for delviery</h2><ol start="1"><li><p>from SQL servers &gt;&gt; we wrap it in a SP, can be <strong>controlled</strong> and the <strong>performance on the server not negatively impacted</strong>.</p></li><li><p>For any data imports coming from a Tabular Model &gt;&gt; use Power Query &gt;&gt; I think we are using Live connetion now so they could build soemthing on Power BI but with RLS they can’t see the data if don’t have enough acess.</p></li></ol><div class="confluence-information-macro confluence-information-macro-information"><span class="aui-icon aui-icon-small aui-iconfont-info confluence-information-macro-icon"></span><div class="confluence-information-macro-body"><p>custom RLS model basically is Concatenated the RLS role setting by<br/>Where Model in this Range</p><p>@UserStatus + @UserType + @BrachName + @ADUserName + @Username + @AdviserCode</p><p>The Security Model itself it is in a Referecne DB sync daily wit hMain model</p><p /></div></div><h1 id="id-06.LearningCIPDataDeliveryprocess-ImportantPoints">Important Points</h1><ul><li><p><strong>Git Workflow</strong>: Use Bitbucket for version control and SourceTree for development; follow steps from analysis to merging in Git process.</p></li><li><p><strong>Types of Work</strong>: Dashboard/Report Development, Ad-hoc Data Pull, BI Enhancements, Automated Data Delivery Process.</p></li><li><p><strong>BI Enhancements</strong>: Include adding new tables/columns, and modifying existing ones within the framework.</p></li><li><p><strong>Automated Processes</strong>: Use SSIS, Synapse pipelines, notebooks, SQL Agent Jobs, or task schedulers.</p></li><li><p><strong>Stakeholders</strong>: Include business area representatives and key technical persons.</p></li><li><p><strong>Prioritization Formula</strong>: Utility to business, strategic vs tactical, difficulty, time to implement, regulatory requirement.</p></li><li><p><strong>Data Sources</strong>: SQL Servers (internal/external) and CIP Tabular Models.</p></li><li><p><strong>Data Destinations</strong>: Power BI Service, Insights Reports Portal, applications (soon ALOHA), PBI desktop, Excel.</p></li><li><p><strong>Standards for Delivery</strong>: Use stored procedures for SQL Server data, Power Query for Tabular Model imports with live connections and custom RLS models.</p></li><li><p><strong>Automated System</strong>: Minimize manual checking by using automated processes.</p></li><li><p><strong>RLS Model</strong>: Custom RLS roles set by concatenating multiple user attributes, synced daily.</p></li></ul><p /><p />
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2568683521/2568683530.png">image-20240619-024350.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2568683521/2568683533.png">processflow-20220616-014001.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2568683521/2568683536.png">image-20240618-205820.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2568683521/2568683539.png">image-20240618-210029.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2568683521/2567929897.png">image-20240620-024415.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:52</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

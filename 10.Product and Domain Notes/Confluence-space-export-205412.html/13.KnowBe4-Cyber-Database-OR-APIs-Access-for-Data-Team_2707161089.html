@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 13.KnowBe4 Cyber Database OR APIs Access for Data Team</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 13.KnowBe4 Cyber Database OR APIs Access for Data Team
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 11-10-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Hi Stephen:<br/>Background:</p><p>I am currently building a Risk Dashboard for the Risk and Compliance team, and one of the areas of focus requires course completion data from the KnowBe4 Cyber Database or its APIs. (<a href="https://craigsip.atlassian.net/wiki/spaces/MIR/pages/614958135/KnowBe4" data-linked-resource-id="614958135" data-linked-resource-version="1" data-linked-resource-type="page">KnowBe4</a> )</p><p /><p>Could you let me know if the data is stored in a SQL database or if it can be queried through an API? Additionally, I would appreciate any guidance on how to query the database or API to retrieve basic metrics such as:</p><ul><li><p>User ID</p></li><li><p>AD Name</p></li><li><p>Course Completed</p></li><li><p>User Join Date</p></li></ul><p>The end goal is to be able to extract these simple metrics from the website or database.</p><p>Thanks for your time in advnace, call me o nteams if needed.</p><p /><hr/><p><strong>How do i get the Oauth Token or APIs Key to call your First APIs?</strong></p><p>KnowBe4 had a really good documentation fot it.</p><p>REST APIs </p><p><a class="external-link" href="https://developer.knowbe4.com/rest/reporting" rel="nofollow">https://developer.knowbe4.com/rest/reporting</a></p><p><a class="external-link" href="https://developer.knowbe4.com/rest/reporting#tag/Training" rel="nofollow">https://developer.knowbe4.com/rest/reporting#tag/Training</a></p><p><em><strong>Get Request (We are the US Server)</strong></em></p><p><a class="external-link" href="https://us.api.knowbe4.com/v1/training/store_purchases" rel="nofollow">https://us.api.knowbe4.com/v1/training/store_purchases</a></p><p><a class="external-link" href="https://us.api.knowbe4.com/v1/training/enrollments" rel="nofollow">https://us.api.knowbe4.com/v1/training/enrollments</a></p><p><a class="external-link" href="https://us.api.knowbe4.com/v1/training/campaigns" rel="nofollow">https://us.api.knowbe4.com/v1/training/campaigns</a></p><p /><p><strong>How to Connet the APIs to POWER BI and GET DATA from Knowbe4?</strong></p><p>Step1: Use Power BI web Connector</p><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20241011-002107.png" width="235" loading="lazy" src="attachments/2707161089/2764734496.png?width=235" data-image-src="attachments/2707161089/2764734496.png" data-height="483" data-width="235" data-unresolved-comment-count="0" data-linked-resource-id="2764734496" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20241011-002107.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2707161089" data-linked-resource-container-version="8" data-media-id="6d8deaec-554e-4966-87a1-64667b5a05b8" data-media-type="file"></span><p>Step 2: put in the Header as 'Authorization'</p><p>Value is “Bearer {YouAPIKey}“</p><p>Please note that there is a Space in between</p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20241011-002243.png" width="760" loading="lazy" src="attachments/2707161089/2764701720.png?width=760" data-image-src="attachments/2707161089/2764701720.png" data-height="759" data-width="1087" data-unresolved-comment-count="0" data-linked-resource-id="2764701720" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20241011-002243.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2707161089" data-linked-resource-container-version="8" data-media-id="51d4a54f-5c84-432c-bb5e-6adcec0c660b" data-media-type="file"></span><p>Step 3: For records that mroe than 100 Rows we need to ceate Pagination for the APIs call.</p><p /><p>How to create Pagination for Power BI APIs?</p><h1 id="id-13.KnowBe4CyberDatabaseORAPIsAccessforDataTeam-Pagination">Pagination</h1><p>There are certain API endpoints where pagination is supported when retrieving a list of records. We currently support two query parameters: <em><strong>page and per_page</strong></em>. These parameters are optional when making a HTTP request. The values used by default are indicated below.</p><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="65b362dc-558f-4cfe-8103-d3cb5e9d1e81" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Parameter</p></th><th class="confluenceTh"><p>Default</p></th><th class="confluenceTh"><p>Description</p></th></tr><tr><td class="confluenceTd"><p>page</p></td><td class="confluenceTd"><p>1</p></td><td class="confluenceTd"><p>The page number you want to retrieve.</p></td></tr><tr><td class="confluenceTd"><p>per_page</p></td><td class="confluenceTd"><p>100</p></td><td class="confluenceTd"><p>The maximum number of results returned in the response (Max = 500)</p></td></tr></tbody></table></div><h2 id="id-13.KnowBe4CyberDatabaseORAPIsAccessforDataTeam-GetallTrainingEnrollments">Get all Training Enrollments</h2><p>This endpoint retrieves a list of all Training Enrollments in your KnowBe4 account.</p><h5 id="id-13.KnowBe4CyberDatabaseORAPIsAccessforDataTeam-Authorizations:">Authorizations:</h5><h5 id="id-13.KnowBe4CyberDatabaseORAPIsAccessforDataTeam-queryParameters">query Parameters</h5><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="1b78445b-1213-413a-8669-c8af67f1645b" class="confluenceTable"><tbody><tr><td class="confluenceTd"><p>store_purchase_id=[store_purchase_id]</p></td><td class="confluenceTd"><p>integer</p><p>Returns a list of all training enrollments filtered by module, as indicated by the [store_purchase_id].</p></td></tr><tr><td class="confluenceTd"><p>campaign_id=[campaign_id]</p></td><td class="confluenceTd"><p>integer</p><p>Returns a list of all training enrollments filtered by a campaign, as indicated by the [campaign_id]. If the Show Scores option is enabled for a training campaign, the scores will also be displayed in the API.</p></td></tr><tr><td class="confluenceTd"><p>user_id=[user_id]</p></td><td class="confluenceTd"><p>integer</p><p>Returns a list of all training enrollments filtered by a user, as indicated by the [user_id]</p></td></tr><tr><td class="confluenceTd"><p>exclude_archived_users=true</p></td><td class="confluenceTd"><p>boolean</p><p>Excludes archived users when returning a list of training enrollments</p></td></tr><tr><td class="confluenceTd"><p>include_campaign_id=true</p></td><td class="confluenceTd"><p>boolean</p><p>Returns the campaign ID for each training enrollment.</p></td></tr><tr><td class="confluenceTd"><p>include_store_purchase_id=true</p></td><td class="confluenceTd"><p>boolean</p><p>Returns the store purchase ID for each training enrollment.</p></td></tr></tbody></table></div><p>The returned results are listed in sequence with the request's response when the per_page parameters and page numbers remain the same as long as the reported data itself does not change.</p><p><a class="external-link" data-card-appearance="inline" href="https://masson210.rssing.com/chan-52776413/article19.html" rel="nofollow">https://masson210.rssing.com/chan-52776413/article19.html</a> </p><p><a class="external-link" data-card-appearance="inline" href="https://medium.com/@marktiedemann/how-to-do-pagination-in-power-query-430460c17c78" rel="nofollow">https://medium.com/@marktiedemann/how-to-do-pagination-in-power-query-430460c17c78</a> </p><p><a class="external-link" data-card-appearance="inline" href="https://community.fabric.microsoft.com/t5/Power-Query/Creating-a-loop-for-fetching-paginated-data-from-a-REST-API/td-p/310677" rel="nofollow">https://community.fabric.microsoft.com/t5/Power-Query/Creating-a-loop-for-fetching-paginated-data-from-a-REST-API/td-p/310677</a> </p><p /><p>I tested on Postman, the correct URl should looke this </p><p>BaseUrl         = &quot;<a class="external-link" href="https://us.api.knowbe4.com/v1/training/enrollments" rel="nofollow">https://us.api.knowbe4.com/v1/training/enrollments</a>&quot;</p><p>&gt;&gt; parameter 1 = ?page=1</p><p>&gt;&gt; parameter 2 = &amp;per_page=500</p><p /><p>GET /v1/training/enrollments?page=1&amp;per_page=500 HTTP/1.1</p><p>Host: <a class="external-link" href="http://us.api.knowbe4.com" rel="nofollow">us.api.knowbe4.com</a></p><p>Authorization: Bearer {abc placehodler}</p><p>Content-Type: text/plain</p><p>Content-Length: 22</p><p> </p><p>&quot;&lt;file contents here&gt;&quot;</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">// Actual working Code Snippet, Token yo ucould find on the kepass at the SQL fodler
+let
+    BaseUrl         = &quot;https://us.api.knowbe4.com/v1/training/enrollments&quot;,
+    Token           = &quot;{abc}&quot;, // Replace with your actual token
+    EntitiesPerPage = 500,    // Set the maximum number of results per page
+
+    GetJson = (Url) =&gt;
+        let
+            Options = [
+                Headers = [
+                    #&quot;Authorization&quot; = &quot;Bearer &quot; &amp; Token,
+                    #&quot;Content-Type&quot; = &quot;application/json&quot;
+                ]
+            ],
+            RawData = Web.Contents(Url, Options),
+            Json    = Json.Document(RawData)
+        in
+            Json,
+
+    // Function to get a single page of data
+    GetPage = (PageNumber as number) =&gt;
+        let
+            Url          = BaseUrl &amp; &quot;?page=&quot; &amp; Text.From(PageNumber) &amp; &quot;&amp;per_page=&quot; &amp; Text.From(EntitiesPerPage),
+            JsonResponse = GetJson(Url)
+        in
+            JsonResponse,
+
+    // Generate a list of all pages
+    AllEnrollments = List.Generate(
+        () =&gt; [Page = 1, Data = GetPage(1)],
+        each List.Count([Data]) &gt; 0,
+        each [Page = [Page] + 1, Data = GetPage([Page] + 1)],
+        each [Data]
+    ),
+
+    // Combine all pages into a single list
+    CombinedEnrollments = List.Combine(AllEnrollments),
+
+    // Convert the list of enrollments to a table
+    EnrollmentTable = Table.FromList(CombinedEnrollments, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+
+    // Expand the enrollment records
+    ExpandedTable = Table.ExpandRecordColumn(
+        EnrollmentTable,
+        &quot;Column1&quot;,
+        {
+            &quot;enrollment_id&quot;, &quot;content_type&quot;, &quot;module_name&quot;, &quot;user&quot;,
+            &quot;campaign_name&quot;, &quot;enrollment_date&quot;, &quot;start_date&quot;,
+            &quot;completion_date&quot;, &quot;status&quot;, &quot;time_spent&quot;,
+            &quot;policy_acknowledged&quot;, &quot;score&quot;
+        },
+        {
+            &quot;enrollment_id&quot;, &quot;content_type&quot;, &quot;module_name&quot;, &quot;user&quot;,
+            &quot;campaign_name&quot;, &quot;enrollment_date&quot;, &quot;start_date&quot;,
+            &quot;completion_date&quot;, &quot;status&quot;, &quot;time_spent&quot;,
+            &quot;policy_acknowledged&quot;, &quot;score&quot;
+        }
+    ),
+
+    // Expand the user records
+    ExpandedUser = Table.ExpandRecordColumn(
+        ExpandedTable,
+        &quot;user&quot;,
+        {&quot;id&quot;, &quot;first_name&quot;, &quot;last_name&quot;, &quot;email&quot;},
+        {&quot;user.id&quot;, &quot;user.first_name&quot;, &quot;user.last_name&quot;, &quot;user.email&quot;}
+    ),
+
+    // Change data types of the columns
+    ChangedType = Table.TransformColumnTypes(
+        ExpandedUser,
+        {
+            {&quot;enrollment_id&quot;, Int64.Type},
+            {&quot;content_type&quot;, type text},
+            {&quot;module_name&quot;, type text},
+            {&quot;user.id&quot;, Int64.Type},
+            {&quot;user.first_name&quot;, type text},
+            {&quot;user.last_name&quot;, type text},
+            {&quot;user.email&quot;, type text},
+            {&quot;campaign_name&quot;, type text},
+            {&quot;enrollment_date&quot;, type datetime},
+            {&quot;start_date&quot;, type datetime},
+            {&quot;completion_date&quot;, type datetime},
+            {&quot;status&quot;, type text},
+            {&quot;time_spent&quot;, Int64.Type},
+            {&quot;policy_acknowledged&quot;, type logical},
+            {&quot;score&quot;, Int64.Type}
+        }
+    )
+in
+    ChangedType</pre>
+</div></div>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2707161089/2764734496.png">image-20241011-002107.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2707161089/2764701720.png">image-20241011-002243.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

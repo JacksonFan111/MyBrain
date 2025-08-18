@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : three clear passes to udnerstand How to get the friendly name</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : three clear passes to udnerstand How to get the friendly name
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 14-08-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>here’s the “ObjectId → human name” story in <strong>three clear passes</strong> (how your script already does it, and why):</p><h1 id="threeclearpassestoudnerstandHowtogetthefriendlyname-1)CollecttherightObjectIds(fromauditpayloads)">1) Collect the right ObjectIds (from audit payloads)</h1><p><strong>Goal:</strong> figure out <em>which</em> records (by GUID) we need names for.</p><ul><li><p><strong>Where it comes from:</strong> <code>Audit.ObjectId</code> is the primary key of the row that was changed.</p></li><li><p><strong>How we isolate the right events:</strong></p><ul><li><p>Filter <code>dbo.Audit</code> to the target <strong>OTC</strong> and time <strong>window</strong>.</p></li><li><p>Keep rows where <code>AttributeMask</code> contains <strong>your ColumnNumber</strong> (the field you care about).</p></li></ul></li><li><p><strong>How we sync the audit arrays:</strong></p><ul><li><p><code>AttributeMask</code> is a comma CSV of ColumnNumbers; <code>ChangeData</code> is a <code>~</code> list of <code>&quot;AttrName,OldValue&quot;</code> pieces.</p></li><li><p>We split both to arrays, give each element a <strong>position index</strong>, and <strong>join by position</strong>.<br/>Result: table <code>#Changes</code> with one row per audited change of <em>your</em> field, including <code>AuditId</code>, <code>ObjectId</code>, and the <strong>old raw value</strong>.</p></li></ul></li><li><p><strong>Output of pass 1:</strong> a minimal set of <code>(OTC, ObjectId)</code> that really matter (derived from <code>#Changes</code>).<br/>This avoids name lookups for unrelated records and keeps things fast.</p></li></ul><blockquote><p>Why this matters<br/>You only want names for records that actually appear in the filtered audit rows. That keeps later joins small and quick.</p></blockquote><hr/><h1 id="threeclearpassestoudnerstandHowtogetthefriendlyname-2)MapObjectId→friendlyTargetRecordName(onceperentity)">2) Map ObjectId → friendly TargetRecordName (once per entity)</h1><p><strong>Goal:</strong> turn each <code>(OTC, ObjectId)</code> into a <strong>human-friendly name</strong> and cache it.</p><ul><li><p><strong>Resolve entity plumbing</strong> for that <strong>OTC</strong>:</p><ul><li><p>From <code>EntityView</code>: <code>BaseTableName</code>, <code>PhysicalName</code> (read table/view), <strong>logical name</strong>.</p></li><li><p>From <code>INFORMATION_SCHEMA.KEY_COLUMN_USAGE</code>: the <strong>PK column</strong> name (so we can join GUID → row).</p></li></ul></li><li><p><strong>Pick the best “name-ish” column</strong> (heuristic):</p><ul><li><p>Search metadata for <code>name</code>, <code>fullname</code>, <code>subject</code>, <code>title</code>, <code>dsl_name</code>, <code>cip_name</code>, or any text that <strong>ends with </strong><code>name</code>.</p></li><li><p>If none found, use an <strong>OTC-specific fallback</strong> (e.g., Account→<code>name</code>, Contact→<code>fullname</code>, Task→<code>subject</code>, etc.).</p></li></ul></li><li><p><strong>Optionally append the state label</strong>:</p><ul><li><p>If the table has <code>statecode</code>, left-join <code>StringMap</code> on <code>(ObjectTypeCode, 'statecode', statecode)</code> and append like<br/><code>&lt;Active&gt;</code>, <code>&lt;Inactive&gt;</code>, etc.</p></li></ul></li><li><p><strong>Insert once per record</strong> into <code>#ObjNames(OTC, ObjectId, ObjectName)</code>, guarding with <code>NOT EXISTS</code> so we don’t duplicate work.</p></li></ul><p><strong>Dynamic SQL</strong> is used <strong>only</strong> to inject resolved identifiers (table name, PK, name column) safely:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">INSERT #ObjNames(OTC,ObjectId,ObjectName)
+SELECT @OTC, t.[&lt;PK&gt;],
+       CASE WHEN hasState THEN CAST(t.[&lt;NameCol&gt;] AS nvarchar(500)) + N&#39; &lt;&#39; + sm.Value + N&#39;&gt;&#39;
+            ELSE CAST(t.[&lt;NameCol&gt;] AS nvarchar(500)) END
+FROM dbo.[&lt;PhysicalName&gt;] t
+JOIN (SELECT DISTINCT ObjectId FROM #Changes) d ON d.ObjectId = t.[&lt;PK&gt;]
+LEFT JOIN StringMap sm ... -- only if statecode exists
+WHERE NOT EXISTS (SELECT 1 FROM #ObjNames x WHERE x.OTC=@OTC AND x.ObjectId=t.[&lt;PK&gt;]);
+</pre>
+</div></div><ul><li><p><strong>Output of pass 2:</strong> a ready-to-join cache <code>#ObjNames</code> so any part of the query can show<br/><code>Mr Jiasheng Fan &lt;Active&gt;</code> (or similar) beside the GUID.</p></li></ul><blockquote><p>Why this matters<br/>Names vary by entity; some are <code>name</code>, others <code>fullname</code> or <code>subject</code>. Doing a metadata-driven pick, then caching, gives accurate labels with minimal overhead.</p></blockquote><hr/><h1 id="threeclearpassestoudnerstandHowtogetthefriendlyname-3)Usethenames+translatevalues(OptionSets/Lookups)intothefinalrollup">3) Use the names + translate values (OptionSets / Lookups) into the final rollup</h1><p><strong>Goal:</strong> produce <strong>human-readable OLD vs CURRENT</strong> lines per change and attach the friendly record name.</p><ul><li><p><strong>OptionSet translation (per field):</strong></p><ul><li><p>If the field is an OptionSet (<code>@IsOptionSet=1</code>), build a map from <code>StringMap</code> for <strong>that OTC + AttributeName</strong>.</p></li><li><p>OLD: map <code>OldValueRaw</code> → <code>OldOptionLabel</code>; CURRENT: map <code>CurrentRaw</code> → <code>CurrentOptionLabel</code>.</p></li></ul></li><li><p><strong>Lookup translation (per field):</strong></p><ul><li><p>If the field is a Lookup (<code>@RefOTC</code> not null), parse <strong>GUIDs</strong>:</p><ul><li><p>OLD can be <code>&quot;logicalname,guid&quot;</code> or just <code>&quot;guid&quot;</code> → we extract the guid portion.</p></li><li><p>CURRENT is the live value from the base table.</p></li></ul></li><li><p>Build small sets <code>#OldIds</code> / <code>#CurIds</code>, then fetch referenced names from the referenced entity’s best <strong>name-ish</strong> column.</p></li></ul></li><li><p><strong>Compute resolved strings</strong>:</p><ul><li><p><code>OldResolved = COALESCE(OldOptionLabel, OldLookupName, OldRaw)</code></p></li><li><p><code>CurrentResolved = COALESCE(CurrentOptionLabel, CurrentLookupName, CurrentRaw)</code></p></li><li><p><code>IsDifferent = OldResolved != CurrentResolved</code> (normalized)</p></li></ul></li><li><p><strong>Attach the friendly record name</strong>:</p><ul><li><p>Simply <code>LEFT JOIN #ObjNames on (OTC, ObjectId)</code> and select <code>TargetRecordName</code>.</p></li></ul></li></ul><p><strong>Final result:</strong> each row shows <strong>who changed what, when</strong>, the <strong>OLD vs CURRENT</strong> as labels/names (not cryptic numbers/guids), and the <strong>record’s friendly name</strong> next to the GUID.</p><blockquote><p>Why this matters<br/>The audit stream is compact and machine-oriented. Pass 3 converts it into human meaning: labels for picklists, names for lookups, and a record title you can recognize immediately.</p></blockquote><hr/><h2 id="threeclearpassestoudnerstandHowtogetthefriendlyname-Edgecases&amp;“ObjectIddynamics”gotchas(andhowthe3passeshandlethem)">Edge cases &amp; “ObjectId dynamics” gotchas (and how the 3 passes handle them)</h2><ul><li><p><strong>Different PK column names per entity:</strong> Pass 2 always discovers the PK via <code>INFORMATION_SCHEMA</code>, so <code>ObjectId</code> joins correctly regardless of schema.</p></li><li><p><strong>Missing or unusual name columns:</strong> The heuristic + fallback list ensures you still get a usable <code>TargetRecordName</code>.</p></li><li><p><strong>State-aware labels:</strong> If <code>statecode</code> exists, names gain <code>&lt;Active&gt;/&lt;Inactive&gt;</code> context without extra queries later.</p></li><li><p><strong>Lookup payload format differences:</strong> Pass 3’s parser handles both <code>&quot;logicalname,guid&quot;</code> and <code>&quot;guid&quot;</code> formats safely.</p></li><li><p><strong>Polymorphic lookups (customer/owner):</strong> Your current logic resolves by <code>@RefOTC</code>; truly polymorphic types would require reading the <code>logicalname</code> from <code>OldValueRaw</code> to choose an entity on the fly (a known enhancement path).</p></li><li><p><strong>Performance:</strong> Distinct sets (<code>SELECT DISTINCT ObjectId</code>), a small in-memory cache (<code>#ObjNames</code>), and <strong>set-based</strong> fetches avoid N× row lookups.</p></li></ul><p>That’s the whole flow:<br/><strong>Pass 1</strong> = <em>find relevant ObjectIds from audit</em>,<br/><strong>Pass 2</strong> = <em>resolve &amp; cache ObjectId → friendly name</em>,<br/><strong>Pass 3</strong> = <em>translate values and join the cached names into a clean, human-friendly rollup</em>.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:54</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

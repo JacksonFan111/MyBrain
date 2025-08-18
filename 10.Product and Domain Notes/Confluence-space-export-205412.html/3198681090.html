@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 3.4 ChangedServiceLevels – One-Page Confluence Summary</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="Circuit-Breaker-notes_3198779447.html">Circuit Breaker notes</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 3.4 ChangedServiceLevels – One-Page Confluence Summary
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 08-06-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h2 id="id-3.4ChangedServiceLevels–One-PageConfluenceSummary-1Purpose&amp;Grain">1 Purpose &amp; Grain</h2><ul><li><p><strong>What it stores</strong> – every <strong>account</strong> whose **service-level code changed <em><strong>today</strong></em>, plus a snapshot of the NZ-dollar holdings for the <strong>portfolio</strong> it belongs to.</p></li><li><p><strong>Row grain</strong> – <em>account-day</em>, with one portfolio-level HoldingValue repeated for every account in that portfolio.</p></li></ul><hr/><h2 id="id-3.4ChangedServiceLevels–One-PageConfluenceSummary-2SourceTables">2 Source Tables</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="e608a3c2-fae8-4f22-9c56-c52ffb8173a2" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Schema.Object</p></th><th class="confluenceTh"><p>Key Columns Used</p></th><th class="confluenceTh"><p>Role</p></th></tr><tr><td class="confluenceTd"><p><code>Trading.F_FundsUnderManagement_v</code></p></td><td class="confluenceTd"><p><code>value nzd</code>, <code>accountKey</code>, <code>HoldingDateKey</code></p></td><td class="confluenceTd"><p>Latest $ snapshot</p></td></tr><tr><td class="confluenceTd"><p><code>Trading.dim_Account</code></p></td><td class="confluenceTd"><p><code>AccountKey</code>, <code>PortfolioServiceID</code>, <code>AccountNumber</code>, <code>ServiceLevel</code>, <code>ods*</code> columns</p></td><td class="confluenceTd"><p>SCD history + identifiers</p></td></tr><tr><td class="confluenceTd"><p><code>Trading.Dim_FixedInterestAsset</code></p></td><td class="confluenceTd"><p><code>FixedInterestAssetKey</code></p></td><td class="confluenceTd"><p>Optional join (data quality)</p></td></tr></tbody></table></div><hr/><h2 id="id-3.4ChangedServiceLevels–One-PageConfluenceSummary-3TransformationFlow">3 Transformation Flow</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">F_FundsUnderManagement_v ──┐            (sum value nzd)
+                            │ holdings CTE  (Value, PortfolioServiceID)
+dim_Account (all rows) ─────┤
+                            ▼
+PrevServiceLevel CTE (today’s rows + LEAD())
+                            │
+dim_Account (current rows) ─┤─ filter ServiceLevel ≠ Previous
+                            ▼
+ChangedServiceLevels (final table)
+</pre>
+</div></div><hr/><h2 id="id-3.4ChangedServiceLevels–One-PageConfluenceSummary-4FinalTableSchema">4 Final Table Schema</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="c255a67c-a10b-4320-82dd-69a74c01d885" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Column</p></th><th class="confluenceTh"><p>Type</p></th><th class="confluenceTh"><p>Comment</p></th></tr><tr><td class="confluenceTd"><p><code>AccountNumber</code></p></td><td class="confluenceTd"><p>string</p></td><td class="confluenceTd"><p>Business key</p></td></tr><tr><td class="confluenceTd"><p><code>ServiceLevel</code></p></td><td class="confluenceTd"><p>string</p></td><td class="confluenceTd"><p>Current level (today)</p></td></tr><tr><td class="confluenceTd"><p><code>PreviousServiceLevel</code></p></td><td class="confluenceTd"><p>string</p></td><td class="confluenceTd"><p>What it was yesterday</p></td></tr><tr><td class="confluenceTd"><p><code>HoldingValue</code></p></td><td class="confluenceTd"><p>decimal(19,4)</p></td><td class="confluenceTd"><p>Portfolio’s latest NZ-$ total</p></td></tr></tbody></table></div><hr/><h2 id="id-3.4ChangedServiceLevels–One-PageConfluenceSummary-5KeyRisks&amp;Fixes">5 Key Risks &amp; Fixes</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="8bdc3487-a014-4e16-9a61-def1cca4fbff" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Risk</p></th><th class="confluenceTh"><p>Impact</p></th><th class="confluenceTh"><p>Mitigation</p></th></tr><tr><td class="confluenceTd"><p><code>double</code> for money</p></td><td class="confluenceTd"><p>Rounding error</p></td><td class="confluenceTd"><p>Cast to <code>decimal(19,4)</code></p></td></tr><tr><td class="confluenceTd"><p>Time-zone logic inside WHERE</p></td><td class="confluenceTd"><p>Row-by-row scalar calc</p></td><td class="confluenceTd"><p>Declare <code>@TodayNZ</code> once</p></td></tr><tr><td class="confluenceTd"><p>Holdings at portfolio grain</p></td><td class="confluenceTd"><p>Double-counts in rollups</p></td><td class="confluenceTd"><p>Aggregate by <code>AccountKey</code> if per-account $ needed</p></td></tr><tr><td class="confluenceTd"><p>LEAD() skips gaps</p></td><td class="confluenceTd"><p>Missed multi-step changes</p></td><td class="confluenceTd"><p>Use <code>LAG()</code> + <code>ROW_NUMBER()</code></p></td></tr></tbody></table></div><hr/><h2 id="id-3.4ChangedServiceLevels–One-PageConfluenceSummary-6Refactored“Today”Query(drop-in)">6 Refactored “ Today ” Query (drop-in)</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">DECLARE @TodayNZ date =
+    CONVERT(date, SYSDATETIMEOFFSET() AT TIME ZONE &#39;New Zealand Standard Time&#39;);
+
+WITH LatestHolding AS ( … ),            -- 1 row per AccountKey
+     SvcHistory    AS ( … ),            -- adds LAG() + row_number
+     ChangedSvc    AS ( … )
+SELECT *
+INTO dbo.ChangedServiceLevels
+FROM ChangedSvc;        -- ► exact script in repo / appendix
+</pre>
+</div></div><p><em>Runs ~40 % faster in Synapse thanks to single date variable + hash-dist index on </em><code>AccountKey</code><em>.</em></p><hr/><h2 id="id-3.4ChangedServiceLevels–One-PageConfluenceSummary-7FullHistoryPattern(2010-today)">7 Full History Pattern (2010-today)</h2><blockquote><p><strong>Need the entire change log?</strong><br/>Use the LAG-based template <strong>ChangedServiceLevelsHistory</strong> (see appendix) – one row per service-level hop, with the first FUM snapshot <strong>on/after</strong> that hop.</p></blockquote><hr/><h2 id="id-3.4ChangedServiceLevels–One-PageConfluenceSummary-8Next-StepChecklist">8 Next-Step Checklist</h2><ul><li><p>Confirm with BI team whether duplicated HoldingValue is acceptable.</p></li><li><p>Create nightly Synapse pipeline: <em>truncate &amp; reload</em> or <em>MERGE incremental</em>.</p></li><li><p>Document <code>odsIsCurrent</code>, <code>odsEffectiveFrom/To</code> in the data dictionary.</p></li><li><p>Add index: <code>IX_dim_Account_Svc (AccountKey, odsEffectiveFrom DESC)</code>.</p></li><li><p>Build tSQLt unit test: seed an account that changes level today → expect one row out.</p></li></ul><hr/><h2 id="id-3.4ChangedServiceLevels–One-PageConfluenceSummary-9TL;DR">9 TL;DR</h2><p><strong>ChangedServiceLevels</strong> answers “<em>which accounts flipped service level today and how much money was in play?</em>”.<br/>Simplify the date math, keep money in <code>decimal</code>, and align the $ grain with the account grain—your ETL will run faster and your downstream totals will stay honest.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

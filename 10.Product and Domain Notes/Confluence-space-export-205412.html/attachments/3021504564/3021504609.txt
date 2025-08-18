@@ -1,0 +1,8 @@
+let
+    Source = Sql.Database("KAPSQLDAT-PRD01", "Integration", [Query="Select DISTINCT#(lf)su.City,#(lf)su.userPrincipalName,#(lf)su.whenChanged,#(lf)su.whenCreated,#(lf)su.Company,#(lf)su.Department,#(lf)su.Title,#(lf)su.Mail,#(lf)su.displayName,#(lf)su.AccountEnabled,#(lf)su.AccountExpired#(lf)from [ActiveDirectory].[vwActiveDirectoryUsers] su#(lf)WHERE#(lf)su.AccountEnabled = 'TRUE'"]),
+    #"Removed Other Columns" = Table.SelectColumns(Source,{"userPrincipalName", "Company", "Title", "displayName", "AccountEnabled"}),
+    #"Filtered Rows" = Table.SelectRows(#"Removed Other Columns", each ([Company] = "Craigs Investment Partners") and ([Title] <> null)),
+    #"Merged Queries" = Table.NestedJoin(#"Filtered Rows", {"displayName"}, #"All Staff", {"displayName"}, "All Staff", JoinKind.Inner),
+    #"Expanded All Staff" = Table.ExpandTableColumn(#"Merged Queries", "All Staff", {"StaffID", "Manager Name", "Join Date", "Completion %"}, {"StaffID", "Manager Name", "Join Date", "Completion %"})
+in
+    #"Expanded All Staff"

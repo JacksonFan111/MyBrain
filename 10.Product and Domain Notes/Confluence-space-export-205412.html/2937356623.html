@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 15.01.2025 USP_04 redesigned - Final Output: AH_CP_AD</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 15.01.2025 USP_04 redesigned - Final Output: AH_CP_AD
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 15-01-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is a <strong>high-level explanation</strong> of why the code <strong>splits</strong> the data into <strong>NFAH, FAH, FAHO, CP, and AD</strong> and then <strong>joins</strong> them back into <strong>122 columns</strong> for the <strong>final</strong> FATCA output. A <strong>pseudocode diagram</strong> is also provided for better visualization.</p><hr/><h2 id="id-15.01.2025USP_04redesigned-FinalOutput:AH_CP_AD-1.WhySplitintoNFAH,FAH,CP,andAD?">1. Why Split into NFAH, FAH, CP, and AD?</h2><h3 id="id-15.01.2025USP_04redesigned-FinalOutput:AH_CP_AD-a)Non-ForeignAccountHolders(NFAH)">a) Non-Foreign Account Holders (NFAH)</h3><ul><li><p><strong>Definition</strong>: These are account holders considered “domestic” (e.g., in New Zealand context) and <em>not</em> meeting the “foreign” criteria under FATCA/CRS.</p></li><li><p><strong>Reason for Separate Extraction</strong>: They often have different TIN/country details, so they’re treated differently for compliance.</p></li></ul><h3 id="id-15.01.2025USP_04redesigned-FinalOutput:AH_CP_AD-b)ForeignAccountHolders(FAH)">b) Foreign Account Holders (FAH)</h3><ul><li><p><strong>Definition</strong>: These are account holders that meet the definition of a “foreign” account under FATCA. This group often includes individuals with foreign TINs or tax residences outside the local jurisdiction.</p></li><li><p><strong>Two Subsets</strong>:</p><ol start="1"><li><p><strong>Individual</strong> Account Holders (FAH - <em>Individual</em>).</p></li><li><p><strong>Entity</strong> Account Holders (FAH - <em>Organization</em>).</p></li></ol></li><li><p><strong>Reason for Separate Extraction</strong>: The FATCA rules differ for individuals vs. entities (e.g., different reporting fields).</p></li></ul><h3 id="id-15.01.2025USP_04redesigned-FinalOutput:AH_CP_AD-c)ControllingPersons(CP)">c) Controlling Persons (CP)</h3><ul><li><p><strong>Definition</strong>: Under FATCA, certain <strong>entities</strong> need to report their “Substantial U.S. Owners” or “Controlling Persons.”</p></li><li><p><strong>Reason for Separate Extraction</strong>: A single entity might have <em>multiple</em> controlling persons, each with unique personal details and TINs that must be reported.</p></li></ul><h3 id="id-15.01.2025USP_04redesigned-FinalOutput:AH_CP_AD-d)AccountDetails(AD)(FinancialInformation)">d) Account Details (AD) (Financial Information)</h3><ul><li><p><strong>Definition</strong>: The actual <strong>financial</strong> data—interest, dividends, account balance, etc.</p></li><li><p><strong>Reason for Separate Extraction</strong>: This numeric/financial data typically comes from different tables (e.g., holdings, transaction-level sums).</p></li><li><p><strong>Later Joined</strong>: We combine these financial amounts with the account holder’s identity details to produce the final 122 FATCA fields.</p></li></ul><hr/><h2 id="id-15.01.2025USP_04redesigned-FinalOutput:AH_CP_AD-2.HowTheyAreJoinedtoForm122Columns">2. How They Are Joined to Form 122 Columns</h2><ol start="1"><li><p><strong>NFAH</strong> is extracted into a temp table <code>#NFAH</code> with key columns (e.g., <code>AccountID</code> / <code>PortfolioNo</code>).</p></li><li><p><strong>FAH</strong> (foreign accounts) is split into <strong>Individuals</strong> and <strong>Entities</strong>, then combined into <code>#AccountHolders</code>.</p></li><li><p><strong>NFAH</strong> is <em>unioned</em> with <strong>FAH</strong> to form <code>#ALLAH</code> (All Account Holders).</p></li><li><p><strong>CP</strong> (controlling persons) is extracted separately, keyed by entity or portfolio references.</p></li><li><p><strong>AD</strong> (financial details) is built from holdings and transaction data, keyed by <code>PortfolioNo</code> &amp; <code>PortfolioServiceLevelName</code>.</p></li><li><p><strong>Join</strong>: The code <strong>LEFT JOINs</strong> <code>#ALLAH</code>, <code>#ControllingPersons</code>, and the financial data (<code>##FATCAAccountDetails</code>) to produce <code>[FATCA].[FATCA_AH_CP_AD_jf]</code>. This table merges:</p><ul><li><p><strong>Account Holder</strong> info (individual or entity),</p></li><li><p><strong>Controlling Person</strong> info (if any), and</p></li><li><p><strong>Account financial</strong> info (AD).</p></li></ul></li><li><p><strong>Final</strong>: From <code>[FATCA].[FATCA_AH_CP_AD_jf]</code>, the script <strong>selects 122 columns</strong> into <code>##fatcafinalselect</code>. This final dataset is then <strong>inserted</strong> into <code>[FATCA].[FATCA_Final_Output_AccountHolders_SubstantialUSOwner_Financeinfo_jf]</code>.</p></li></ol><hr/><h2 id="id-15.01.2025USP_04redesigned-FinalOutput:AH_CP_AD-3.PseudocodeDiagram">3. Pseudocode Diagram</h2><p>Here’s a <strong>simplified</strong> conceptual diagram showing the flow and why it’s split/merged. This is <strong>not</strong> exact SQL but rather a <strong>process outline</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">         ┌────────────────────────────────────────────────┐
+         │            NFAH Source (Non-Foreign)          │
+         │ (FATCA.NonForeignAccHolderData_jf + Stage)    │
+         └────────────────────────────────────────────────┘
+                          |  (Step 10.1)
+                          v
+                [ #NFAH (temp table) ]
+
+         ┌────────────────────────────────────────────────┐
+         │            FAH Source (Foreign)               │
+         │ (FATCA.Stage_FATCAPivotedData_jf + Entities)  │
+         └────────────────────────────────────────────────┘
+                          |  (Step 10.2)
+                          v
+                [ #IndividualAccountHolders ]   [ #EntityAccountHolders ]
+                            \                         /
+                             \       (UNION ALL)      /
+                              \                      /
+                                ----&gt; [ #AccountHolders ]
+                          
+                          ┌───────────────────────────────────────────┐
+                          │ #NFAH  UNION ALL  #AccountHolders        │
+                          └───────────────────────────────────────────┘
+                                        |  (Step 10.3)
+                                        v
+                                    [ #ALLAH ]  
+                                        |
+                                        |  (Step 10.4)
+                                        v
+       ┌────────────────────────────────────────────────────────┐
+       │  #ControllingPersons (CP) extraction (substantial US) │
+       └────────────────────────────────────────────────────────┘
+
+                                        |  (Step 10.5)
+                                        v
+       ┌────────────────────────────────────────────────────────┐
+       │  ##FATCAAccountDetails (AD) - financial data (balances, etc.) │
+       └────────────────────────────────────────────────────────┘
+
+                                        |  (Step 10.6)
+                                        v
+┌─────────────────────────────────────────────────────────────────────────┐
+│ [FATCA].[FATCA_AH_CP_AD_jf] = Join( #ALLAH, #ControllingPersons, AD ) │
+│   Contains all consolidated columns needed for FATCA &amp; CP info        │
+└─────────────────────────────────────────────────────────────────────────┘
+
+                                        |  (Step 11.1)
+                                        v
+┌─────────────────────────────────────────────────────────────────────────┐
+│            ##fatcafinalselect (122 columns)                           │
+│            Final stage from [FATCA].[FATCA_AH_CP_AD_jf]               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+                                        |  (Step 11.2)
+                                        v
+┌─────────────────────────────────────────────────────────────────────────┐
+│ [FATCA].[FATCA_Final_Output_AccountHolders_SubstantialUSOwner_Financeinfo_jf] │
+│   Final table used for actual submission / further processing          │
+└─────────────────────────────────────────────────────────────────────────┘
+</pre>
+</div></div><p><strong>Key points</strong> from the diagram:</p><ol start="1"><li><p><strong>NFAH</strong> (non-foreign) and <strong>FAH</strong> (foreign) account holders must be processed <strong>separately</strong> because they differ in how TINs, countries, and FATCA statuses are determined.</p></li><li><p><strong>Entities</strong> vs. <strong>Individuals</strong> also get separate handling for FAH but eventually combine into a single list of all possible account holders.</p></li><li><p><strong>Controlling Persons</strong> (CP) are extracted because an entity account may list <strong>multiple</strong> controlling persons, each requiring separate FATCA reporting.</p></li><li><p><strong>Financial Data</strong> (AD) is <strong>aggregated</strong> or summarized separately (sums of interest, dividends, balances, etc.).</p></li><li><p><strong>All</strong> these pieces are eventually <strong>joined</strong> into a <strong>single</strong> comprehensive dataset with <strong>122</strong> columns, matching the FATCA schema requirements.</p></li></ol><hr/><h2 id="id-15.01.2025USP_04redesigned-FinalOutput:AH_CP_AD-4.Summary">4. Summary</h2><ul><li><p>The script logically <strong>partitions</strong> the data by account type (NFAH vs. FAH, individuals vs. entities) because each group has <strong>unique</strong> reporting requirements and data fields under FATCA.</p></li><li><p><strong>Controlling persons</strong> must be <strong>linked</strong> to the entities they control.</p></li><li><p><strong>Financial</strong> or <strong>account details</strong> are often in a <strong>different</strong> source, so it’s consolidated last to ensure the correct sums (interest, dividends, balance, etc.) appear next to the right <strong>account holder</strong>.</p></li><li><p>Finally, everything is <strong>merged</strong> into a single, large <strong>table</strong> (or temp table) that meets the <strong>FATCA</strong> reporting specification for <strong>122</strong> columns, ensuring that all <em>U.S. owners</em>, <em>account statuses</em>, and <em>financial details</em> are present in a single place for submission.</p></li></ul><p>By splitting the data into these <strong>logical subsets</strong> and then <strong>joining</strong> them, the development team can <strong>isolate</strong> and <strong>validate</strong> each step more easily, <strong>handle</strong> the nuances of each account type, and <strong>reduce</strong> the risk of incorrect merges or missing records.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 11. CRM advisers and PWAs complex relationships</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 11. CRM advisers and PWAs complex relationships
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 09-09-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h1 id="id-11.CRMadvisersandPWAscomplexrelationships-CRMSystemTeamHierarchyandRelationships–ABeginner’sGuide">CRM System Team Hierarchy and Relationships – A Beginner’s Guide</h1><h2 id="id-11.CRMadvisersandPWAscomplexrelationships-Overview">Overview</h2><p>This guide is designed to help new users in the company understand the key relationships within the CRM system, particularly how <strong>Advisers</strong>, <strong>Primary Advisers</strong>, <strong>Assistants (Private Wealth Assistants - PWA)</strong>, <strong>Primary Assistants</strong>, <strong>Adviser Codes</strong>, <strong>Branches</strong>, <strong>Teams</strong>, and <strong>System Users</strong> work together. Understanding these relationships is crucial for managing client interactions, fostering team collaboration, and accurately tracking financial activities.</p><hr/><h2 id="id-11.CRMadvisersandPWAscomplexrelationships-KeyEntitiesintheCRMSystem">Key Entities in the CRM System</h2><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-Adviser–TheLeaderManagingMultipleAssistantsandClients"><strong>Adviser</strong> – The Leader Managing Multiple Assistants and Clients</h3><ul><li><p><strong>Role</strong>: Advisers are the key professionals responsible for managing client portfolios and ensuring successful financial outcomes.</p></li><li><p><strong>Hierarchy</strong>: Advisers operate within specific <strong>Branches</strong> and may have multiple <strong>Assistants</strong> and <strong>Adviser Codes</strong> assigned to them.</p><p><strong>Key Relationships</strong>:</p><ul><li><p><strong>Primary Assistant</strong>: Advisers often have one designated <strong>Primary Assistant</strong> who is the main point of contact and handles most of their administrative work. This is a special many-to-one relationship, where each adviser has <strong>one Primary Assistant</strong>, but an assistant can work with multiple advisers.</p></li><li><p><strong>Assistants</strong>: In addition to the <strong>Primary Assistant</strong>, an adviser can also work with other assistants in a general many-to-many relationship.</p></li><li><p><strong>Primary Adviser</strong>: The primary adviser is the lead professional responsible for managing a particular client or issue. This is important in cases where multiple advisers are involved with a client but one adviser takes the lead.</p></li><li><p><strong>Adviser Codes</strong>: Advisers can have multiple adviser codes, and each code can be shared across multiple advisers (many-to-many).</p></li><li><p><strong>Branch</strong>: Each adviser belongs to one branch, but a branch can have multiple advisers (many-to-one relationship).</p></li></ul></li></ul><hr/><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-PrimaryAdviser–TheLeadProfessional"><strong>Primary Adviser</strong> – The Lead Professional</h3><ul><li><p><strong>Role</strong>: The primary adviser is the <strong>lead</strong> adviser assigned to a client or a specific financial issue. They take overall responsibility for managing the client relationship, coordinating with other advisers, and ensuring client goals are met.</p></li><li><p><strong>Hierarchy</strong>: A client or financial issue may have multiple advisers, but only <strong>one</strong> is designated as the primary adviser.</p><p><strong>Key Relationships</strong>:</p><ul><li><p><strong>Client</strong>: The primary adviser is the main point of contact for the client and takes the lead in managing the relationship.</p></li><li><p><strong>Other Advisers</strong>: The primary adviser works alongside other advisers but has the final responsibility for the client or issue.</p></li></ul></li></ul><hr/><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-Assistant(PrivateWealthAssistant-PWA)–TheSupportRole"><strong>Assistant (Private Wealth Assistant - PWA)</strong> – The Support Role</h3><ul><li><p><strong>Role</strong>: PWAs help advisers by managing client communication, handling administrative tasks, and ensuring smooth daily operations.</p></li><li><p><strong>Hierarchy</strong>: Assistants are part of a <strong>Team</strong> and can work with multiple advisers at once.</p><p><strong>Key Relationships</strong>:</p><ul><li><p><strong>Primary Adviser</strong>: The assistant may work directly with the primary adviser to support the most critical needs of the adviser’s clients.</p></li><li><p><strong>Primary Assistant</strong>: An assistant may serve as a <strong>Primary Assistant</strong> to one adviser while still supporting other advisers in the team (one-to-many relationship).</p></li><li><p><strong>Advisers</strong>: An assistant can support multiple advisers, and an adviser can have multiple assistants (many-to-many relationship).</p></li><li><p><strong>Team</strong>: Each assistant is part of a team, but a team can have multiple assistants (many-to-one relationship).</p></li></ul></li></ul><hr/><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-PrimaryAssistant–TheKeySupportRole"><strong>Primary Assistant</strong> – The Key Support Role</h3><ul><li><p><strong>Role</strong>: The <strong>Primary Assistant</strong> is the main assistant assigned to an adviser. They are responsible for handling the majority of administrative tasks, ensuring smooth day-to-day operations, and acting as the go-to person for both the adviser and clients.</p></li><li><p><strong>Hierarchy</strong>: An adviser can have one <strong>Primary Assistant</strong>, and each assistant can be the primary for more than one adviser.</p><p><strong>Key Relationships</strong>:</p><ul><li><p><strong>Primary Adviser</strong>: The primary assistant works closely with the primary adviser to manage clients and ensure that the adviser’s administrative workload is handled effectively.</p></li><li><p><strong>Other Advisers</strong>: A primary assistant may also assist other advisers, but their focus will be on the adviser they are primarily assigned to.</p></li><li><p><strong>Team</strong>: The primary assistant is part of a team of assistants, but they serve in a more focused capacity, ensuring the primary adviser is fully supported.</p></li></ul></li></ul><hr/><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-AdviserCode–TheFinancialIdentifier"><strong>Adviser Code</strong> – The Financial Identifier</h3><ul><li><p><strong>Role</strong>: Adviser codes are unique identifiers assigned to advisers to track financial transactions, including client investments and other dealings.</p></li><li><p><strong>Hierarchy</strong>: Adviser codes may be shared across multiple advisers, and advisers may have multiple adviser codes assigned to them.</p><p><strong>Key Relationships</strong>:</p><ul><li><p><strong>Advisers</strong>: Adviser codes are linked to advisers in a many-to-many relationship.</p></li></ul></li></ul><hr/><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-Branch–TheOperationalHub"><strong>Branch</strong> – The Operational Hub</h3><ul><li><p><strong>Role</strong>: Advisers work within branches, which are their primary operational locations.</p></li><li><p><strong>Hierarchy</strong>: A branch can have multiple advisers, who manage clients from that location.</p><p><strong>Key Relationships</strong>:</p><ul><li><p><strong>Advisers</strong>: A branch can have many advisers, while each adviser works within one branch (one-to-many relationship).</p></li></ul></li></ul><hr/><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-Team–TheSupportGroup"><strong>Team</strong> – The Support Group</h3><ul><li><p><strong>Role</strong>: Teams are groups of assistants who collaborate within a branch or department to support advisers.</p></li><li><p><strong>Hierarchy</strong>: Each team can have multiple assistants working under them.</p><p><strong>Key Relationships</strong>:</p><ul><li><p><strong>Assistants</strong>: Each team manages multiple assistants, who in turn support the advisers (one-to-many relationship).</p></li></ul></li></ul><hr/><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-SystemUser–TheCoreCRMDataTable"><strong>System User</strong> – The Core CRM Data Table</h3><ul><li><p><strong>Role</strong>: This table holds information about all users in the CRM system, including both advisers and assistants.</p></li><li><p><strong>Hierarchy</strong>: Advisers and assistants are stored as system users with their roles, email addresses, and other contact information.</p></li></ul><hr/><h2 id="id-11.CRMadvisersandPWAscomplexrelationships-KeyRelationshipsExplained">Key Relationships Explained</h2><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-AdvisertoPrimaryAssistant:"><strong>Adviser to Primary Assistant</strong>:</h3><ul><li><p><strong>Relationship</strong>: One-to-Many</p></li><li><p><strong>Explanation</strong>: An adviser can have one <strong>Primary Assistant</strong> who is primarily responsible for managing their work, but the assistant can support multiple advisers in different capacities.</p></li></ul><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-PrimaryAdviser:"><strong>Primary Adviser</strong>:</h3><ul><li><p><strong>Relationship</strong>: One-to-Many</p></li><li><p><strong>Explanation</strong>: The primary adviser is the lead adviser responsible for the client. In some cases, multiple advisers may be involved in a client relationship, but the <strong>Primary Adviser</strong> takes charge of managing the client’s portfolio.</p></li></ul><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-AdvisertoAssistant(PWA):"><strong>Adviser to Assistant (PWA)</strong>:</h3><ul><li><p><strong>Relationship</strong>: Many-to-Many</p></li><li><p><strong>Explanation</strong>: Each adviser can have multiple assistants working with them, and each assistant can support multiple advisers. This provides flexibility in resource allocation and task distribution.</p></li></ul><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-AdvisertoAdviserCode:"><strong>Adviser to Adviser Code</strong>:</h3><ul><li><p><strong>Relationship</strong>: Many-to-Many</p></li><li><p><strong>Explanation</strong>: An adviser can be assigned multiple adviser codes, which are used to track financial transactions. Similarly, a single adviser code can be shared by multiple advisers, allowing for group-based tracking.</p></li></ul><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-AdvisertoBranch:"><strong>Adviser to Branch</strong>:</h3><ul><li><p><strong>Relationship</strong>: Many-to-One</p></li><li><p><strong>Explanation</strong>: Each adviser works in one branch, but each branch can have multiple advisers. This is important for organizational structuring and reporting within the company.</p></li></ul><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-AssistanttoTeam:"><strong>Assistant to Team</strong>:</h3><ul><li><p><strong>Relationship</strong>: Many-to-One</p></li><li><p><strong>Explanation</strong>: Each assistant belongs to one team, and a team can have many assistants. Teams ensure that assistants are well-organized and adequately support the advisers they are assigned to.</p></li></ul><hr/><h2 id="id-11.CRMadvisersandPWAscomplexrelationships-CRMEntitiesinPseudoCode">CRM Entities in Pseudo Code</h2><p>Here’s a simplified view of how these relationships would look if represented in pseudo-code:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">// Define Entities
+Entity Adviser {
+    String AdviserId
+    String Name
+    String Email
+    PrimaryAssistant Assistant        // One-to-One with Primary Assistant
+    List&lt;AdviserCode&gt; AdviserCodes    // Many-to-Many with AdviserCode
+    List&lt;Assistant&gt; Assistants        // Many-to-Many with Assistant
+    String Branch                     // Belongs to one Branch (Many-to-One)
+}
+
+Entity PrimaryAssistant {
+    String AssistantId
+    String Name
+    String Email
+    List&lt;Adviser&gt; PrimaryAdvisers     // Many-to-One with Primary Advisers
+}
+
+Entity Assistant {
+    String AssistantId
+    String Name
+    String Email
+    List&lt;Adviser&gt; Advisers            // Many-to-Many with Adviser
+    String Team                       // Belongs to one Team (Many-to-One)
+}
+
+Entity AdviserCode {
+    String CodeId
+    String CodeName
+    List&lt;Adviser&gt; Advisers            // Many-to-Many with Adviser
+}
+
+Entity Branch {
+    String BranchId
+    String BranchName
+    List&lt;Adviser&gt; Advisers            // One-to-Many with Advisers
+}
+
+Entity Team {
+    String TeamId
+    String TeamName
+    List&lt;Assistant&gt; Assistants        // One-to-Many with Assistants
+}</pre>
+</div></div><hr/><h2 id="id-11.CRMadvisersandPWAscomplexrelationships-SummaryforNewBusinessUsers">Summary for New Business Users</h2><ul><li><p><strong>Advisers</strong> are the key professionals managing clients. They work within specific branches, have multiple adviser codes, and are supported by <strong>Primary Assistants</strong> and other assistants.</p></li><li><p><strong>Primary Assistants</strong> are the main point of contact for advisers and handle the bulk of their administrative tasks, ensuring smooth client management.</p></li><li><p><strong>Primary Advisers</strong> are the lead advisers assigned to clients or issues and have the final responsibility for managing client portfolios.</p></li><li><p><strong>Adviser Codes</strong> are unique identifiers used to track the financial activities of advisers. These codes may be shared among multiple advisers.</p></li><li><p><strong>Branches</strong> organize advisers, and each branch can have multiple advisers.</p></li><li><p><strong><span style="background-color: rgb(211,241,167);">Teams</span></strong><span style="background-color: rgb(211,241,167);"> organize assistants, and each team can have multiple assistants supporting the</span></p></li></ul><p><span style="background-color: rgb(211,241,167);"> advisers within the branch.</span></p><ul><li><p>All users in the system, whether advisers or assistants, are represented as <strong>System Users</strong> in the CRM database.</p></li></ul><p>Understanding these relationships is crucial for optimizing operations, ensuring compliance, and managing the day-to-day tasks of supporting advisers and clients.</p><hr/><hr/><h1 id="id-11.CRMadvisersandPWAscomplexrelationships-DesigningaproperDataWarehouseschemausingtheKimballmethodology(DimensionalModeling)">Designing a proper <strong>Data Warehouse</strong> schema using the <strong>Kimball methodology</strong> (Dimensional Modeling) </h1><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-KimballDimensionalModelDesign"><strong>Kimball Dimensional Model Design</strong></h3><h4 id="id-11.CRMadvisersandPWAscomplexrelationships-1.FactTable:Adviser_Assistant_Fact"><strong>1. Fact Table: Adviser_Assistant_Fact</strong></h4><p>This table tracks the interactions between <strong>Advisers</strong> and <strong>Assistants</strong>, including primary relationships, financial transactions, and issue management.</p><p><strong>Grain</strong>: Each row represents one interaction between an adviser and an assistant, related to a financial transaction or client issue.</p><p><strong>Fact Table Fields</strong>:</p><ul><li><p><strong>Fact ID</strong> (Primary Key)</p></li><li><p><strong>Adviser Key</strong> (Foreign Key to Dim_Adviser)</p></li><li><p><strong>Assistant Key</strong> (Foreign Key to Dim_Assistant)</p></li><li><p><strong>Primary Adviser Flag</strong> (Yes/No) → Whether the adviser is the primary adviser for this client/transaction.</p></li><li><p><strong>Primary Assistant Flag</strong> (Yes/No) → Whether the assistant is the primary assistant.</p></li><li><p><strong>Adviser Code Key</strong> (Foreign Key to Dim_Adviser_Code)</p></li><li><p><strong>Branch Key</strong> (Foreign Key to Dim_Branch)</p></li><li><p><strong>Team Key</strong> (Foreign Key to Dim_Team)</p></li><li><p><strong>Client ID</strong> (Surrogate Key or Natural Key) → Identifier for the client being managed.</p></li><li><p><strong>Issue ID</strong> → Identifier for the financial issue.</p></li><li><p><strong>Transaction Amount</strong> → Monetary value of the financial transaction.</p></li><li><p><strong>Transaction Date</strong> → Date of the transaction.</p></li><li><p><strong>Issue Close Date</strong> → The date the issue was resolved or closed.</p></li><li><p><strong>Is Active</strong> (Yes/No) → Whether the issue/interaction is still ongoing.</p></li></ul><h4 id="id-11.CRMadvisersandPWAscomplexrelationships-2.DimensionTables"><strong>2. Dimension Tables</strong></h4><h5 id="id-11.CRMadvisersandPWAscomplexrelationships-Dim_Adviser"><strong>Dim_Adviser</strong></h5><p>Stores details about advisers.</p><p><strong>Fields</strong>:</p><ul><li><p><strong>Adviser Key</strong> (Primary Key)</p></li><li><p><strong>Adviser ID</strong> (Natural Key from the CRM system)</p></li><li><p><strong>Adviser Name</strong></p></li><li><p><strong>Adviser Email</strong></p></li><li><p><strong>Branch Key</strong> (Foreign Key to Dim_Branch) → The branch the adviser belongs to.</p></li><li><p><strong>Is Primary Adviser</strong> (Yes/No) → Whether the adviser is the primary adviser for this client/transaction.</p></li></ul><h5 id="id-11.CRMadvisersandPWAscomplexrelationships-Dim_Assistant"><strong>Dim_Assistant</strong></h5><p>Stores details about assistants (Private Wealth Assistants - PWAs).</p><p><strong>Fields</strong>:</p><ul><li><p><strong>Assistant Key</strong> (Primary Key)</p></li><li><p><strong>Assistant ID</strong> (Natural Key from the CRM system)</p></li><li><p><strong>Assistant Name</strong></p></li><li><p><strong>Assistant Email</strong></p></li><li><p><strong>Team Key</strong> (Foreign Key to Dim_Team) → The team the assistant belongs to.</p></li><li><p><strong>Is Primary Assistant</strong> (Yes/No) → Whether the assistant is the primary assistant for this adviser.</p></li></ul><h5 id="id-11.CRMadvisersandPWAscomplexrelationships-Dim_Adviser_Code"><strong>Dim_Adviser_Code</strong></h5><p>Stores details about the adviser codes that identify financial transactions.</p><p><strong>Fields</strong>:</p><ul><li><p><strong>Adviser Code Key</strong> (Primary Key)</p></li><li><p><strong>Adviser Code ID</strong> (Natural Key from the CRM system)</p></li><li><p><strong>Adviser Code Name</strong></p></li><li><p><strong>Adviser ID</strong> (Foreign Key to Dim_Adviser)</p></li></ul><h5 id="id-11.CRMadvisersandPWAscomplexrelationships-Dim_Branch"><strong>Dim_Branch</strong></h5><p>Stores details about branches.</p><p><strong>Fields</strong>:</p><ul><li><p><strong>Branch Key</strong> (Primary Key)</p></li><li><p><strong>Branch ID</strong> (Natural Key from the CRM system)</p></li><li><p><strong>Branch Name</strong></p></li><li><p><strong>Location</strong> (If available)</p></li></ul><h5 id="id-11.CRMadvisersandPWAscomplexrelationships-Dim_Team"><strong>Dim_Team</strong></h5><p>Stores details about teams that the assistants belong to.</p><p><strong>Fields</strong>:</p><ul><li><p><strong>Team Key</strong> (Primary Key)</p></li><li><p><strong>Team ID</strong> (Natural Key from the CRM system)</p></li><li><p><strong>Team Name</strong></p></li><li><p><strong>Branch Key</strong> (Foreign Key to Dim_Branch) → Which branch the team operates within.</p></li></ul><h5 id="id-11.CRMadvisersandPWAscomplexrelationships-Dim_Issue"><strong>Dim_Issue</strong></h5><p>Stores details about financial issues or transactions that advisers and assistants work on.</p><p><strong>Fields</strong>:</p><ul><li><p><strong>Issue Key</strong> (Primary Key)</p></li><li><p><strong>Issue ID</strong> (Natural Key from the CRM system)</p></li><li><p><strong>Issue Name</strong></p></li><li><p><strong>Close Date</strong> (For closed issues)</p></li><li><p><strong>Status</strong> (Open, Closed, etc.)</p></li></ul><hr/><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-Fact-DimensionRelationships"><strong>Fact-Dimension Relationships</strong></h3><ul><li><p><strong>Adviser_Assistant_Fact</strong> links to:</p><ul><li><p><strong>Dim_Adviser</strong> on <strong>Adviser Key</strong></p></li><li><p><strong>Dim_Assistant</strong> on <strong>Assistant Key</strong></p></li><li><p><strong>Dim_Adviser_Code</strong> on <strong>Adviser Code Key</strong></p></li><li><p><strong>Dim_Branch</strong> on <strong>Branch Key</strong></p></li><li><p><strong>Dim_Team</strong> on <strong>Team Key</strong></p></li><li><p><strong>Dim_Issue</strong> on <strong>Issue Key</strong></p></li></ul></li></ul><p>This design follows Kimball’s methodology by:</p><ul><li><p><strong>Identifying key business processes</strong>: The interactions between advisers, assistants, and clients in managing financial transactions.</p></li><li><p><strong>Defining the grain</strong>: Each fact table row captures one specific interaction/transaction involving advisers and assistants.</p></li><li><p><strong>Dimension tables</strong>: Store the descriptive information needed to describe advisers, assistants, adviser codes, teams, and branches.</p></li><li><p><strong>Fact table</strong>: Stores the quantitative metrics such as transaction amount, dates, and whether the adviser or assistant is the primary contact.</p></li></ul><hr/><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-SchemaOptimizationTechniques"><strong>Schema Optimization Techniques</strong></h3><ol start="1"><li><p><strong>Surrogate Keys</strong>: Each dimension table uses a <strong>surrogate key</strong> as the primary key (e.g., <strong>Adviser Key</strong>, <strong>Assistant Key</strong>). Surrogate keys help manage slowly changing dimensions (SCDs) and ensure a stable join structure even if natural keys change in the source CRM system.</p></li><li><p><strong>SCD Type 2 for Dim_Adviser and Dim_Assistant</strong>: </p><ul><li><p>When the relationship between an adviser and their primary assistant changes, or when the adviser switches branches, we create a new row in the respective dimension table (SCD Type 2). This ensures we track history over time without overwriting existing data.</p></li></ul></li><li><p><strong>Degenerate Dimensions for Client and Issue IDs</strong>: </p><ul><li><p><strong>Client ID</strong> and <strong>Issue ID</strong> can be stored as degenerate dimensions directly in the fact table. They do not need separate dimension tables if no additional attributes are required.</p></li></ul></li><li><p><strong>Data Aggregation</strong>: Aggregates like <strong>total transaction amount</strong> by adviser, branch, or assistant can be pre-calculated at different levels (monthly, quarterly) to improve reporting performance.</p></li></ol><hr/><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-ExampleQueryScenarios"><strong>Example Query Scenarios</strong></h3><ol start="1"><li><p><strong>Total Transaction Amount per Adviser</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    a.AdviserName,
+    SUM(f.TransactionAmount) AS TotalTransactionAmount
+FROM 
+    Adviser_Assistant_Fact f
+JOIN 
+    Dim_Adviser a ON f.AdviserKey = a.AdviserKey
+GROUP BY 
+    a.AdviserName;</pre>
+</div></div></li><li><p><strong>Primary Assistant Workload Analysis</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    a.AdviserName,
+    ass.AssistantName,
+    COUNT(f.FactID) AS TotalTasks
+FROM 
+    Adviser_Assistant_Fact f
+JOIN 
+    Dim_Adviser a ON f.AdviserKey = a.AdviserKey
+JOIN 
+    Dim_Assistant ass ON f.AssistantKey = ass.AssistantKey
+WHERE 
+    f.PrimaryAssistantFlag = &#39;Yes&#39;
+GROUP BY 
+    a.AdviserName, ass.AssistantName;</pre>
+</div></div></li><li><p><strong>Branch Performance Report</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    b.BranchName,
+    SUM(f.TransactionAmount) AS BranchRevenue
+FROM 
+    Adviser_Assistant_Fact f
+JOIN 
+    Dim_Branch b ON f.BranchKey = b.BranchKey
+GROUP BY 
+    b.BranchName;</pre>
+</div></div></li></ol><hr/><h3 id="id-11.CRMadvisersandPWAscomplexrelationships-Conclusion"><strong>Conclusion</strong></h3><p>This <strong>Kimball Dimensional Model</strong> is designed to simplify reporting and analytics for the CRM system. The fact table tracks interactions and financial transactions between advisers, assistants, and clients, while the dimension tables store the descriptive details of these entities. This model allows for efficient querying, tracking of historical changes, and flexibility in reporting at various levels (adviser, branch, team, etc.).</p><p>By adhering to Kimball's principles, this schema is well-optimized for <strong>data warehouse</strong> environments and will support comprehensive <strong>business intelligence</strong> and <strong>reporting</strong> needs.</p><p /><h2 id="id-11.CRMadvisersandPWAscomplexrelationships-Instructions"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4d8" data-emoji-shortname=":blue_book:" data-emoji-fallback="\uD83D\uDCD8" src="images/icons/emoticons/72/1f4d8.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Instructions</h2><p></p><ol start="1"><li><p></p></li><li><p></p></li><li><p></p></li></ol><div class="confluence-information-macro confluence-information-macro-information"><span class="aui-icon aui-icon-small aui-iconfont-info confluence-information-macro-icon"></span><div class="confluence-information-macro-body"><p>Highlight important information in a panel like this one. To edit this panel's color or style, select one of the options in the menu.</p></div></div><h2 id="id-11.CRMadvisersandPWAscomplexrelationships-Relatedarticles"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4cb" data-emoji-shortname=":clipboard:" data-emoji-fallback="\uD83D\uDCCB" src="images/icons/emoticons/72/1f4cb.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Related articles</h2><p></p>
+
+
+
+
+
+
+
+
+
+
+
+    
+    <ul class="content-by-label">
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="3021504564" data-linked-resource-type="page" data-linked-resource-version="3" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/3021504564/Power+BI+Dynamic+Subscriptions+Set+Up+Guide">Power BI Dynamic Subscriptions Set Up Guide</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2698248202" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2698248202/10.+Known+Issues+-+Ace+Holdings+Data+at+Month+End">10. Known Issues - Ace Holdings Data at Month End</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2703098031" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2703098031/12.+Minors+turning+18">12. Minors turning 18</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2702376988" data-linked-resource-type="page" data-linked-resource-version="5" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2702376988/11.+CRM+advisers+and+PWAs+complex+relationships">11. CRM advisers and PWAs complex relationships</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2688352258" data-linked-resource-type="page" data-linked-resource-version="7" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2688352258/09.+CIP+0209441Cashman+accounts+balance+report+By+Brenden">09. CIP:0209441Cashman accounts balance report By Brenden</a>
+                        
+                        
+                    </div>
+    </li>
+    </ul>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : StoredProcedure [dbo].[spr_AEOI_Financials] @rptyear</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="2762113156.html">18. Rebuild FATCA/CRS step 1 - 10</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : StoredProcedure [dbo].[spr_AEOI_Financials] @rptyear
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 08-11-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p><strong>Understanding the Dynamic SQL and DAX Query</strong></p><p>The code you've provided is constructing a dynamic SQL string that contains a DAX query. This DAX query is designed to calculate various financial measures and output them in a summarized table. Let's break down the code step by step to understand what's happening.</p><hr/><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-1.InitializingVariables"><strong>1. Initializing Variables</strong></h3><p>The code starts by initializing two variables, <code>@SQL</code> and <code>@SQL_cont</code>, which will hold parts of the DAX query as strings.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">select @SQL = &#39;...&#39;
+set @SQL_cont = &#39;...&#39;</pre>
+</div></div><ul><li><p><code>@SQL</code> contains the <code>DEFINE</code> section where measures are defined.</p></li><li><p><code>@SQL_cont</code> contains additional measures and the main <code>EVALUATE</code> statement.</p></li></ul><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-2.DefiningMeasures"><strong>2. Defining Measures</strong></h3><p>The <code>DEFINE</code> statement is used in DAX to declare new measures. Measures are calculations that aggregate data based on certain conditions.</p><p><strong>Example Measure:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Account Holdings Monthly&#39;[TotalTDIncAI] =
+    CALCULATE (
+        SUM ( &#39;Account Holdings Monthly&#39;[Holding NZD Total] ),
+        &#39;asset&#39;[valuation method] = &quot;Accumulation&quot;,
+        &#39;account holdings Date&#39;[account holdings date] = VALUE ( &quot;@Date&quot; ),
+        &#39;asset&#39;[Asset Type] = &quot;Term Deposit&quot;,
+        ISBLANK ( &#39;Account Holdings Monthly&#39;[FixedInterestAssetKey] ) = FALSE
+            &amp;&amp; &#39;Account Holdings Monthly&#39;[FixedInterestAssetKey] &lt;&gt; -1
+    )</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Purpose:</strong> Calculates the total NZD holdings for term deposits including accrued interest on a specific date.</p></li><li><p><strong>Components:</strong></p><ul><li><p><strong>SUM:</strong> Adds up the 'Holding NZD Total' column.</p></li><li><p><strong>CALCULATE:</strong> Modifies the context by applying filters.</p></li><li><p><strong>Filters Applied:</strong></p><ul><li><p><code>'valuation method'</code> is &quot;Accumulation&quot;.</p></li><li><p><code>'account holdings date'</code> matches <code>@Date</code>.</p></li><li><p><code>'Asset Type'</code> is &quot;Term Deposit&quot;.</p></li><li><p><code>'FixedInterestAssetKey'</code> is not blank and not -1.</p></li></ul></li></ul></li></ul><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-3.AdditionalMeasures"><strong>3. Additional Measures</strong></h3><p>Similarly, other measures are defined to calculate:</p><ul><li><p>Total accrued interest.</p></li><li><p>Total face value.</p></li><li><p>Total interest paid.</p></li><li><p>Total tax paid.</p></li><li><p>Various totals for cash management, term deposits, and other asset transactions.</p></li></ul><p>These measures help in aggregating and analyzing financial data based on different criteria.</p><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-4.ConstructingtheMainQuery"><strong>4. Constructing the Main Query</strong></h3><p>In <code>@SQL_cont</code>, the code continues with:</p><ul><li><p>Additional measure definitions.</p></li><li><p>The <code>EVALUATE</code> statement, which is used to run a DAX query that returns a table.</p></li></ul><p><strong>EVALUATE Statement:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">EVALUATE
+FILTER (
+    SUMMARIZE (
+        CALCULATETABLE ( 
+            &#39;Account&#39; 
+        ),
+        &#39;account&#39;[Account Number],
+        &#39;Service Levels&#39;[Service Level Display Name],
+        &#39;Service Levels&#39;[Service Level],
+        &#39;Service Levels&#39;[Service Level Short Name],
+        // Including all the measures defined earlier
+    ),
+    // Filter conditions to include only relevant accounts
+)
+ORDER BY &#39;Account&#39;[Account Number]</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>CALCULATETABLE('Account'):</strong> Retrieves the 'Account' table, potentially with filters (commented out in your code).</p></li><li><p><strong>SUMMARIZE:</strong> Groups data by account details and computes the measures.</p></li><li><p><strong>FILTER:</strong> Applies conditions to only include accounts where the measures have meaningful values (not blank or zero).</p></li><li><p><strong>ORDER BY:</strong> Sorts the result by 'Account Number'.</p></li></ul><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-5.ReplacingPlaceholderswithActualValues"><strong>5. Replacing Placeholders with Actual Values</strong></h3><p>The code includes placeholders <code>@Date</code> and <code>@Year</code>, which are replaced with actual values before executing the query.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">set @SQL = replace(@SQL,&#39;@Date&#39;,convert(varchar(10),@Date,126))
+set @SQL = replace(@SQL,&#39;@Year&#39;,@Year)
+set @SQL_cont = replace(@SQL_cont,&#39;@Date&#39;,convert(varchar(10),@Date,126))
+set @SQL_cont = replace(@SQL_cont,&#39;@Year&#39;,@Year)</pre>
+</div></div><ul><li><p><code>@Date</code>: Represents the date for which the data is being queried.</p></li><li><p><code>@Year</code>: Represents the financial year.</p></li><li><p><code>convert(varchar(10),@Date,126)</code>: Converts the date to a string in ISO format (YYYY-MM-DD).</p></li></ul><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-6.UnderstandingtheMeasuresinContext"><strong>6. Understanding the Measures in Context</strong></h3><p>Let's understand how these measures are used in the query.</p><ul><li><p><strong>Financial Calculations:</strong></p><ul><li><p><strong>Term Deposits:</strong> Measures like <code>TotalTDIncAI</code>, <code>TotalTDAI</code>, and <code>TotalTDInterestPaid</code> calculate holdings and interest for term deposits.</p></li><li><p><strong>Cash Management:</strong> Measures like <code>TotalCMInterest</code> and <code>TotalCMBalance</code> focus on cash management accounts.</p></li><li><p><strong>Other Assets:</strong> Measures like <code>TotalCSLIntNet</code> and <code>TotalCSLDivGross</code> deal with other investment assets.</p></li></ul></li><li><p><strong>Purpose of Filters in EVALUATE:</strong></p><ul><li><p>The <code>FILTER</code> function ensures that only accounts with relevant data are included.</p></li><li><p>Conditions like <code>ISBLANK(...) = FALSE</code> check that measures have values.</p></li></ul></li></ul><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-7.ExecutingtheQuery"><strong>7. Executing the Query</strong></h3><p>After replacing the placeholders, the complete DAX query is ready to be executed. This query will:</p><ul><li><p>Calculate the defined measures for each account.</p></li><li><p>Summarize the data, grouping by account and service level details.</p></li><li><p>Filter out accounts without relevant data.</p></li><li><p>Return a table sorted by account number.</p></li></ul><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-8.SummaryoftheProcess"><strong>8. Summary of the Process</strong></h3><ol start="1"><li><p><strong>Define Measures:</strong></p><ul><li><p>Custom calculations are set up to aggregate and analyze financial data.</p></li></ul></li><li><p><strong>Prepare the Main Query:</strong></p><ul><li><p>Use <code>EVALUATE</code>, <code>SUMMARIZE</code>, and <code>FILTER</code> to structure the data retrieval.</p></li></ul></li><li><p><strong>Replace Placeholders:</strong></p><ul><li><p>Insert actual date and year values into the query.</p></li></ul></li><li><p><strong>Execute the Query:</strong></p><ul><li><p>Run the DAX query to get the summarized financial data.</p></li></ul></li></ol><hr/><p><strong>Key Concepts for Beginners:</strong></p><ul><li><p><strong>Dynamic SQL and DAX:</strong></p><ul><li><p>The code dynamically builds a DAX query within SQL.</p></li><li><p>DAX (Data Analysis Expressions) is a formula language used in Power BI and Analysis Services.</p></li></ul></li><li><p><strong>Measures:</strong></p><ul><li><p>Measures are calculations used to aggregate data.</p></li><li><p>They can be reused in different parts of the query.</p></li></ul></li><li><p><strong>Filters and Context:</strong></p><ul><li><p><code>CALCULATE</code> changes the context to apply filters to calculations.</p></li><li><p>Filters narrow down the data to include only relevant records.</p></li></ul></li><li><p><strong>Summarization and Evaluation:</strong></p><ul><li><p><code>SUMMARIZE</code> groups data and applies measures.</p></li><li><p><code>EVALUATE</code> runs the query and returns the result.</p></li></ul></li><li><p><strong>Placeholders and Variables:</strong></p><ul><li><p>Placeholders like <code>@Date</code> allow for dynamic queries that can be adjusted for different dates or years.</p></li><li><p>Replacing placeholders with actual values ensures the query is accurate for the intended time period.</p></li></ul></li></ul><hr/><p><strong>Practical Example:</strong></p><p>Imagine you're generating a financial report for clients' investment accounts as of a specific date and for a specific financial year. This query calculates:</p><ul><li><p>Total holdings in term deposits, including accrued interest.</p></li><li><p>Total interest paid and taxes for term deposits.</p></li><li><p>Cash management account balances and interest.</p></li><li><p>Interest and dividends from other assets, both net and gross.</p></li></ul><p>By summarizing and filtering the data, you get a concise report that includes only accounts with relevant financial activity, making it easier to analyze and present to stakeholders.</p><hr/><p><strong>Defining and Explaining the Additional Measures</strong></p><p>In the previous explanation, we briefly mentioned several additional measures defined in the DAX query. Let's delve into each of these measures, define them, and explain how they contribute to aggregating and analyzing financial data based on different criteria.</p><hr/><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-1.TotalAccruedInterest"><strong>1. Total Accrued Interest</strong></h3><p><strong>Measure:</strong> <code>'Account Holdings Monthly'[TotalTDAI]</code></p><p><strong>Definition:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Account Holdings Monthly&#39;[TotalTDAI] =
+    CALCULATE (
+        SUM ( &#39;Account Holdings Monthly&#39;[NZD Accrued Interest] ),
+        &#39;asset&#39;[valuation method] = &quot;Accumulation&quot;,
+        &#39;account holdings Date&#39;[account holdings date] = VALUE(&quot;@Date&quot;),
+        &#39;asset&#39;[Asset Type] = &quot;Term Deposit&quot;,
+        ISBLANK(&#39;Account Holdings Monthly&#39;[FixedInterestAssetKey]) = FALSE
+            &amp;&amp; &#39;Account Holdings Monthly&#39;[FixedInterestAssetKey] &lt;&gt; -1
+    )</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Purpose:</strong> Calculates the total accrued interest in New Zealand Dollars (NZD) for term deposits as of a specific date.</p></li><li><p><strong>Components:</strong></p><ul><li><p><strong>SUM:</strong> Aggregates the 'NZD Accrued Interest' column.</p></li><li><p><strong>CALCULATE:</strong> Modifies the context by applying filters.</p></li></ul></li><li><p><strong>Filters Applied:</strong></p><ul><li><p><strong>'valuation method' = &quot;Accumulation&quot;:</strong> Considers only assets valued using the accumulation method.</p></li><li><p><strong>'account holdings date' = &quot;@Date&quot;:</strong> Filters data to the specified date.</p></li><li><p><strong>'Asset Type' = &quot;Term Deposit&quot;:</strong> Includes only term deposit assets.</p></li><li><p><strong>'FixedInterestAssetKey' is valid:</strong> Excludes records where this key is blank or -1.</p></li></ul></li></ul><p><strong>Interpretation:</strong></p><p>This measure represents the interest that has been earned but not yet paid on term deposits up to the specified date.</p><hr/><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-2.TotalFaceValue"><strong>2. Total Face Value</strong></h3><p><strong>Measure:</strong> <code>'Account Holdings Monthly'[TotalTDFaceValue]</code></p><p><strong>Definition:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Account Holdings Monthly&#39;[TotalTDFaceValue] =
+    CALCULATE (
+        &#39;Account Holdings Monthly&#39;[TotalTDIncAI] - &#39;Account Holdings Monthly&#39;[TotalTDAI]
+    )</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Purpose:</strong> Computes the principal amount (face value) of term deposits by subtracting the accrued interest from the total holdings including accrued interest.</p></li><li><p><strong>Components:</strong></p><ul><li><p><strong>'TotalTDIncAI':</strong> Total holdings including accrued interest.</p></li><li><p><strong>'TotalTDAI':</strong> Total accrued interest.</p></li></ul></li><li><p><strong>Calculation:</strong> Subtracts the accrued interest from the total holdings to get the face value.</p></li></ul><p><strong>Interpretation:</strong></p><p>This measure gives the original amount invested in term deposits, excluding any interest that has accrued.</p><hr/><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-3.TotalInterestPaid"><strong>3. Total Interest Paid</strong></h3><p><strong>Measure:</strong> <code>'Asset Transaction'[TotalTDInterestPaid]</code></p><p><strong>Definition:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Asset Transaction&#39;[TotalTDInterestPaid] =
+    CALCULATE (
+        SUM ( &#39;Asset Transaction&#39;[Amount] ),
+        &#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Income&quot;
+            || &#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Coupon&quot;,
+        &#39;asset&#39;[Asset Type] = &quot;Term Deposit&quot;,
+        FILTER(&#39;Traded Date&#39;, &#39;Traded Date&#39;[Traded Financial Year] = @Year)
+    )</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Purpose:</strong> Calculates the total amount of interest paid out on term deposits during a specific financial year.</p></li><li><p><strong>Components:</strong></p><ul><li><p><strong>SUM:</strong> Adds up the 'Amount' field from 'Asset Transaction'.</p></li><li><p><strong>CALCULATE:</strong> Applies filters to narrow down the data.</p></li></ul></li><li><p><strong>Filters Applied:</strong></p><ul><li><p><strong>Transaction Type:</strong> Includes only transactions labeled as &quot;Income&quot; or &quot;Coupon&quot;.</p></li><li><p><strong>'Asset Type' = &quot;Term Deposit&quot;:</strong> Focuses on term deposit assets.</p></li><li><p><strong>Financial Year:</strong> Filters transactions to those occurring in the specified financial year.</p></li></ul></li></ul><p><strong>Interpretation:</strong></p><p>This measure represents the actual interest payments made to investors holding term deposits within the given financial year.</p><hr/><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-4.TotalTaxPaid"><strong>4. Total Tax Paid</strong></h3><p><strong>Measure:</strong> <code>'Asset Transaction'[TotalTDTaxPaid]</code></p><p><strong>Definition:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Asset Transaction&#39;[TotalTDTaxPaid] =
+    CALCULATE (
+        &#39;Asset Transaction&#39;[Tax Amount NZD],
+        &#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Income&quot;
+            || &#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Coupon&quot;,
+        &#39;asset&#39;[Asset Type] = &quot;Term Deposit&quot;,
+        FILTER(&#39;Traded Date&#39;, &#39;Traded Date&#39;[Traded Financial Year] = @Year)
+    )</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Purpose:</strong> Computes the total tax deducted from interest payments on term deposits during a specific financial year.</p></li><li><p><strong>Components:</strong></p><ul><li><p><strong>'Tax Amount NZD':</strong> The tax amount in NZD from 'Asset Transaction'.</p></li><li><p><strong>CALCULATE:</strong> Applies relevant filters.</p></li></ul></li><li><p><strong>Filters Applied:</strong></p><ul><li><p>Same as in Total Interest Paid measure.</p></li></ul></li></ul><p><strong>Interpretation:</strong></p><p>This measure reflects the total taxes withheld from the interest income of term deposit holders over the financial year.</p><hr/><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-5.TotalInterestGross"><strong>5. Total Interest Gross</strong></h3><p><strong>Measure:</strong> <code>'Asset Transaction'[TotalTDInterestGross]</code></p><p><strong>Definition:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Asset Transaction&#39;[TotalTDInterestGross] =
+    CALCULATE (
+        &#39;Asset Transaction&#39;[TotalTDInterestPaid] + &#39;Asset Transaction&#39;[TotalTDTaxPaid]
+    )</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Purpose:</strong> Calculates the gross interest earned on term deposits before tax deductions.</p></li><li><p><strong>Components:</strong></p><ul><li><p><strong>Total Interest Paid:</strong> Net interest received by investors.</p></li><li><p><strong>Total Tax Paid:</strong> Taxes withheld from interest payments.</p></li></ul></li><li><p><strong>Calculation:</strong> Adds net interest and tax paid to get the gross amount.</p></li></ul><p><strong>Interpretation:</strong></p><p>This measure shows the total interest income generated by term deposits before considering tax liabilities.</p><hr/><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-6.CashManagementTotals"><strong>6. Cash Management Totals</strong></h3><p><strong>Measures:</strong></p><ul><li><p><strong>TotalCMInterest:</strong> Interest earned from cash management accounts.</p></li><li><p><strong>TotalCMTax:</strong> Tax deducted from cash management interest.</p></li><li><p><strong>TotalCMGross:</strong> Gross interest from cash management accounts.</p></li><li><p><strong>TotalCMBalance:</strong> Total balance in cash management accounts.</p></li></ul><p><strong>Definitions and Explanations:</strong></p><p><strong>a. TotalCMInterest</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Asset Transaction&#39;[TotalCMInterest] =
+    CALCULATE (
+        SUM ( &#39;Asset Transaction&#39;[Amount] ),
+        &#39;asset&#39;[Is Cashman] = &quot;yes&quot;,
+        &#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Income&quot;
+            || &#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Coupon&quot;,
+        FILTER(&#39;Traded Date&#39;, &#39;Traded Date&#39;[Traded Financial Year] = @Year)
+    )</pre>
+</div></div><ul><li><p><strong>Purpose:</strong> Calculates total interest earned from cash management accounts during the financial year.</p></li><li><p><strong>Filters Applied:</strong></p><ul><li><p><strong>'Is Cashman' = &quot;yes&quot;:</strong> Includes only cash management assets.</p></li><li><p><strong>Transaction Type:</strong> &quot;Income&quot; or &quot;Coupon&quot;.</p></li></ul></li></ul><p><strong>b. TotalCMTax</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Asset Transaction&#39;[TotalCMTax] =
+    CALCULATE (
+        &#39;Asset Transaction&#39;[Tax Amount NZD],
+        &#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Income&quot;
+            || &#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Coupon&quot;,
+        &#39;asset&#39;[Is Cashman] = &quot;yes&quot;,
+        FILTER(&#39;Traded Date&#39;, &#39;Traded Date&#39;[Traded Financial Year] = @Year)
+    )</pre>
+</div></div><ul><li><p><strong>Purpose:</strong> Computes the total tax deducted from interest earned on cash management accounts.</p></li></ul><p><strong>c. TotalCMGross</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Asset Transaction&#39;[TotalCMGross] =
+    CALCULATE (
+        &#39;Asset Transaction&#39;[TotalCMInterest] + &#39;Asset Transaction&#39;[TotalCMTax]
+    )</pre>
+</div></div><ul><li><p><strong>Purpose:</strong> Calculates the gross interest income from cash management accounts before tax.</p></li></ul><p><strong>d. TotalCMBalance</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Account Holdings Monthly&#39;[TotalCMBalance] =
+    CALCULATE (
+        SUM ( &#39;Account Holdings Monthly&#39;[Holding NZD Total] ),
+        &#39;asset&#39;[valuation method] = &quot;Accumulation&quot;,
+        &#39;account holdings Date&#39;[account holdings date] = VALUE(&quot;@Date&quot;),
+        &#39;asset&#39;[Is Cashman] = &quot;yes&quot;
+    )</pre>
+</div></div><ul><li><p><strong>Purpose:</strong> Determines the total balance in cash management accounts as of a specific date.</p></li></ul><p><strong>Interpretation:</strong></p><p>These measures collectively provide insights into the performance and holdings of cash management accounts, including interest income and account balances.</p><hr/><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-7.OtherAssetTransactions"><strong>7. Other Asset Transactions</strong></h3><p><strong>Measures:</strong></p><ul><li><p><strong>TotalCSLIntTax:</strong> Tax on interest from client service level assets.</p></li><li><p><strong>TotalCSLIntNet:</strong> Net interest from client service level assets.</p></li><li><p><strong>TotalCSLIntGross:</strong> Gross interest from client service level assets.</p></li><li><p><strong>TotalCSLDivTax:</strong> Tax on dividends from client service level assets.</p></li><li><p><strong>TotalCSLDivNet:</strong> Net dividends from client service level assets.</p></li><li><p><strong>TotalCSLDivGross:</strong> Gross dividends from client service level assets.</p></li></ul><p><strong>Definitions and Explanations:</strong></p><p><strong>a. TotalCSLIntTax</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Asset Transaction&#39;[TotalCSLIntTax] =
+    CALCULATE (
+        &#39;Asset Transaction&#39;[Tax Amount NZD],
+        &#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Income&quot;
+            || &#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Coupon&quot;,
+        &#39;asset&#39;[Is Cashman] = &quot;No&quot;,
+        &#39;asset&#39;[Asset Type] &lt;&gt; &quot;Term Deposit&quot;,
+        &#39;Asset Transaction&#39;[dataProviderID] = 20,
+        FILTER(&#39;Traded Date&#39;, &#39;Traded Date&#39;[Traded Financial Year] = @Year)
+    )</pre>
+</div></div><ul><li><p><strong>Purpose:</strong> Calculates the total tax on interest from assets that are neither cash management nor term deposits, specifically those with a <code>dataProviderID</code> of 20.</p></li></ul><p><strong>b. TotalCSLIntNet</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Asset Transaction&#39;[TotalCSLIntNet] =
+    CALCULATE (
+        SUM ( &#39;Asset Transaction&#39;[Amount] ),
+        &#39;asset&#39;[Is Cashman] = &quot;No&quot;,
+        &#39;asset&#39;[Asset Type] &lt;&gt; &quot;Term Deposit&quot;,
+        &#39;Asset Transaction&#39;[dataProviderID] = 20,
+        &#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Income&quot;
+            || &#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Coupon&quot;,
+        FILTER(&#39;Traded Date&#39;, &#39;Traded Date&#39;[Traded Financial Year] = @Year)
+    )</pre>
+</div></div><ul><li><p><strong>Purpose:</strong> Computes the net interest income from these assets.</p></li></ul><p><strong>c. TotalCSLIntGross</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Asset Transaction&#39;[TotalCSLIntGross] =
+    CALCULATE (
+        &#39;Asset Transaction&#39;[TotalCSLIntNet] + &#39;Asset Transaction&#39;[TotalCSLIntTax]
+    )</pre>
+</div></div><ul><li><p><strong>Purpose:</strong> Calculates the gross interest income before tax deductions.</p></li></ul><p><strong>d. TotalCSLDivTax</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Asset Transaction&#39;[TotalCSLDivTax] =
+    CALCULATE (
+        &#39;Asset Transaction&#39;[Tax Amount NZD],
+        NOT (&#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Income&quot;
+            || &#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Coupon&quot;),
+        &#39;asset&#39;[Is Cashman] = &quot;No&quot;,
+        &#39;asset&#39;[Asset Type] &lt;&gt; &quot;Term Deposit&quot;,
+        &#39;Asset Transaction&#39;[dataProviderID] = 20,
+        FILTER(&#39;Traded Date&#39;, &#39;Traded Date&#39;[Traded Financial Year] = @Year)
+    )</pre>
+</div></div><ul><li><p><strong>Purpose:</strong> Calculates the total tax on dividends (as opposed to interest) from these assets.</p></li></ul><p><strong>e. TotalCSLDivNet</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Asset Transaction&#39;[TotalCSLDivNet] =
+    CALCULATE (
+        SUM ( &#39;Asset Transaction&#39;[Amount] ),
+        &#39;asset&#39;[Is Cashman] = &quot;No&quot;,
+        &#39;asset&#39;[Asset Type] &lt;&gt; &quot;Term Deposit&quot;,
+        &#39;Asset Transaction&#39;[dataProviderID] = 20,
+        NOT (&#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Income&quot;
+            || &#39;Asset Transaction Type&#39;[Transaction Type Name] = &quot;Coupon&quot;),
+        FILTER(&#39;Traded Date&#39;, &#39;Traded Date&#39;[Traded Financial Year] = @Year)
+    )</pre>
+</div></div><ul><li><p><strong>Purpose:</strong> Computes the net dividend income from these assets.</p></li></ul><p><strong>f. TotalCSLDivGross</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Asset Transaction&#39;[TotalCSLDivGross] =
+    CALCULATE (
+        &#39;Asset Transaction&#39;[TotalCSLDivNet] + &#39;Asset Transaction&#39;[TotalCSLDivTax]
+    )</pre>
+</div></div><ul><li><p><strong>Purpose:</strong> Calculates the gross dividend income before tax deductions.</p></li></ul><p><strong>Interpretation:</strong></p><p>These measures provide detailed insights into the income (both interest and dividends) from client service level assets that are not cash management accounts or term deposits. They help in understanding the overall performance and tax implications of these investments.</p><hr/><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-8.TotalHoldings"><strong>8. Total Holdings</strong></h3><p><strong>Measure:</strong> <code>'Account Holdings Monthly'[TotalHolding]</code></p><p><strong>Definition:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Account Holdings Monthly&#39;[TotalHolding] =
+    CALCULATE (
+        &#39;Account Holdings Monthly&#39;[TotalHoldingSC]
+            + &#39;Account Holdings Monthly&#39;[TotalHoldingMPS]
+            + &#39;Account Holdings Monthly&#39;[TotalSTART],
+        &#39;account holdings Date&#39;[account holdings date] = VALUE(&quot;@Date&quot;)
+    )</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Purpose:</strong> Computes the total holdings across different service levels as of the specified date.</p></li><li><p><strong>Components:</strong></p><ul><li><p><strong>'TotalHoldingSC':</strong> Holdings in safekeeping.</p></li><li><p><strong>'TotalHoldingMPS':</strong> Holdings in Managed Portfolio Services (MPS).</p></li><li><p><strong>'TotalSTART':</strong> Holdings in START service level.</p></li></ul></li><li><p><strong>Calculation:</strong> Adds up holdings from various service levels to get the total.</p></li></ul><p><strong>Sub-Measures:</strong></p><p><strong>a. TotalHoldingSC</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Account Holdings Monthly&#39;[TotalHoldingSC] =
+    CALCULATE (
+        SUM ( &#39;Account holdings monthly&#39;[Holding NZD SafeKeeping] ),
+        &#39;Asset&#39;[sedol] &lt;&gt; &quot;Unsupervised&quot;,
+        &#39;asset&#39;[Valuation Method] = &quot;Accumulation&quot;,
+        &#39;asset&#39;[Market Code] &lt;&gt; &quot;Unlisted&quot;
+    )</pre>
+</div></div><ul><li><p><strong>Purpose:</strong> Calculates the total holdings in safekeeping, excluding unsupervised assets and unlisted markets.</p></li></ul><p><strong>b. TotalHoldingMPS</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Account Holdings Monthly&#39;[TotalHoldingMPS] =
+    CALCULATE (
+        SUM ( &#39;Account holdings monthly&#39;[Holding NZD Total] ),
+        &#39;asset&#39;[Valuation Method] = &quot;Accumulation&quot;,
+        &#39;Asset&#39;[sedol] &lt;&gt; &quot;Unsupervised&quot;,
+        PATHCONTAINS(&quot;MPS|IAS|DIMS&quot;, &#39;Service Levels&#39;[Service Level Display Name]),
+        &#39;asset&#39;[Market Code] &lt;&gt; &quot;Unlisted&quot;
+    )</pre>
+</div></div><ul><li><p><strong>Purpose:</strong> Computes total holdings in service levels related to Managed Portfolio Services, Investment Advisory Services, or Discretionary Investment Management Services.</p></li></ul><p><strong>c. TotalSTART</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Account Holdings Monthly&#39;[TotalSTART] =
+    CALCULATE (
+        SUM ( &#39;Account holdings monthly&#39;[Holding NZD Total] ),
+        &#39;Service Levels&#39;[Service Level Type] = &quot;START&quot;
+    )</pre>
+</div></div><ul><li><p><strong>Purpose:</strong> Calculates total holdings in the START service level.</p></li></ul><p><strong>Interpretation:</strong></p><p>By aggregating holdings across different service levels, this measure provides a comprehensive view of an account's total investments as of the specified date.</p><hr/><h3 id="StoredProcedure[dbo].[spr_AEOI_Financials]@rptyear-9.AdditionalContextonFiltersandConditions"><strong>9. Additional Context on Filters and Conditions</strong></h3><p>In the <code>EVALUATE</code> section of the query, these measures are used to generate a summarized table that includes accounts where:</p><ul><li><p>Any of the calculated measures have meaningful values (i.e., they are not blank or zero).</p></li><li><p>This ensures that the report focuses on accounts with relevant financial activity.</p></li></ul><p><strong>Filter Example:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">FILTER (
+    SUMMARIZE ( ... ),
+    ISBLANK(&#39;Asset Transaction&#39;[TotalCMInterest]) = FALSE
+        || ISBLANK(&#39;Account Holdings Monthly&#39;[TotalTDIncAI]) = FALSE
+        || (&#39;Account Holdings Monthly&#39;[TotalCMBalance] &gt; 0)
+        || (&#39;Asset Transaction&#39;[TotalCSLIntTax] &lt;&gt; 0)
+        || (&#39;Account Holdings Monthly&#39;[TotalHolding] &lt;&gt; 0)
+)</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p>The filter checks if any of the key measures are not blank or have significant values.</p></li><li><p>This helps in excluding accounts without relevant data from the final output.</p></li></ul><hr/><p><strong>Conclusion:</strong></p><p>By defining and explaining these measures, we see how the DAX query is structured to perform detailed financial calculations. Each measure is carefully crafted to aggregate data based on specific criteria, such as asset type, transaction type, service level, and date.</p><p>Understanding these measures allows for:</p><ul><li><p><strong>Accurate Financial Reporting:</strong> Provides detailed insights into different aspects of financial performance.</p></li><li><p><strong>Data Analysis:</strong> Enables analysts to identify trends, evaluate investment performance, and make informed decisions.</p></li><li><p><strong>Customized Reporting:</strong> The measures can be adjusted or expanded to fit different reporting needs or to focus on specific areas of interest.</p></li></ul><hr/><p><strong>Tips for Beginners:</strong></p><ul><li><p><strong>Measure Definition:</strong> In DAX, measures are defined using the syntax <code>MEASURE 'TableName'[MeasureName] = Expression</code>.</p></li><li><p><strong>CALCULATE Function:</strong> A powerful function that changes the filter context for calculations.</p></li><li><p><strong>Filters:</strong> Used within <code>CALCULATE</code> to include or exclude data based on conditions.</p></li><li><p><strong>Aggregations:</strong> Functions like <code>SUM</code>, <code>SUMX</code>, <code>COUNT</code>, etc., aggregate data over specified contexts.</p></li><li><p><strong>Placeholders:</strong> Variables like <code>@Date</code> and <code>@Year</code> are placeholders that are replaced with actual values before the query is executed.</p></li></ul><p>By understanding how each measure is constructed and how filters are applied, you can create complex queries that provide valuable insights into your data.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

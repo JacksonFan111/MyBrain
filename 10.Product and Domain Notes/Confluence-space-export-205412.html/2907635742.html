@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 12.12.2024 FATCA/CRS Bug Fix Log</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 12.12.2024 FATCA/CRS Bug Fix Log
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 12-12-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is an organized summary and proposed fixes for each issue, suitable for logging in a Confluence bug fix journal for 12.12.2024.</p><hr/><p><strong>Date:</strong> 12.12.2024<br/><strong>Author:</strong> [Your Name]<br/><strong>Purpose:</strong> Summarize and document the issues identified during FATCA/CRS reporting checks, along with the proposed resolutions.</p><hr/><h3 id="id-12.12.2024FATCA/CRSBugFixLog-Overview">Overview</h3><p>During the FATCA/CRS reporting review, several categories of issues emerged involving special conditions such as distressed assets, pending closures, U.S. indicia handling, and classification of New Zealand-based active entities. We also identified a technical detail concerning Standard Broking Service and cashman references. The following notes detail each issue, the interpretation per regulations and guidance from Lynley, and proposed system fixes.</p><hr/><h3 id="id-12.12.2024FATCA/CRSBugFixLog-Issue1:DistressedAssets(Mrs.CA.Collins)">Issue 1: Distressed Assets (Mrs. C A. Collins)</h3><p><strong>Context:</strong></p><ul><li><p>Mrs. C A Collins holds distressed assets which are not generating dividends or income.</p></li><li><p>Lynley advised these are exempt from reporting because they are distressed and not producing any reportable income.</p></li><li><p>The challenge: We have no direct CRM flag to identify such distressed, non-reportable accounts for automatic exclusion.</p></li></ul><p><strong>Proposed Fix:</strong></p><ul><li><p>Introduce a new CRM flag or attribute in the client/account metadata to denote &quot;Distressed Asset – Exempt from Reporting.&quot;</p></li><li><p>Until a formal flag is introduced, add an exclusion logic based on a manually maintained whitelist of portfolio IDs or statuses that are known to be distressed and non-reportable.</p></li></ul><hr/><h3 id="id-12.12.2024FATCA/CRSBugFixLog-Issue2:PendingClosures(MPSPortfolios)">Issue 2: Pending Closures (MPS Portfolios)</h3><p><strong>Context:</strong></p><ul><li><p>MPS portfolios that are pending closure and actually close before the reporting period ends should not be reported.</p></li><li><p>For FATCA reporting in NZ: An account pending closure and closed before the reporting date is not reported.</p></li><li><p>For CRS reporting in NZ: Similarly, an account pending closure and closed before the reporting date is not required to be reported.</p></li></ul><p><strong>Proposed Fix:</strong></p><ul><li><p>Update the Step 6 filters in the reporting logic.</p></li><li><p>When detecting &quot;Pending Closure&quot; status, verify if the account closed before the reporting end date. If yes, exclude it from the final report.</p></li></ul><hr/><h3 id="id-12.12.2024FATCA/CRSBugFixLog-Issue3:U.S.IndiciaandInvestigations(Dr.TheresaAnnBidwell)">Issue 3: U.S. Indicia and Investigations (Dr. Theresa Ann Bidwell)</h3><p><strong>Context:</strong></p><ul><li><p>Individual has U.S. indicia, and as per Lynley’s notes, this individual is managed differently (mySTART PS investigations, ACE popup checks).</p></li><li><p>If a portfolio was closed (e.g., SB closed on 02/03/2023), it should not appear in the report.</p></li><li><p>The instruction is that if the U.S. person’s account is closed before the reporting end date, it should not show up.</p></li></ul><p><strong>Proposed Fix:</strong></p><ul><li><p>Update the logic to exclude U.S. indicia customers whose portfolios are closed prior to the reporting end date.</p></li><li><p>Confirm that all closed U.S. indicia-related portfolios are filtered out at the final reporting step.</p></li></ul><hr/><h3 id="id-12.12.2024FATCA/CRSBugFixLog-Issue4:ActiveNFEinNewZealand(ControllingPersonsNotRequiredtoReport)">Issue 4: Active NFE in New Zealand (Controlling Persons Not Required to Report)</h3><p><strong>Context:</strong></p><ul><li><p>If an entity is a New Zealand-based Active NFE with U.S. controlling persons, per FATCA Model 1 IGA, it’s not required to report those controlling persons.</p></li><li><p>Lynley’s guidance: Since the entity is Active NFE and established in NZ, even if it has U.S. controlling persons, it does not need to report them.</p></li></ul><p><strong>Proposed Fix:</strong></p><ul><li><p>Adjust Step 6 logic: If entity is Active NFE and primary tax domicile is New Zealand, then exclude controlling persons from being reported.</p></li><li><p>Query condition refinement:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">AND (OrgPrimaryTaxDomicile IS NULL OR OrgPrimaryTaxDomicile != &#39;New Zealand&#39; OR PassiveActive != &#39;Active&#39;)
+</pre>
+</div></div><p> becomes something like:</p><ul><li><p>If <code>OrgPrimaryTaxDomicile = 'New Zealand' AND PassiveActive = 'Active'</code> → do not report controlling persons.</p></li></ul><p> (Adjust logic as per Lynley’s new instructions to ensure no controlling person reporting in this scenario.)</p></li></ul><hr/><h3 id="id-12.12.2024FATCA/CRSBugFixLog-Issue5:StandardBrokingServiceandCashmanHandling">Issue 5: Standard Broking Service and Cashman Handling</h3><p><strong>Context:</strong></p><ul><li><p>Standard Broking Service portfolios sometimes appear without a corresponding “Cashman” account type.</p></li><li><p>Example: Portfolio #136600 linked to Mr. Richard Bruce Pollock. The Standard Broking Service setup is not accompanied by Cashman, which might cause confusion or incorrect assumptions in reporting logic.</p></li></ul><p><strong>Proposed Fix:</strong></p><ul><li><p>Clarify that Standard Broking Service portfolios without Cashman should be handled consistently with other non-Cashman accounts.</p></li><li><p>Ensure the logic does not assume the presence of Cashman to determine reporting status. Treat the Standard Broking Service portfolio according to established rules (e.g., closed or active status, domicile, indicia, etc.), not reliant on the Cashman attribute.</p></li></ul><hr/><h3 id="id-12.12.2024FATCA/CRSBugFixLog-Conclusion">Conclusion</h3><p><strong>Actions Taken:</strong></p><ul><li><p>Documented all issues, their context, and the required fixes.</p></li><li><p>Updated Step 6 filters and logic to correctly handle pending closures and exclude closed accounts from reporting.</p></li><li><p>Introduced logic adjustments for U.S. indicia cases and NZ-based Active NFE entities.</p></li><li><p>Proposed a new CRM attribute or exclusion mechanism for distressed assets.</p></li><li><p>Noted that Standard Broking Service portfolios should not rely on a Cashman reference for reporting logic.</p></li></ul><p><strong>Next Steps:</strong></p><ul><li><p>Implement and test the updated SQL queries and logic changes in the reporting codebase.</p></li><li><p>Create a new CRM field for distressed asset exemption or a manual exclusion list until the field is available.</p></li><li><p>Validate changes with Lynley and re-run test reporting scenarios to confirm correct exclusions and inclusions.</p></li></ul><p><strong>Status:</strong></p><ul><li><p>Pending review and sign-off from Lynley and compliance team before production deployment.</p></li></ul><hr/><p><strong>End of 12.12.2024 Confluence Bug Fix Log</strong></p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

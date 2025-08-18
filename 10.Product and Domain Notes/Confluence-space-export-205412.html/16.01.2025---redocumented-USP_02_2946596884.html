@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 16.01.2025 - redocumented USP_02</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 16.01.2025 - redocumented USP_02
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 15-01-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is an example <strong>Confluence</strong>-style page documenting <code>USP_02_FATCA_CRS_TransformRowtoColumnData</code> from a <strong>SQL engineering perspective</strong>, building on the outputs of <code>USP_01_FATCA_CRS_ExtractAndPrepareData</code>. It provides step-by-step insight into <strong>why</strong> each SQL transformation is performed and <strong>how</strong> the data flows through. Feel free to adapt the formatting to your team’s Confluence style guidelines.</p><hr/><h1 id="id-16.01.2025-redocumentedUSP_02-USP_02_FATCA_CRS_TransformRowtoColumnData">USP_02_FATCA_CRS_TransformRowtoColumnData</h1><p><strong>Last Updated</strong>: January 16, 2025<br/><strong>Author</strong>: Jackson Fan</p><hr/><h2 id="id-16.01.2025-redocumentedUSP_02-1.Purpose">1. Purpose</h2><p><code>USP_02_FATCA_CRS_TransformRowtoColumnData</code> is the <strong>second</strong> procedure in the <strong>FATCA/CRS</strong> data workflow. It takes the <strong>staged</strong> data from <code>FATCA.Stage_crmdatafatcacrs_jf</code> (created by <code>USP_01_FATCA_CRS_ExtractAndPrepareData</code>) and performs the following <strong>core tasks</strong>:</p><ol start="1"><li><p><strong>Identifies &amp; incorporates non-foreign account holders</strong> who share entities with at least one foreign controlling individual (to ensure complete account-level reporting).</p></li><li><p><strong>Separates</strong> the data into <strong>CRS</strong>-only and <strong>FATCA</strong>-only datasets, because a single person may have multiple TINs (e.g., one for the US and one for another country).</p></li><li><p><strong>Assigns row numbers</strong> to each TIN for each individual (using <code>DENSE_RANK()</code>), facilitating the pivot from <strong>multiple TIN rows</strong> to <strong>single-row</strong> multi-column TIN structures.</p></li><li><p><strong>Pivots</strong> TIN data from <strong>row-based</strong> to <strong>column-based</strong> format, generating:</p><ul><li><p><code>FATCA.Stage_CRSPivotedData_jf</code></p></li><li><p><code>FATCA.Stage_FATCAPivotedData_jf</code></p></li></ul></li></ol><p>By the end of <code>USP_02</code>, you have <strong>two</strong> pivoted datasets—<strong>CRS</strong> and <strong>FATCA</strong>—each containing TINs in separate columns, ready for final reporting or XML generation.</p><hr/><h2 id="id-16.01.2025-redocumentedUSP_02-2.Prerequisites">2. Prerequisites</h2><ol start="1"><li><p><code>FATCA.Stage_crmdatafatcacrs_jf</code> must be populated by <code>USP_01_FATCA_CRS_ExtractAndPrepareData</code>.</p></li><li><p>Proper table references in <code>[DynamicsPROD].[CRM_MSCRM]</code> for Contacts, Roles, Accounts, TIN records.</p></li><li><p>Sufficient knowledge of:</p><ul><li><p><strong>CRM Roles</strong> (<code>dsl_roles</code>)</p></li><li><p><strong>Contact table</strong> (<code>ContactId</code>, TIN flags)</p></li><li><p><strong>Account table</strong> (<code>AccountId</code>, <code>Name</code>, etc.)</p></li></ul></li></ol><hr/><h2 id="id-16.01.2025-redocumentedUSP_02-3.High-LevelDataFlow">3. High-Level Data Flow</h2><p>Below is an <strong>SQL-centric</strong> overview of how the data moves and transforms inside <code>USP_02</code>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">           ┌─────────────────────────────────┐
+           │ FATCA.Stage_crmdatafatcacrs_jf │  (From USP_01)
+           └──────────────┬──────────────────┘
+                          │
+                          ▼
+     7.0 Identify Entities w/ Foreign Individuals + Non-Foreign Acc Holders
+                          │
+                          ▼
+       ┌─────────────────────────────────────────┐
+       │ #EntitiesWithFlaggedIndividuals2 (temp)│
+       └─────────────────────────────────────────┘
+                          │
+                          ▼
+       ┌─────────────────────────────────────────┐
+       │ FATCA.NonForeignAccHolderData_jf       │
+       │ (Non-foreign holders linked to foreign │
+       │ entities)                              │
+       └──────────────┬─────────────────────────┘
+                      │
+                      ▼
+   7.1 Separate into #CRSOnlyData &amp; #FATCAOnlyData
+                      │
+                      ▼
+   ┌───────────────────────────┐     ┌───────────────────────────┐
+   │       #CRSOnlyData        │     │      #FATCAOnlyData       │
+   └────────────┬──────────────┘     └────────────┬──────────────┘
+                │                                 │
+                ▼                                 ▼
+      7.2 Assign RowNum (CRS)            7.3 Assign RowNum (FATCA)
+   ┌───────────────────────────┐     ┌───────────────────────────┐
+   │ #CRSDataWithRowNum        │     │ #FATCADataWithRowNum      │
+   └────────────┬──────────────┘     └────────────┬──────────────┘
+                │                                 │
+                ▼                                 ▼
+      7.4 Pivot TINs (CRS)               7.5 Pivot TINs (FATCA)
+   ┌───────────────────────────┐     ┌───────────────────────────┐
+   │  #CRSPivotedData          │     │  #FATCAPivotedData        │
+   └────────────┬──────────────┘     └────────────┬──────────────┘
+                ▼                                 ▼
+┌────────────────────────────────┐   ┌────────────────────────────────┐
+│ FATCA.Stage_CRSPivotedData_jf │   │ FATCA.Stage_FATCAPivotedData_jf│
+└────────────────────────────────┘   └────────────────────────────────┘
+</pre>
+</div></div><hr/><h2 id="id-16.01.2025-redocumentedUSP_02-4.Step-by-StepBreakdown(SQLEngineeringPerspective)">4. Step-by-Step Breakdown (SQL Engineering Perspective)</h2><h3 id="id-16.01.2025-redocumentedUSP_02-Step7.0:IdentifyNon-ForeignAccountHolders"><strong>Step 7.0: Identify Non-Foreign Account Holders</strong></h3><ol start="1"><li><p><strong>Goal</strong>:</p><ul><li><p>Some entities have <strong>foreign</strong> controlling individuals. If any <strong>non-foreign</strong> account holders are tied to these same entities, they <strong>must</strong> appear in final reporting for completeness.</p></li></ul></li><li><p><strong>SQL Technique</strong>:</p><ul><li><p><strong>Step 7.0.1</strong> creates a temp table <code>#EntitiesWithFlaggedIndividuals2</code> using:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT
+    r.dsl_TradingEntityID AS EntityId
+  INTO #EntitiesWithFlaggedIndividuals2
+  FROM dsl_roles AS r
+  JOIN Contact AS i ON r.dsl_IndividualId = i.ContactId
+  WHERE i.dsl_USCitizensforTaxPurposes = 1
+     OR i.ots_foreigntaxresident = 1;
+</pre>
+</div></div><p>This identifies <strong>all</strong> entities having <strong>≥1 foreign</strong> individual.</p></li><li><p><strong>Step 7.0.2</strong>: <code>FATCA.NonForeignAccHolderData_jf</code></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT
+    ...
+    INTO FATCA.NonForeignAccHolderData_jf
+FROM Account AS a
+JOIN dsl_roles AS r  ON a.AccountId = r.dsl_TradingEntityID
+JOIN #EntitiesWithFlaggedIndividuals2 ewf2 ON ewf2.EntityId = a.AccountId
+...
+WHERE ft2.cip_identification IS NULL -- i.e., no foreign TIN
+  AND r.dsl_RoleTypeIdName IN (&#39;Individual&#39;,&#39;Bank Account Holder&#39;,&#39;Minor&#39;)
+  AND r.dsl_Authorised = 1
+  ...
+</pre>
+</div></div><p>Pulls <strong>non-foreign</strong> individuals who still share the entity with at least one foreign person.</p></li></ul></li><li><p><strong>Outcome</strong>:</p><ul><li><p><code>FATCA.NonForeignAccHolderData_jf</code>: A “supplementary” table of non-foreign individuals that must be included in the final output to reflect correct account composition.</p></li></ul></li></ol><hr/><h3 id="id-16.01.2025-redocumentedUSP_02-Step7.1:SeparateDatainto#CRSOnlyDataand#FATCAOnlyData"><strong>Step 7.1: Separate Data into #CRSOnlyData and #FATCAOnlyData</strong></h3><ol start="1"><li><p><strong>Why</strong>:</p><ul><li><p>Some individuals are flagged for <strong>both</strong> CRS and FATCA (<code>FATCA_CRS</code>) if they have multiple TINs.</p></li><li><p>However, the <strong>CRS</strong> subset <strong>cannot</strong> include US TINs.</p></li><li><p>The <strong>FATCA</strong> subset <strong>must</strong> only include <strong>US TINs</strong>.</p></li></ul></li><li><p><strong>SQL Technique</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT *
+INTO #CRSOnlyData
+FROM FATCA.Stage_crmdatafatcacrs_jf
+WHERE Regime IN (&#39;CRS&#39;,&#39;FATCA_CRS&#39;)
+  AND Ind_TaxCodeCountryISO &lt;&gt; &#39;USA&#39;;
+</pre>
+</div></div><ul><li><p>Filters out US TIN records for <strong>CRS</strong>.</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT *
+INTO #FATCAOnlyData
+FROM FATCA.Stage_crmdatafatcacrs_jf
+WHERE Regime IN (&#39;FATCA&#39;,&#39;FATCA_CRS&#39;)
+  AND Ind_TaxCodeCountryISO = &#39;USA&#39;;
+</pre>
+</div></div><ul><li><p>Retains only <strong>US</strong> TIN records for <strong>FATCA</strong>.</p></li></ul></li><li><p><strong>Outcome</strong>:</p><ul><li><p>Two temp tables:</p><ul><li><p><code>#CRSOnlyData</code> → Non-US TINs.</p></li><li><p><code>#FATCAOnlyData</code> → US TINs only.</p></li></ul></li></ul></li></ol><hr/><h3 id="id-16.01.2025-redocumentedUSP_02-Step7.2:AssignTINRowNumbersforCRS"><strong>Step 7.2: Assign TIN Row Numbers for CRS</strong></h3><ol start="1"><li><p><strong>Goal</strong>:</p><ul><li><p>A single individual may have <strong>multiple</strong> TIN rows. We want to pivot them into columns (TIN1, TIN2, etc.).</p></li><li><p>We use <code>DENSE_RANK()</code> to <strong>partition</strong> TINs by <code>IndividualId</code> in a consistent, gap-free manner.</p></li></ul></li><li><p><strong>SQL Technique</strong>:</p><ul><li><p><code>#CRSDistinctTINs</code> captures unique <code>(IndividualId, Ind_TaxCodeCountryISO, cip_Identification)</code>.</p></li><li><p>Then we do:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT
+    dt.*,
+    DENSE_RANK() OVER (
+        PARTITION BY dt.IndividualId
+        ORDER BY dt.Ind_TaxCodeCountryISO, dt.cip_Identification
+    ) AS TINRowNum
+  INTO #CRSTINRowNums
+  FROM #CRSDistinctTINs dt;
+</pre>
+</div></div></li><li><p>Joins back to produce <code>#CRSDataWithRowNum</code>, attaching the new <code>TINRowNum</code> to every row.</p></li></ul></li><li><p><strong>Outcome</strong>:</p><ul><li><p><code>#CRSDataWithRowNum</code>: Each row indicates the TIN’s rank for that individual.</p></li></ul></li></ol><hr/><h3 id="id-16.01.2025-redocumentedUSP_02-Step7.3:AssignTINRowNumbersforFATCA"><strong>Step 7.3: Assign TIN Row Numbers for FATCA</strong></h3><ol start="1"><li><p><strong>Parallel Approach</strong>:</p><ul><li><p>Essentially the <strong>same</strong> logic as step 7.2, but on <code>#FATCAOnlyData</code>.</p></li><li><p>Creates <code>#FATCADataWithRowNum</code> with a <code>TINRowNum</code> for each TIN row.</p></li></ul></li><li><p><strong>Outcome</strong>:</p><ul><li><p><code>#FATCADataWithRowNum</code>: Each US TIN has a rank per individual.</p></li></ul></li></ol><hr/><h3 id="id-16.01.2025-redocumentedUSP_02-Step7.4:PivotTINsintoColumns(CRS)"><strong>Step 7.4: Pivot TINs into Columns (CRS)</strong></h3><ol start="1"><li><p><strong>Goal</strong>:</p><ul><li><p>Transform multiple TIN rows into columns (e.g., <code>TIN1</code>, <code>TIN2</code>, <code>TIN3</code>, etc.), because <strong>CRS</strong> reporting requires each TIN in a separate field.</p></li></ul></li><li><p><strong>SQL Technique</strong>:</p><ul><li><p>Create <code>#CRSPivotedData</code> by <strong>self-joining</strong> <code>#CRSDataWithRowNum</code> multiple times—once per potential TIN rank (1 to 5).</p></li><li><p>The base query picks rows where <code>TINRowNum = 1</code>, then left-joins rows for <code>TINRowNum = 2, 3, 4, 5</code>.</p></li><li><p>Example snippet:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT
+    b.*,
+    TIN1.cip_Identification AS TIN1,
+    TIN2.cip_Identification AS TIN2,
+    ...
+  INTO #CRSPivotedData
+  FROM #CRSDataWithRowNum b
+  LEFT JOIN #CRSDataWithRowNum TIN1 ON b.IndividualId = TIN1.IndividualId AND TIN1.TINRowNum=1
+  LEFT JOIN #CRSDataWithRowNum TIN2 ON b.IndividualId = TIN2.IndividualId AND TIN2.TINRowNum=2
+  ...
+  WHERE b.TINRowNum = 1;
+</pre>
+</div></div></li><li><p>This ensures <strong>one</strong> final row per <code>IndividualId</code> per portfolio, with TINs as columns.</p></li></ul></li><li><p><strong>Outcome</strong>:</p><ul><li><p><code>#CRSPivotedData</code>: Row-based TIN data pivoted into columns (<code>TIN1</code>, <code>TIN2</code>, <code>TIN3</code>, ...).</p></li></ul></li><li><p><strong>Final Storage</strong>:</p><ul><li><p>We drop and recreate <code>FATCA.Stage_CRSPivotedData_jf</code> from <code>#CRSPivotedData</code>.</p></li></ul></li></ol><hr/><h3 id="id-16.01.2025-redocumentedUSP_02-Step7.5:PivotTINsintoColumns(FATCA)"><strong>Step 7.5: Pivot TINs into Columns (FATCA)</strong></h3><ol start="1"><li><p><strong>Goal</strong>:</p><ul><li><p>Similar to <strong>Step 7.4</strong>, but specific to <strong>FATCA</strong>. Typically only <strong>one</strong> TIN (the US TIN) remains for each individual in FATCA context.</p></li></ul></li><li><p><strong>SQL Technique</strong>:</p><ul><li><p>Same self-join approach, but <strong>only</strong> TINRowNum=1 is relevant for FATCA.</p></li><li><p>Outputs <code>#FATCAPivotedData</code>, then saves to <code>FATCA.Stage_FATCAPivotedData_jf</code>.</p></li></ul></li><li><p><strong>Outcome</strong>:</p><ul><li><p><code>FATCA.Stage_FATCAPivotedData_jf</code>: Row-based TIN data for FATCA pivoted to a single TIN column (<code>TIN1</code>).</p></li></ul></li></ol><hr/><h2 id="id-16.01.2025-redocumentedUSP_02-5.HandlingNon-ForeignAccountHolders">5. Handling Non-Foreign Account Holders</h2><ul><li><p>The procedure creates <code>FATCA.NonForeignAccHolderData_jf</code> (Step 7.0) to capture non-foreign individuals sharing accounts with foreign controlling individuals.</p></li><li><p>This table may optionally be <strong>JOINed</strong> when building the final pivot tables, so that each entity’s complete membership is reflected in the final output (though in the sample code, those joins are commented out or partially tested).</p></li><li><p><strong>Why</strong>?</p><ul><li><p>Some tax filings require <strong>all</strong> relevant parties, foreign or not, on an account if at least one controlling person is foreign.</p></li></ul></li></ul><hr/><h2 id="id-16.01.2025-redocumentedUSP_02-6.FinalOutputs">6. Final Outputs</h2><ol start="1"><li><p><code>FATCA.Stage_CRSPivotedData_jf</code></p><ul><li><p><strong>CRS</strong>-compliant pivoted data (only <strong>non-US</strong> TINs).</p></li><li><p>Contains up to 5 TIN columns per person.</p></li></ul></li><li><p><code>FATCA.Stage_FATCAPivotedData_jf</code></p><ul><li><p><strong>FATCA</strong>-compliant pivoted data (only <strong>US</strong> TINs).</p></li><li><p>Typically, only 1 TIN column.</p></li></ul></li></ol><hr/><h2 id="id-16.01.2025-redocumentedUSP_02-7.SQLTechniques&amp;NotablePoints">7. SQL Techniques &amp; Notable Points</h2><ol start="1"><li><p><code>DENSE_RANK()</code></p><ul><li><p>Ensures each TIN is assigned a sequential rank without gaps. If an individual has 2 TINs, they’ll be <code>TINRowNum = 1</code> and <code>2</code>.</p></li></ul></li><li><p><strong>Self-Joins</strong> for Pivot</p><ul><li><p>A standard approach (especially in T-SQL) for pivoting a small, <strong>finite</strong> number of TIN columns.</p></li><li><p>Alternatives exist (like <code>PIVOT</code>), but the self-join is often more transparent for debugging.</p></li></ul></li><li><p><strong>Exclusion of Overlapping</strong></p><ul><li><p>By splitting into <code>#CRSOnlyData</code> and <code>#FATCAOnlyData</code>, we avoid mixing US TIN data in <strong>CRS</strong> flows, and vice versa.</p></li></ul></li></ol><hr/><h2 id="id-16.01.2025-redocumentedUSP_02-8.SampleExecution">8. Sample Execution</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- Simply call the stored procedure; 
+-- it references FATCA.Stage_crmdatafatcacrs_jf populated by USP_01.
+
+EXEC [FATCA].[USP_02_FATCA_CRS_TransformRowtoColumnData];
+</pre>
+</div></div><p><strong>Note</strong>: This procedure does not take parameters in its current form. It relies on the data prepared by <code>USP_01</code>.</p><hr/><h2 id="id-16.01.2025-redocumentedUSP_02-9.NextSteps">9. Next Steps</h2><ul><li><p><code>USP_03_FATCA_CRS_ValidatePivotedData</code> (if it exists) typically handles data validations, e.g., ensuring no critical columns are NULL.</p></li><li><p><strong>Final XML or CSV Exports</strong>:</p><ul><li><p>The pivoted data in <code>Stage_CRSPivotedData_jf</code> and <code>Stage_FATCAPivotedData_jf</code> is often used to generate the final <strong>CRS</strong> and <strong>FATCA</strong> submissions.</p></li></ul></li></ul><hr/><h3 id="id-16.01.2025-redocumentedUSP_02-QuestionsorIssues?">Questions or Issues?</h3><ul><li><p><strong>Contact</strong>: If you have questions about TIN pivoting or incorporating non-foreign account holders, reach out to the FATCA/CRS Data Team.</p></li><li><p><strong>CRM Data Corrections</strong>: For any inaccuracies in CRM (missing TIN, wrong role, etc.), contact the CRM Data Stewards.</p></li></ul><p><strong>End of Confluence Documentation</strong></p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

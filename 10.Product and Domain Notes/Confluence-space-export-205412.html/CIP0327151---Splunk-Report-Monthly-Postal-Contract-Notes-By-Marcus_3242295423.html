@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : CIP0327151 - Splunk Report Monthly Postal Contract Notes By Marcus</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : CIP0327151 - Splunk Report Monthly Postal Contract Notes By Marcus
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 08-07-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p class="media-group"><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/3242295423/3242295432.sql" data-nice-type="null" data-file-src="/wiki/download/attachments/3242295423/W1.1-dsSentStatusLog-postal.sql?version=1&amp;modificationDate=1751933137333&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="3242295432" data-linked-resource-type="attachment" data-linked-resource-container-id="3242295423" data-linked-resource-default-alias="W1.1-dsSentStatusLog-postal.sql" data-mime-type="binary/octet-stream" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="fbcb3cbd-3f66-458a-ae6d-a791fcbc0cf8" data-media-type="file"><img src="attachments/thumbnails/3242295423/3242295432" height="250"/></a></span><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/3242295423/3242950687.sql" data-nice-type="null" data-file-src="/wiki/download/attachments/3242295423/W1-dsSentStatusLog-Emails.sql?version=1&amp;modificationDate=1751933137318&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="3242950687" data-linked-resource-type="attachment" data-linked-resource-container-id="3242295423" data-linked-resource-default-alias="W1-dsSentStatusLog-Emails.sql" data-mime-type="binary/octet-stream" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="250926f5-e73b-4a2e-bca6-6abf93bc43cf" data-media-type="file"><img src="attachments/thumbnails/3242295423/3242950687" height="250"/></a></span><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/3242295423/3242852409.sql" data-nice-type="null" data-file-src="/wiki/download/attachments/3242295423/W1.3-%20Account%20number%20per%20row%20of%20CRM.sql?version=2&amp;modificationDate=1751933201394&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="3242852409" data-linked-resource-type="attachment" data-linked-resource-container-id="3242295423" data-linked-resource-default-alias="W1.3- Account number per row of CRM.sql" data-mime-type="binary/octet-stream" data-has-thumbnail="true" data-linked-resource-version="2" data-media-id="cb8f6277-62b7-476c-8b06-d33d7cd88152" data-media-type="file"><img src="attachments/thumbnails/3242295423/3242852409" height="250"/></a></span></p><p /><h3 id="CIP0327151-SplunkReportMonthlyPostalContractNotesByMarcus-SummaryoftheSOPandProcess">Summary of the SOP and Process</h3><ul><li><p><strong>DGS and SDL Workflow</strong>:</p><ul><li><p>DGS generates email and postal contract notes. Postal notes are sent to SDL via SFTP (\\svsftp2k8001\soldynamics) as .xml and .pdf files with a control file.</p></li><li><p>SDL processes these files, moves them to a &quot;done&quot; folder, and provides a return control file via email to the CIP Service Desk and SFTP (C:\sftp_root\Usr\soldynamics\SDL return Control Reports).</p></li><li><p>The return control file includes sections: Input Files, Output Channels, and data needing review.</p></li><li><p>Contract notes are processed via:</p><ul><li><p><strong>Postal</strong>: postaldistributionqueue (SFTP to SDL).</p></li><li><p><strong>Email</strong>: emaildistributionqueue (Email Exchange).</p></li></ul></li><li><p>Failed contract notes (after 5 retries) go to a dead letter queue.</p></li></ul></li><li><p><strong>Service Desk Responsibilities</strong>:</p><ul><li><p>Monitor Splunk for &quot;Contract Notes on Dead Letter Queue&quot; &gt; 0:</p><ul><li><p>Raise P2 tickets: one for Infrastructure to investigate and release notes from dead queues, one for BA to assist and liaise with the business.</p></li></ul></li><li><p>Raise P3 tickets for:</p><ul><li><p>SQLCIP email (&quot;Unsent Contract Notes – [record(s)]&quot;) with count &gt; 0.</p></li><li><p>Report Manager email (&quot;Contract notes sent yesterday&quot;) with &quot;Declined&quot; status contract notes.</p></li></ul></li><li><p>Investigate and resolve issues, involving BA if needed.</p></li></ul></li><li><p><strong>Infrastructure Responsibilities</strong>:</p><ul><li><p>Investigate and resolve issues with services (e.g., XpertDoc, Email Exchange, SFTP, SharePoint).</p></li><li><p>Release contract notes from dead letter queues post-resolution.</p></li></ul></li><li><p><strong>BA Responsibilities</strong>:</p><ul><li><p>Support Service Desk and Infrastructure in resolving issues.</p></li><li><p>Investigate non-zero counts in SQLCIP’s &quot;Unsent Contract Notes&quot; email using the SQL query:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT * FROM CdsContractSent WHERE Created &gt;= GETDATE()-1 AND Status &lt;&gt; &#39;ACCEPTED&#39;</pre>
+</div></div><ul><li><p>Statuses: SENT, DECLINED.</p></li><li><p><strong>DECLINED</strong>: If Media = P (postal), Chelmer resends in the next batch. If Media = E (email), reprint from ACE.</p></li><li><p><strong>SENT</strong>: Verify if sent (check SharePoint, SFTP, or Mail Marshall). If not sent and Media = E, reprint from ACE. If sent, note details for status update to ACCEPTED.</p></li></ul></li></ul></li><li><p><strong>Daily Reports</strong>:</p><ul><li><p><strong>SQLCIP Report</strong> (&quot;Contract notes sent yesterday&quot;):</p><ul><li><p>Checks if SENT or DECLINED contract notes are updated to ACCEPTED.</p></li><li><p>Sent daily to Service Desk and nominated recipients.</p></li></ul></li><li><p><strong>SDL Control File</strong>:</p><ul><li><p>Sent daily via email/SFTP to CIP.</p></li><li><p>Manually checked for errors by Executive Services (Chontelle).</p></li></ul></li></ul></li></ul><h3 id="CIP0327151-SplunkReportMonthlyPostalContractNotesByMarcus-ReconcilingACEwithSplunkReport">Reconciling ACE with Splunk Report</h3><p>My suspicion that &quot;Marcus wants to recon ACE cdsContractnoteSent with the Splunk report&quot; likely refers to ensuring the contract note statuses in ACE align with Splunk’s monitoring data (e.g., &quot;Contract Notes on Dead Letter Queue&quot; alerts or other processing metrics). Here’s how this could be approached:</p><ol start="1"><li><p><strong>Objective</strong>:</p><ul><li><p>Reconcile ACE’s contract note statuses (ACCEPTED, SENT, DECLINED) with Splunk’s real-time monitoring of queue issues (e.g., dead letter queue counts) to identify and resolve discrepancies.</p></li></ul></li><li><p><strong>Steps for Reconciliation</strong>:</p><ul><li><p><strong>Run SQL Query in ACE</strong>:</p><ul><li><p>Use the query:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT * FROM CdsContractSent WHERE Created &gt;= GETDATE()-1 AND Status &lt;&gt; &#39;ACCEPTED&#39;</pre>
+</div></div><p>to identify contract notes with SENT or DECLINED status from the last 24 hours.</p></li></ul></li><li><p><strong>Compare with Splunk Data</strong>:</p><ul><li><p>Check Splunk for alerts like &quot;Contract Notes on Dead Letter Queue&quot; &gt; 0.</p></li><li><p>Cross-reference contract note IDs from the ACE query with Splunk’s queue data to identify stuck or failed notes.</p></li></ul></li><li><p><strong>Investigate Discrepancies</strong>:</p><ul><li><p>For DECLINED:</p><ul><li><p>If Media = P, confirm Chelmer will resend in the next batch.</p></li><li><p>If Media = E, initiate reprint from ACE.</p></li></ul></li><li><p>For SENT:</p><ul><li><p>Verify delivery via SharePoint, SFTP, or Mail Marshall.</p></li><li><p>If undelivered and Media = E, reprint from ACE.</p></li><li><p>If delivered, update status to ACCEPTED in ACE (noting details for audit).</p></li></ul></li></ul></li><li><p><strong>Check SDL Control File</strong>:</p><ul><li><p>Review the daily SDL return control file for errors or unprocessed postal contract notes.</p></li><li><p>Match these with ACE data to ensure all notes are accounted for.</p></li></ul></li><li><p><strong>Action Dead Letter Queue Issues</strong>:</p><ul><li><p>If Splunk shows dead letter queue issues, ensure Infrastructure resolves service issues (e.g., SFTP or Email Exchange downtime) and releases notes.</p></li><li><p>Re-run the ACE query post-release to confirm status updates.</p></li></ul></li></ul></li><li><p><strong>Automation Consideration</strong>:</p><ul><li><p>To streamline, consider automating the comparison between ACE’s SQL query output and Splunk’s queue alerts, flagging discrepancies for Service Desk review.</p></li><li><p>Use the SQLCIP daily report (&quot;Contract notes sent yesterday&quot;) to confirm status updates to ACCEPTED.</p></li></ul></li><li><p><strong>Reporting</strong>:</p><ul><li><p>Document findings (e.g., number of SENT/DECLINED notes, actions taken, final status) and share with stakeholders via the Service Desk.</p></li><li><p>Ensure SDL control file errors are logged and addressed by Executive Services.</p></li></ul></li></ol><h3 id="CIP0327151-SplunkReportMonthlyPostalContractNotesByMarcus-AdditionalNotes">Additional Notes</h3><ul><li><p><strong>Splunk’s Role</strong>: Splunk likely monitors real-time metrics (e.g., dead letter queue counts, processing errors). Ensure the Splunk dashboard is configured to track relevant contract note metrics.</p></li><li><p><strong>ACE Updates</strong>: Updating ACE statuses (e.g., from SENT/DECLINED to ACCEPTED) requires verification of delivery or reprocessing, as outlined in the SOP.</p></li><li><p><strong>Potential Issues</strong>:</p><ul><li><p>Service outages (e.g., SFTP, Email Exchange) causing dead letter queue buildup.</p></li><li><p>Discrepancies between SDL’s control file and ACE’s status records.</p></li><li><p>Manual errors in checking SDL control files or updating ACE.</p></li></ul></li></ul><p />
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3242295423/3242885150.sql">W1.3- Account number per row of CRM.sql</a> (binary/octet-stream)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3242295423/3242950687.sql">W1-dsSentStatusLog-Emails.sql</a> (binary/octet-stream)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3242295423/3242295432.sql">W1.1-dsSentStatusLog-postal.sql</a> (binary/octet-stream)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3242295423/3242852409.sql">W1.3- Account number per row of CRM.sql</a> (binary/octet-stream)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : [usp_FATCA_CRS_Exceptions_v2] Refactor</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : [usp_FATCA_CRS_Exceptions_v2] Refactor
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 26-02-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Let me break down the detailed exception scenarios from the stored procedure <code>[FATCA].[usp_FATCA_CRS_Exceptions_v2]</code> and map them out for you. The procedure identifies several exceptions related to FATCA (Foreign Account Tax Compliance Act) and CRS (Common Reporting Standard) reporting, and I’ll explain each one based on the code provided. I'll focus on the logic and conditions that trigger each exception, making it clear and concise.</p><hr/><h3 id="id-[usp_FATCA_CRS_Exceptions_v2]Refactor-OverviewofExceptions">Overview of Exceptions</h3><p>The stored procedure processes data to identify anomalies or issues in tax reporting records for individuals and entities. Each exception represents a specific scenario where the data does not meet compliance requirements. The exceptions are numbered (1 through 6, with 7 commented out), and they are processed when <code>@RefreshExceptionData = 1</code>. Below, I’ll detail each exception scenario, including the conditions and purpose.</p><hr/><h3 id="id-[usp_FATCA_CRS_Exceptions_v2]Refactor-ExceptionScenarios">Exception Scenarios</h3><h4 id="id-[usp_FATCA_CRS_Exceptions_v2]Refactor-Exception1:ForeignCountryDetectedbutNotFlaggedasFATCA/CRS"><strong>Exception 1: Foreign Country Detected but Not Flagged as FATCA/CRS</strong></h4><ul><li><p><strong>Purpose</strong>: Identifies records where a foreign country is associated with an account or individual, but it hasn’t been flagged for FATCA or CRS reporting in the filtered dataset.</p></li><li><p><strong>Conditions</strong>:</p><ul><li><p><strong>Entity Accounts</strong>:</p><ul><li><p>The record exists in <code>##fatcacrsexceptions</code> but not in <code>[FATCA].[crmtaxdatafilt]</code> (indicating it’s not flagged for reporting).</p></li><li><p>No matching foreign tax record exists in <code>[cip_foreigntaxrecordBase]</code> for the entity (<code>a.AccountID = rb.cip_Entity</code> and <code>a.dsl_countryid = rb.cip_CountryJurisdiction</code>).</p></li><li><p><code>ReportingEntityType</code> is not 'Other'.</p></li><li><p><code>AccountType = 'Entity'</code>.</p></li></ul></li><li><p><strong>Individual Accounts</strong>:</p><ul><li><p>Similar to entities, but checks individuals (<code>a.AccountID = rb.cip_Individual</code>).</p></li><li><p><code>AccountType = 'Individual'</code>.</p></li><li><p>Returns <code>ContactID</code> and <code>ContactName</code> instead of <code>AccountID</code> and <code>EntityName</code>.</p></li></ul></li></ul></li><li><p><strong>Output</strong>:</p><ul><li><p><code>ExceptionID = 1</code>.</p></li><li><p>Includes <code>TaxCodeCountryISO</code> and <code>FTCountryIndicators</code> (stripped of trailing characters).</p></li></ul></li><li><p><strong>Scenario</strong>: A foreign country is linked to an account or individual, but it’s not properly tagged for FATCA/CRS, indicating a potential oversight in compliance.</p></li></ul><hr/><h4 id="id-[usp_FATCA_CRS_Exceptions_v2]Refactor-Exception2:DifferentCountryCodes"><strong>Exception 2: Different Country Codes</strong></h4><ul><li><p><strong>Purpose</strong>: Flags records where the country code in the exception data differs from the filtered dataset, indicating inconsistency.</p></li><li><p><strong>Conditions</strong>:</p><ul><li><p>Record exists in <code>##fatcacrsexceptions</code> and matches a record in <code>[FATCA].[crmtaxdatafilt]</code> (via <code>ReportYear</code>, <code>AccountType</code>, <code>Regime</code>, <code>AccountID</code>, <code>dsl_IndividualID</code>, and <code>dsl_PortfolioServiceLevelName</code>).</p></li><li><p>The <code>TaxCodeCountryISO</code> in the filtered data (<code>b.TaxCodeCountryISO</code>) is empty or null, while <code>##fatcacrsexceptions</code> has a value.</p></li><li><p><code>ReportingEntityType</code> is not 'Other'.</p></li></ul></li><li><p><strong>Output</strong>:</p><ul><li><p><code>ExceptionID = 2</code>.</p></li><li><p>Includes full account and contact details, <code>TaxCodeCountryISO</code>, and <code>FTCountryIndicators</code>.</p></li></ul></li><li><p><strong>Scenario</strong>: An account has a foreign tax country code in one dataset but not in another, suggesting a mismatch that could affect reporting accuracy.</p></li></ul><hr/><h4 id="id-[usp_FATCA_CRS_Exceptions_v2]Refactor-Exception3:ForeignTax(FT)RecordExistsbutTINorCountryisMissing"><strong>Exception 3: Foreign Tax (FT) Record Exists but TIN or Country is Missing</strong></h4><ul><li><p><strong>Purpose</strong>: Identifies foreign tax records where either the Tax Identification Number (TIN) or the country is missing, which is critical for FATCA/CRS compliance.</p></li><li><p><strong>Conditions</strong>:</p><ul><li><p><strong>Individuals</strong>:</p><ul><li><p>Joins <code>[cip_foreigntaxrecordBase]</code> with <code>Contact</code> and related tables (<code>dsl_roles</code>, <code>Account</code>, <code>dsl_portfolioservice</code>, etc.).</p></li><li><p>Either <code>cip_CountryJurisdiction</code> (country) or <code>cip_Identification</code> (TIN) is null.</p></li><li><p>Excludes 'Estate Winding-Up' accounts.</p></li><li><p>Filters for active roles (<code>dsl_BeneficialOwner = 1</code>, <code>dsl_applicant = 1</code>, or <code>dsl_Authorised = 1</code>) based on <code>TradingEntityType</code>.</p></li><li><p>Portfolio status is not 'Closed', or if 'Closed', the close date falls within the reporting period (<code>@PeriodStartDate</code> to <code>@PeriodEndDate</code>).</p></li><li><p><code>FTCountryIndicators</code> describes the issue (e.g., &quot;No Country or TaxID in FT table&quot;, &quot;Individual Entry without Tax ID in FT table&quot;).</p></li></ul></li><li><p><strong>Entities</strong>:</p><ul><li><p>Similar logic, but joins <code>[cip_foreigntaxrecordBase]</code> with <code>Account</code> and checks <code>cip_Entity</code> instead of <code>cip_Individual</code>.</p></li><li><p>Same filtering conditions apply.</p></li></ul></li><li><p>Regime is determined by <code>cip_ISOcode</code>:</p><ul><li><p>'USA' → 'FATCA'.</p></li><li><p>Not 'NZL' or empty → 'CRS'.</p></li><li><p>Otherwise, null (excluded from final output).</p></li></ul></li></ul></li><li><p><strong>Output</strong>:</p><ul><li><p><code>ExceptionID = 3</code>.</p></li><li><p>Includes <code>AccountType</code> ('Individual' or 'Entity'), <code>Regime</code>, account/contact details, <code>TaxCodeCountryISO</code>, and <code>FTCountryIndicators</code>.</p></li></ul></li><li><p><strong>Scenario</strong>: A foreign tax record exists, but it’s incomplete (missing TIN or country), making it non-compliant for reporting.</p></li></ul><hr/><h4 id="id-[usp_FATCA_CRS_Exceptions_v2]Refactor-Exception4:DuplicateRecords"><strong>Exception 4: Duplicate Records</strong></h4><ul><li><p><strong>Note</strong>: The code for Exception 4 is not fully provided in your snippet (it’s mentioned but not detailed). Based on context, I’ll infer its purpose.</p></li><li><p><strong>Purpose</strong>: Likely identifies duplicate foreign tax records for the same account or individual, which could lead to over-reporting or confusion.</p></li><li><p><strong>Hypothetical Conditions</strong> (based on typical duplicate detection):</p><ul><li><p>Multiple records in <code>[cip_foreigntaxrecordBase]</code> or <code>##fatcacrsexceptions</code> with the same <code>AccountID</code>, <code>dsl_IndividualID</code>, or <code>TaxCodeCountryISO</code>.</p></li><li><p>Matching key fields but differing secondary details (e.g., TIN or regime).</p></li></ul></li><li><p><strong>Output</strong>:</p><ul><li><p><code>ExceptionID = 4</code>.</p></li><li><p>Likely includes details of the duplicated records.</p></li></ul></li><li><p><strong>Scenario</strong>: Duplicate entries exist for the same entity or individual, indicating data quality issues.</p></li></ul><hr/><h4 id="id-[usp_FATCA_CRS_Exceptions_v2]Refactor-Exception5:FlaggedasFIbutGIINNumberisMissing"><strong>Exception 5: Flagged as FI but GIIN Number is Missing</strong></h4><ul><li><p><strong>Purpose</strong>: Flags accounts marked as Financial Institutions (FI) that lack a Global Intermediary Identification Number (GIIN), which is required for FATCA compliance.</p></li><li><p><strong>Conditions</strong>:</p><ul><li><p><code>dsl_finffe</code> (from <code>StringMap</code>) is 'FI'.</p></li><li><p><code>dsl_giinnumber</code> is null or empty.</p></li><li><p>Joins <code>Account</code> with related tables (<code>dsl_roles</code>, <code>Contact</code>, <code>dsl_portfolioservice</code>).</p></li></ul></li><li><p><strong>Output</strong>:</p><ul><li><p><code>ExceptionID = 5</code>.</p></li><li><p><code>AccountType = 'Entity'</code>.</p></li><li><p><code>Regime = 'N/A'</code>.</p></li><li><p><code>TaxCodeCountryISO = 'N/A'</code>.</p></li><li><p><code>FTCountryIndicators = 'GIIN number=None'</code>.</p></li></ul></li><li><p><strong>Scenario</strong>: An entity is classified as an FI but lacks a GIIN, rendering it non-compliant with FATCA requirements.</p></li></ul><hr/><h4 id="id-[usp_FATCA_CRS_Exceptions_v2]Refactor-Exception6:GIINNumberPresentbutNotFlaggedasFI"><strong>Exception 6: GIIN Number Present but Not Flagged as FI</strong></h4><ul><li><p><strong>Purpose</strong>: Identifies accounts with a GIIN number but not marked as Financial Institutions, indicating a potential misclassification.</p></li><li><p><strong>Conditions</strong>:</p><ul><li><p><code>dsl_finffe</code> is null (not flagged as FI).</p></li><li><p><code>dsl_giinnumber</code> is not null or empty.</p></li><li><p>Same joins as Exception 5.</p></li></ul></li><li><p><strong>Output</strong>:</p><ul><li><p><code>ExceptionID = 6</code>.</p></li><li><p>Same fields as Exception 5, but <code>FTCountryIndicators = 'GIIN number=&lt;value&gt;'</code>.</p></li></ul></li><li><p><strong>Scenario</strong>: An entity has a GIIN but isn’t tagged as an FI, suggesting a data inconsistency.</p></li></ul><hr/><h4 id="id-[usp_FATCA_CRS_Exceptions_v2]Refactor-Exception7:(CommentedOut,NotActive)"><strong>Exception 7: (Commented Out, Not Active)</strong></h4><ul><li><p><strong>Note</strong>: The code mentions Exception 7 but it’s commented out, so no active logic exists in the provided script.</p></li><li><p><strong>Hypothetical Purpose</strong>: Could relate to another compliance issue (e.g., missing beneficial owner details, invalid dates), but without the code, it’s speculative.</p></li></ul><hr/><h3 id="id-[usp_FATCA_CRS_Exceptions_v2]Refactor-SummaryTableofExceptions">Summary Table of Exceptions</h3><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="70db56df-8980-4983-b919-e747f8af9859" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Exception ID</p></th><th class="confluenceTh"><p>Description</p></th><th class="confluenceTh"><p>Trigger Condition</p></th><th class="confluenceTh"><p>Account Type</p></th><th class="confluenceTh"><p>Regime Impact</p></th></tr><tr><td class="confluenceTd"><p>1            </p></td><td class="confluenceTd"><p>Foreign country not flagged FATCA/CRS     </p></td><td class="confluenceTd"><p>Foreign country present but not in filtered dataset   </p></td><td class="confluenceTd"><p>Entity, Individual </p></td><td class="confluenceTd"><p>FATCA/CRS          </p></td></tr><tr><td class="confluenceTd"><p>2            </p></td><td class="confluenceTd"><p>Different country codes                  </p></td><td class="confluenceTd"><p>Mismatch between exception and filtered country codes </p></td><td class="confluenceTd"><p>Any                </p></td><td class="confluenceTd"><p>FATCA/CRS          </p></td></tr><tr><td class="confluenceTd"><p>3            </p></td><td class="confluenceTd"><p>FT record missing TIN or country         </p></td><td class="confluenceTd"><p>Foreign tax record lacks TIN or country               </p></td><td class="confluenceTd"><p>Entity, Individual </p></td><td class="confluenceTd"><p>FATCA/CRS          </p></td></tr><tr><td class="confluenceTd"><p>4            </p></td><td class="confluenceTd"><p>Duplicate records                        </p></td><td class="confluenceTd"><p>(Inferred) Multiple identical records                 </p></td><td class="confluenceTd"><p>Any                </p></td><td class="confluenceTd"><p>FATCA/CRS          </p></td></tr><tr><td class="confluenceTd"><p>5            </p></td><td class="confluenceTd"><p>FI flagged but no GIIN                   </p></td><td class="confluenceTd"><p><code>dsl_finffe = 'FI'</code> and <code>dsl_giinnumber</code> is empty     </p></td><td class="confluenceTd"><p>Entity             </p></td><td class="confluenceTd"><p>N/A (FATCA focus)  </p></td></tr><tr><td class="confluenceTd"><p>6            </p></td><td class="confluenceTd"><p>GIIN present but not flagged FI          </p></td><td class="confluenceTd"><p><code>dsl_finffe</code> is null and <code>dsl_giinnumber</code> exists      </p></td><td class="confluenceTd"><p>Entity             </p></td><td class="confluenceTd"><p>N/A (FATCA focus)  </p></td></tr><tr><td class="confluenceTd"><p>7            </p></td><td class="confluenceTd"><p>(Commented out)                          </p></td><td class="confluenceTd"><p>Unknown (inactive)                                    </p></td><td class="confluenceTd"><ul><li><p /></li></ul></td><td class="confluenceTd"><ul><li><p /></li></ul></td></tr></tbody></table></div><hr/><h3 id="id-[usp_FATCA_CRS_Exceptions_v2]Refactor-HowItWorksinContext">How It Works in Context</h3><ol start="1"><li><p><strong>Data Preparation</strong>: The procedure first builds a base dataset (<code>##crmtaxdata_exc</code>) from views excluding New Zealand records, then filters it into <code>##fatcacrsexceptions</code> based on FATCA/CRS criteria.</p></li><li><p><strong>Exception Processing</strong>: Each exception block queries specific conditions and inserts results into <code>FATCA.crmtaxdataexceptions</code>.</p></li><li><p><strong>Final Output</strong>: Depending on <code>@allEntTypes</code>, it returns the exceptions with or without <code>ReportingEntityType</code>, ordered by <code>ExceptionID</code>, <code>AccountType</code>, and name.</p></li></ol><p>Let me know if you’d like me to expand on any specific exception or clarify further!</p><p /><p>Below is a contextual text diagram representing the data flows within the stored procedure <code>[FATCA].[usp_FATCA_CRS_Exceptions_v2]</code>. This diagram outlines how data moves through the various steps, temporary tables, and exception processing logic, with detailed explanations of each component and its role in the process. Since this is a text-based response, I'll structure it hierarchically and descriptively to mimic a visual flow.</p><hr/><h3 id="id-[usp_FATCA_CRS_Exceptions_v2]Refactor-ContextualTextDiagram:DataFlowin[FATCA].[usp_FATCA_CRS_Exceptions_v2]">Contextual Text Diagram: Data Flow in <code>[FATCA].[usp_FATCA_CRS_Exceptions_v2]</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">[Input Parameters]
+   ├── @RefreshExceptionData (BIT) = 0    → Controls whether exception data is refreshed (1 = yes, 0 = no)
+   └── @allEntTypes (BIT) = 1            → Determines output format (1 = all entity types, 0 = filtered)
+
+[Main Process]
+   ├── Step 1: Set Report Year and Period Dates
+   │   ├── Source: FATCA.Stage_crmdatafatcacrs_jf
+   │   │   └── Query: SELECT TOP 1 ReportYear → Stores in @rptYear
+   │   ├── Calculations:
+   │   │   ├── @PeriodStartDate = (@rptYear - 1) + &#39;-04-01&#39; → Start of reporting period (April 1 of previous year)
+   │   │   └── @PeriodEndDate = @rptYear + &#39;-03-31&#39;         → End of reporting period (March 31 of report year)
+   │   └── Purpose: Defines the time frame for data analysis (e.g., April 1, 2023 - March 31, 2024 for 2024 report)
+   │
+   ├── Step 2: Refresh Exception Data (IF @RefreshExceptionData = 1)
+   │   ├── 2.1: Build Base Dataset (##crmtaxdata_exc)
+   │   │   ├── Sources:
+   │   │   │   ├── FATCA.vw_CatchAll_NON_NZ_Individuals_exc → Individuals data (non-NZ)
+   │   │   │   └── FATCA.vw_CatchAll_NON_NZ_Entities_exc     → Entities data (non-NZ)
+   │   │   ├── Process:
+   │   │   │   ├── CTE (cte_union):
+   │   │   │   │   ├── UNION ALL of Individuals and Entities views
+   │   │   │   │   ├── Filter: Regime IS NOT NULL
+   │   │   │   │   └── Add ROW_NUMBER (tinrownum) → Partitions by AccountId, PortfolioNo, ServiceLevel, IndividualId
+   │   │   │   ├── Output to ##crmtaxdata_exc:
+   │   │   │   │   ├── All columns from CTE
+   │   │   │   │   └── Add ROW_NUMBER (rownum) → Partitions by AccountId, PortfolioNo, ServiceLevel, TaxCodeCountryISO
+   │   │   └── Purpose: Combines raw individual and entity data into a temporary table for further filtering
+   │   │
+   │   ├── 2.2: Filter for FATCA/CRS Exceptions (##fatcacrsexceptions)
+   │   │   ├── Source: ##crmtaxdata_exc
+   │   │   ├── Process:
+   │   │   │   ├── CTE (cte_fatcaentityfilt):
+   │   │   │   │   ├── Filter 1: Entity + FATCA
+   │   │   │   │   │   ├── Conditions: AccountType = &#39;Entity&#39;, Regime = &#39;FATCA&#39;, TradingEntityType ≠ &#39;Estate Winding-Up&#39;
+   │   │   │   │   │   ├── CIP or Passive/Active check: cip_Identification ≠ &#39;&#39; OR PassiveActive ≠ &#39;Active&#39;
+   │   │   │   │   │   └── Role/Beneficial Owner logic based on TradingEntityType
+   │   │   │   │   ├── Filter 2: Entity + CRS
+   │   │   │   │   │   ├── Conditions: AccountType = &#39;Entity&#39;, Regime = &#39;CRS&#39;, dsl_BeneficialOwner = 1
+   │   │   │   │   │   └── Similar CIP and role checks
+   │   │   │   │   ├── Filter 3: Individual + FATCA/CRS
+   │   │   │   │   │   ├── Conditions: AccountType = &#39;Individual&#39;, Regime = &#39;FATCA&#39; or &#39;CRS&#39;
+   │   │   │   │   │   └── Role and CIP/US citizenship checks
+   │   │   │   ├── Output to ##fatcacrsexceptions:
+   │   │   │   │   ├── Columns: ReportYear (@rptYear), ReportingEntityType (mapped from dsl_PortfolioServiceLevelName), all CTE columns
+   │   │   │   │   └── Filter: PortfolioServiceStatus ≠ &#39;Closed&#39; OR closed within @PeriodStartDate to @PeriodEndDate
+   │   │   └── Purpose: Narrows down to records relevant for FATCA/CRS reporting exceptions
+   │   │
+   │   ├── 2.3: Process Exception Cases
+   │   │   ├── Target Table: FATCA.crmtaxdataexceptions
+   │   │   ├── Exception 1: Foreign Country Not Flagged
+   │   │   │   ├── Source: ##fatcacrsexceptions
+   │   │   │   ├── Join: LEFT JOIN [FATCA].[crmtaxdatafilt] (filtered data)
+   │   │   │   ├── Conditions:
+   │   │   │   │   ├── No match in filtered data (b.AccountID IS NULL)
+   │   │   │   │   ├── No matching foreign tax record in [cip_foreigntaxrecordBase]
+   │   │   │   │   └── ReportingEntityType ≠ &#39;Other&#39;
+   │   │   │   ├── Flow: Insert into FATCA.crmtaxdataexceptions (ExceptionID = 1)
+   │   │   │   └── Output: Distinct records for Entity and Individual accounts
+   │   │   │
+   │   │   ├── Exception 2: Different Country Codes
+   │   │   │   ├── Source: ##fatcacrsexceptions
+   │   │   │   ├── Join: LEFT JOIN [FATCA].[crmtaxdatafilt]
+   │   │   │   ├── Conditions:
+   │   │   │   │   ├── Match exists (b.AccountID IS NOT NULL)
+   │   │   │   │   ├── Filtered TaxCodeCountryISO is empty
+   │   │   │   │   └── ReportingEntityType ≠ &#39;Other&#39;
+   │   │   │   ├── Flow: Insert into FATCA.crmtaxdataexceptions (ExceptionID = 2)
+   │   │   │   └── Output: Distinct records with mismatched country codes
+   │   │   │
+   │   │   ├── Exception 3: FT Record Missing TIN/Country
+   │   │   │   ├── Source: [Dynamics].[CRM_MSCRM].[dbo].[cip_foreigntaxrecordBase]
+   │   │   │   ├── Joins: Contact (Individuals) or Account (Entities), dsl_roles, dsl_portfolioservice, etc.
+   │   │   │   ├── Conditions:
+   │   │   │   │   ├── cip_CountryJurisdiction OR cip_Identification IS NULL
+   │   │   │   │   ├── TradingEntityType ≠ &#39;Estate Winding-Up&#39;
+   │   │   │   │   └── Portfolio status check within reporting period
+   │   │   │   ├── Flow: CTE → Insert into FATCA.crmtaxdataexceptions (ExceptionID = 3)
+   │   │   │   └── Output: Records with Regime (&#39;FATCA&#39; or &#39;CRS&#39;) and FTCountryIndicators
+   │   │   │
+   │   │   ├── Exception 4: Duplicate Records (Inferred)
+   │   │   │   ├── (Not fully coded in snippet, hypothetical flow)
+   │   │   │   ├── Flow: Insert into FATCA.crmtaxdataexceptions (ExceptionID = 4)
+   │   │   │   └── Purpose: Detect and flag duplicate tax records
+   │   │   │
+   │   │   ├── Exception 5 &amp; 6: GIIN Number Issues
+   │   │   │   ├── Source: [Dynamics].[CRM_MSCRM].dbo.Account
+   │   │   │   ├── Joins: dsl_roles, Contact, dsl_portfolioservice
+   │   │   │   ├── Conditions:
+   │   │   │   │   ├── Exception 5: dsl_finffe = &#39;FI&#39; AND dsl_giinnumber IS NULL/empty
+   │   │   │   │   ├── Exception 6: dsl_finffe IS NULL AND dsl_giinnumber IS NOT empty
+   │   │   │   ├── Flow: Insert into FATCA.crmtaxdataexceptions (ExceptionID = 5 or 6)
+   │   │   │   └── Output: Entity records with GIIN-related issues
+   │   │   │
+   │   │   └── Purpose: Populate exception table with detailed anomaly records
+   │   │
+   │   └── Purpose: Refreshes and computes all exception cases for FATCA/CRS compliance
+   │
+   └── Step 3: Final Output
+       ├── Source: FATCA.crmtaxdataexceptions
+       ├── Join: FATCA.Exceptions (for ExceptionDesc)
+       ├── Conditions:
+       │   ├── IF @allEntTypes = 1:
+       │   │   ├── CTE (cte_repdata): Select distinct records, nullify ReportingEntityType
+       │   │   ├── Flow: SELECT * ORDER BY ExceptionID, AccountType, COALESCE(EntityName, ContactName)
+       │   └── ELSE:
+       │       ├── Flow: SELECT t.ExceptionDesc, e.* ORDER BY ExceptionID, AccountType, COALESCE(EntityName, ContactName)
+       └── Purpose: Returns formatted exception report based on user preference</pre>
+</div></div><hr/><h3 id="id-[usp_FATCA_CRS_Exceptions_v2]Refactor-DetailedExplanationofDataFlows">Detailed Explanation of Data Flows</h3><ol start="1"><li><p><strong>Input Parameters</strong></p><ul><li><p>The procedure starts with two parameters that control its behavior:</p><ul><li><p><code>@RefreshExceptionData</code>: If 1, it refreshes the exception data; if 0, it skips to output.</p></li><li><p><code>@allEntTypes</code>: If 1, includes all entity types in the final output; if 0, uses a simpler format.</p></li></ul></li></ul></li><li><p><strong>Step 1: Set Report Year and Period Dates</strong></p><ul><li><p><strong>Data Source</strong>: Queries <code>FATCA.Stage_crmdatafatcacrs_jf</code> to get the most recent <code>ReportYear</code>.</p></li><li><p><strong>Variables</strong>: Computes <code>@PeriodStartDate</code> and <code>@PeriodEndDate</code> to define the reporting window (e.g., April 1, 2023 - March 31, 2024 for 2024).</p></li><li><p><strong>Flow</strong>: These variables are used throughout to filter records by date.</p></li></ul></li><li><p><strong>Step 2: Refresh Exception Data</strong></p><ul><li><p><strong>Condition</strong>: Only executes if <code>@RefreshExceptionData = 1</code>.</p></li><li><p><strong>Substep 2.1: Build Base Dataset</strong></p><ul><li><p><strong>Sources</strong>: Combines non-NZ individual and entity data from views into <code>##crmtaxdata_exc</code>.</p></li><li><p><strong>Process</strong>: Uses a CTE to union the data and adds row numbers for grouping and ordering.</p></li><li><p><strong>Output</strong>: Temporary table <code>##crmtaxdata_exc</code> holds raw data for further processing.</p></li></ul></li><li><p><strong>Substep 2.2: Filter for FATCA/CRS Exceptions</strong></p><ul><li><p><strong>Source</strong>: Filters <code>##crmtaxdata_exc</code> into <code>##fatcacrsexceptions</code>.</p></li><li><p><strong>Process</strong>: Applies complex logic via CTE to identify FATCA/CRS-relevant records (e.g., Entity/FATCA, Entity/CRS, Individual).</p></li><li><p><strong>Output</strong>: Temporary table with report-ready records, tagged with <code>ReportYear</code> and <code>ReportingEntityType</code>.</p></li></ul></li><li><p><strong>Substep 2.3: Process Exception Cases</strong></p><ul><li><p><strong>Target</strong>: Inserts exceptions into <code>FATCA.crmtaxdataexceptions</code>.</p></li><li><p><strong>Exceptions</strong>: Each has unique logic:</p><ul><li><p><strong>Exception 1</strong>: Non-flagged foreign countries.</p></li><li><p><strong>Exception 2</strong>: Country code mismatches.</p></li><li><p><strong>Exception 3</strong>: Incomplete foreign tax records.</p></li><li><p><strong>Exception 4</strong>: (Inferred) Duplicates.</p></li><li><p><strong>Exception 5 &amp; 6</strong>: GIIN-related issues.</p></li></ul></li><li><p><strong>Flow</strong>: Data flows from source tables → CTEs → temporary tables → final exception table.</p></li></ul></li></ul></li><li><p><strong>Step 3: Final Output</strong></p><ul><li><p><strong>Source</strong>: Pulls from <code>FATCA.crmtaxdataexceptions</code> and joins with <code>FATCA.Exceptions</code> for descriptions.</p></li><li><p><strong>Output Variants</strong>:</p><ul><li><p>If <code>@allEntTypes = 1</code>: Uses a CTE to nullify <code>ReportingEntityType</code> and returns all records.</p></li><li><p>Else: Direct select with <code>ExceptionDesc</code> included.</p></li></ul></li><li><p><strong>Flow</strong>: Sorted output based on <code>ExceptionID</code>, <code>AccountType</code>, and name fields.</p></li></ul></li></ol><hr/><h3 id="id-[usp_FATCA_CRS_Exceptions_v2]Refactor-KeyDataFlowPaths">Key Data Flow Paths</h3><ul><li><p><strong>Raw Data → Base Dataset</strong>: Views → <code>##crmtaxdata_exc</code>.</p></li><li><p><strong>Base Dataset → Filtered Exceptions</strong>: <code>##crmtaxdata_exc</code> → <code>##fatcacrsexceptions</code>.</p></li><li><p><strong>Filtered Exceptions → Exception Table</strong>: <code>##fatcacrsexceptions</code> + other sources → <code>FATCA.crmtaxdataexceptions</code>.</p></li><li><p><strong>Exception Table → Output</strong>: <code>FATCA.crmtaxdataexceptions</code> → Final SELECT.</p></li></ul><p>This structure ensures that data is systematically processed, filtered, and flagged for compliance issues before being presented to the user. Let me know if you'd like me to refine or visualize any part further!</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : New Issues (Web application that are old stuff) – UAT and PROD Mismatch</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : New Issues (Web application that are old stuff) – UAT and PROD Mismatch
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 29-01-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <style type='text/css'>/*<![CDATA[*/
+div.rbtoc1755550413950 {padding: 0px;}
+div.rbtoc1755550413950 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1755550413950 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style><div class='toc-macro rbtoc1755550413950'>
+<ul class='toc-indentation'>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-📖Overview'>📖 Overview</a>
+<ul class='toc-indentation'>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-History&amp;Background'>History &amp; Background</a>
+<ul class='toc-indentation'>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-🕰️EvolutionoftheDeploymentProcess'>🕰️ Evolution of the Deployment Process</a></li>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-📌KeyIssues'>📌 Key Issues</a></li>
+</ul>
+</li>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-1️⃣Repository&amp;BranchingStructure'>1️⃣ Repository &amp; Branching Structure</a>
+<ul class='toc-indentation'>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-🌐BitbucketRepository'>🌐 Bitbucket Repository</a></li>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-🛠️KeyBranches'>🛠️ Key Branches</a></li>
+</ul>
+</li>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-2️⃣ProjectStructure'>2️⃣ Project Structure</a>
+<ul class='toc-indentation'>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-📂KeyFolders&amp;Files'>📂 Key Folders &amp; Files</a></li>
+</ul>
+</li>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-3️⃣Deployment&amp;PipelineIssues'>3️⃣ Deployment &amp; Pipeline Issues</a>
+<ul class='toc-indentation'>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-🛠️CurrentDeploymentProcess'>🛠️ Current Deployment Process</a></li>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-🚨ProblemsIdentified'>🚨 Problems Identified</a></li>
+</ul>
+</li>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-4️⃣ImmediateFixes'>4️⃣ Immediate Fixes</a>
+<ul class='toc-indentation'>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-✅ManualDeploymentWorkflow(UntilPipelineisFixed)'>✅ Manual Deployment Workflow (Until Pipeline is Fixed)</a></li>
+</ul>
+</li>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-5️⃣Long-TermFixes'>5️⃣ Long-Term Fixes</a>
+<ul class='toc-indentation'>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-🚀ImproveDeploymentProcess'>🚀 Improve Deployment Process</a></li>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-📂StandardizeNaming&amp;Tracking'>📂 Standardize Naming &amp; Tracking</a></li>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-🔗ImproveAccess&amp;Visibility'>🔗 Improve Access &amp; Visibility</a></li>
+</ul>
+</li>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-📌KeyTakeaways'>📌 Key Takeaways</a></li>
+<li><a href='#NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-👥ContactPoints'>👥 Contact Points</a></li>
+</ul>
+</li>
+</ul>
+</div><h1 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-📖Overview"><strong>📖 Overview</strong></h1><p>This document serves as a reference for <strong>new team members</strong> joining the <strong>Data Team</strong>, explaining the <strong>New Issues application’s UAT and PROD mismatch</strong>, the <strong>Bitbucket repository structure</strong>, and the <strong>current deployment workflow</strong>.</p><h2 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-History&amp;Background"><strong>History &amp; Background</strong></h2><p>The <strong>New Issues system</strong> is a web application that interacts with an <strong>SQL Server 2008 database</strong>, providing an interface for <strong>Finance business users</strong> to track <strong>IPO New Stocks</strong> being published within the organization.</p><p>Over time, <strong>inconsistencies</strong> have arisen between the <strong>UAT database</strong> and the <code>develop</code><strong> branch in Bitbucket</strong>, primarily due to <strong>manual deployments</strong>.</p><p><strong>Cynthia</strong>, the <strong>New Issues application admin</strong>, discovered a <strong>data mismatch in UAT</strong>. She identified the issue because <strong>a report that reconciles three areas</strong>—for example:</p><p>➡ <strong>A + B = C</strong></p><p>was no longer accurate, as she found that:</p><p>❌ <strong>A + B ≠ C</strong></p><p>This discrepancy led her to <strong>raise questions</strong> about the integrity of the UAT data.</p><h3 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-🕰️EvolutionoftheDeploymentProcess"><strong>🕰️ Evolution of the Deployment Process</strong></h3><ol start="1"><li><p><strong>Initial Setup (Pre-DevOps)</strong></p><ul><li><p>Originally, both <strong>UAT and PROD databases were manually managed</strong> with scripts.</p></li><li><p>Changes were made <strong>directly to the UAT database</strong> without a proper version control system.</p></li></ul></li><li><p><strong>Introduction of Bitbucket &amp; Azure DevOps</strong></p><ul><li><p>The team migrated source code to <strong>Bitbucket</strong> aroun 2021 Auhest not sure and started using <strong>branch-based workflows</strong>.</p></li><li><p>Azure DevOps was introduced for <strong>build automation</strong>, but <strong>not for database deployments</strong>. (According to Fabio)</p></li></ul></li></ol><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250129-205923.png" width="760" loading="lazy" src="attachments/2982445162/2982641699.png?width=760" data-image-src="attachments/2982445162/2982641699.png" data-height="638" data-width="905" data-unresolved-comment-count="0" data-linked-resource-id="2982641699" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250129-205923.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2982445162" data-linked-resource-container-version="4" data-media-id="7eafbe36-638c-41b2-b1a6-c0b3dae6cc28" data-media-type="file"></span><p /><ol start="3"><li><p><strong>Current State (Manual UAT Database Updates)</strong></p><ul><li><p><strong>Develop branch (Bitbucket) is up to date, but the UAT DB is outdated.</strong></p></li><li><p>There is <strong>no automated deployment for UAT</strong>, meaning manual scripts have caused <strong>inconsistencies</strong>.</p></li><li><p>The <strong>Azure DevOps pipeline does not include UAT deployment</strong>, only builds.</p></li></ul></li></ol><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250129-210001.png" width="992" loading="lazy" src="attachments/2982445162/2982641706.png?width=992" data-image-src="attachments/2982445162/2982641706.png" data-height="1326" data-width="2560" data-unresolved-comment-count="0" data-linked-resource-id="2982641706" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250129-210001.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2982445162" data-linked-resource-container-version="4" data-media-id="c382b305-1e77-420b-8aef-b2beef97ed55" data-media-type="file"></span><p /><h3 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-📌KeyIssues"><strong>📌 Key Issues</strong></h3><ul><li><p><strong>Naming Confusion:</strong> The <strong>Develop branch is actually the UAT branch</strong>, but people assume otherwise.</p></li><li><p><strong>Outdated UAT Database ans its SPs:</strong> </p><ul><li><p>The <strong>UAT database does not match the </strong><code>develop</code><strong> branch</strong> because updates are applied <strong>manually</strong>.</p></li><li><p>The <strong>Data Team members often update only specific portions of the code</strong> without checking out the full <code>develop</code> branch.</p></li><li><p>This results in <strong>partial updates</strong>, where only certain stored procedures or schema changes are applied, leaving the UAT database inconsistent.</p></li></ul></li><li><p><strong>No Tracking of UAT Deployments:</strong> </p><ul><li><p>There is <strong>no clear record of when or how</strong> database updates were applied to UAT.</p></li><li><p>Currently, <strong>we do not have a version history</strong> of these updates, making it difficult to trace past changes.</p></li><li><p>The <strong>only way to track modifications</strong> is through <strong>SQL Server Management Studio (SSMS) logs</strong>, which show who made changes and when they were applied on the <strong>UAT server (New Issues DB)</strong>.</p></li></ul></li></ul><hr/><h2 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-1️⃣Repository&amp;BranchingStructure"><strong>1️⃣ Repository &amp; Branching Structure</strong></h2><h3 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-🌐BitbucketRepository"><strong>🌐 Bitbucket Repository</strong></h3><ul><li><p><strong>Repository URL</strong>: <a class="external-link" href="https://bitbucket.org/craigsip/craigs.newissues.web.legacy/src" rel="nofollow">New Issues Repository</a> (the naming of this Repo is misleading called <a class="external-link" href="https://bitbucket.org/craigsip/craigs.newissues.web.legacy/" rel="nofollow">craigs.newissues.web.legacy</a> &gt;&gt; but it is actuall ycotnaisn the Databse repo inside)</p></li></ul><h3 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-🛠️KeyBranches"><strong>🛠️ Key Branches</strong></h3><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="44a33a81-fcbd-4ff1-9a06-aa968915d17e" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Branch</p></th><th class="confluenceTh"><p>Purpose</p></th><th class="confluenceTh"><p>Status</p></th></tr><tr><td class="confluenceTd"><p><code>master</code></p></td><td class="confluenceTd"><p>Production branch</p></td><td class="confluenceTd"><p>Stable, used for live deployments</p></td></tr><tr><td class="confluenceTd"><p><code>develop</code></p></td><td class="confluenceTd"><p><strong>UAT Branch</strong> (naming confusion)</p></td><td class="confluenceTd"><p><strong>Up to date in Bitbucket</strong> but <strong>UAT DB is outdated</strong></p></td></tr></tbody></table></div><blockquote><p><strong>❗ Important:</strong> The <strong><span style="background-color: rgb(211,241,167);">Develop branch = UAT branch</span></strong>, but the name is misleading. <strong>All UAT updates must go through the </strong><code>develop</code><strong> branch</strong>.</p></blockquote><hr/><h2 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-2️⃣ProjectStructure"><strong>2️⃣ Project Structure</strong></h2><p>📂 <strong>Repository File Structure (</strong><code>craigs.newissues.web.legacy</code><strong>)</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">└── 📁 craigs.newissues.web.legacy
+        ├── 📁 config
+        ├── 📁 Database (Stored Procedures, Tables, Views)
+        ├── 📁 NewIssues (Web application source code)
+        ├── 📁 NewIssues.Data (Data access layer)
+        ├── 📁 AdvisorPlatformData (Business logic layer)
+        ├── `.gitignore`
+        ├── `azure-pipelines.yaml`
+        ├── `NewIssues.sln`
+</pre>
+</div></div><h3 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-📂KeyFolders&amp;Files"><strong>📂 Key Folders &amp; Files</strong></h3><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="a17156d0-859f-45df-a3fb-e507ee7dd998" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Folder</p></th><th class="confluenceTh"><p>Description</p></th></tr><tr><td class="confluenceTd"><p><code>Database/sprocs</code></p></td><td class="confluenceTd"><p>Contains <span style="background-color: rgb(211,241,167);">all </span><strong><span style="background-color: rgb(211,241,167);">stored procedures</span></strong>, including outdated ones in UAT.</p></td></tr><tr><td class="confluenceTd"><p><code>Database/tables</code></p></td><td class="confluenceTd"><p>Database table definitions.</p></td></tr><tr><td class="confluenceTd"><p><code>Database/views</code></p></td><td class="confluenceTd"><p>SQL views used for reporting.</p></td></tr><tr><td class="confluenceTd"><p><code>NewIssues</code></p></td><td class="confluenceTd"><p><strong>Main Web Application</strong> (used old C# code and Old <a class="external-link" href="http://ASP.NET" rel="nofollow">ASP.NET</a> Framework, SOAP Web protopcal).</p></td></tr><tr><td class="confluenceTd"><p><code>NewIssues.Data</code></p></td><td class="confluenceTd"><p>Data models and database interaction logic.</p></td></tr><tr><td class="confluenceTd"><p><code>AdvisorPlatformData</code></p></td><td class="confluenceTd"><p>Contains business rules and validation logic.</p></td></tr></tbody></table></div><hr/><h2 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-3️⃣Deployment&amp;PipelineIssues"><strong>3️⃣ Deployment &amp; Pipeline Issues</strong></h2><h3 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-🛠️CurrentDeploymentProcess"><strong>🛠️ Current Deployment Process</strong></h3><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="37c167b8-a0b8-4969-a494-c01376c2f00d" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Environment</p></th><th class="confluenceTh"><p>Deployment Type</p></th><th class="confluenceTh"><p>Status</p></th></tr><tr><td class="confluenceTd"><p><strong>Production (PROD)</strong></p></td><td class="confluenceTd"><p><strong>Manually deployed</strong></p></td><td class="confluenceTd"><p>✅ Active</p></td></tr><tr><td class="confluenceTd"><p><strong>UAT (</strong><code>develop</code><strong> branch in Bitbucket)</strong></p></td><td class="confluenceTd"><p><strong>Up to date</strong></p></td><td class="confluenceTd"><p>✅ <strong>Latest changes exist in Bitbucket</strong></p></td></tr><tr><td class="confluenceTd"><p><strong>UAT (NewIssues DB on SQL Server)</strong></p></td><td class="confluenceTd"><p><strong>Manually deployed, but outdated</strong></p></td><td class="confluenceTd"><p>❌ <strong>Does not match </strong><code>develop</code><strong> branch</strong></p></td></tr><tr><td class="confluenceTd"><p><strong>Azure DevOps</strong></p></td><td class="confluenceTd"><p><strong>Build only, no auto-deploy</strong></p></td><td class="confluenceTd"><p>❌ <strong>Pipeline does not push to UAT</strong></p></td></tr></tbody></table></div><h3 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-🚨ProblemsIdentified"><strong>🚨 Problems Identified</strong></h3><ol start="1"><li><p><strong>Develop branch (Bitbucket) is correct, but the UAT database is outdated.</strong></p></li><li><p><strong>Stored procedures in UAT DB differ from </strong><code>develop</code><strong> branch due to manual deployments.</strong></p></li><li><p><strong>Azure DevOps only builds artifacts, does not deploy them</strong> to UAT.</p></li><li><p><strong>No clear tracking of manual deployments</strong> in UAT.</p></li></ol><hr/><h2 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-4️⃣ImmediateFixes"><strong>4️⃣ Immediate Fixes</strong></h2><h3 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-✅ManualDeploymentWorkflow(UntilPipelineisFixed)"><strong>✅ Manual Deployment Workflow (Until Pipeline is Fixed)</strong></h3><p>1️⃣ <strong>Create a Feature Branch</strong></p><ul><li><p>Any UAT-related update must be made in a <strong>new feature branch (</strong><code>CIPXXX - and then descritpe the issues and what i try to deploy</code><strong>)</strong>.</p></li></ul><p>2️⃣ <strong>Deploy Changes Manually to UAT after the Develoepr IAN reviewed the changes</strong></p><ul><li><p>Compare stored procedures in <strong>UAT DB vs. </strong><code>develop</code><strong> branch</strong>.</p></li><li><p>Manually update UAT <strong>only if required</strong> to match <code>develop</code>.</p></li><li><p>Get approval from <strong>Iain Davidson</strong> before merging.</p></li></ul><p>3️⃣ <strong><span style="background-color: rgb(211,241,167);">Merge into </span></strong><code>develop</code><strong><span style="background-color: rgb(211,241,167);"> (UAT) Branch &gt;&gt; the so called “develop branch“ is actually aim to represent the UAT DB</span></strong></p><ul><li><p>Once tested, merge changes into <code>develop</code> to maintain consistency.</p></li></ul><hr/><h2 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-5️⃣Long-TermFixes"><strong>5️⃣ Long-Term Fixes</strong></h2><h3 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-🚀ImproveDeploymentProcess"><strong>🚀 Improve Deployment Process</strong></h3><ul><li><p><strong>Add a UAT Deployment Stage in Azure DevOps</strong>:</p><ul><li><p>Modify <code>azure-pipelines.yaml</code> to include <strong>UAT deployment</strong>.</p></li><li><p>Ensure changes in <code>develop</code> <strong>trigger a build and deploy to UAT</strong>.</p></li></ul></li></ul><h3 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-📂StandardizeNaming&amp;Tracking"><strong>📂 Standardize Naming &amp; Tracking</strong></h3><ul><li><p><strong>Document that </strong><code>develop = UAT</code> to avoid confusion.</p></li><li><p><strong>Implement database change tracking</strong> for UAT updates.</p></li></ul><h3 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-🔗ImproveAccess&amp;Visibility"><strong>🔗 Improve Access &amp; Visibility</strong></h3><ul><li><p>Request <strong>read-only Azure DevOps access for Data Team</strong>.</p></li><li><p>Implement <strong>logging for manual database changes</strong>.</p></li></ul><hr/><h2 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-📌KeyTakeaways"><strong>📌 Key Takeaways</strong></h2><p>✔ <code>develop</code><strong> = UAT branch</strong> → All UAT changes must go through <code>develop</code>.<br/>✔ <strong>Develop branch is up to date</strong> → But UAT DB is outdated due to manual deployments.<br/>✔ <strong>No automated UAT deployments</strong> → Must be manually applied for now.<br/>✔ <strong>Always create a feature branch before updating UAT</strong> → Merge into <code>develop</code> after testing.<br/>✔ <strong>Data team lacks Azure DevOps access</strong> → Request access as needed.</p><hr/><h2 id="NewIssues(Webapplicationthatareoldstuff)–UATandPRODMismatch-👥ContactPoints"><strong>👥 Contact Points</strong></h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="fe3e8872-01cb-4c00-9ecf-a9b45e49071c" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Name</p></th><th class="confluenceTh"><p>Role</p></th><th class="confluenceTh"><p>Responsibility</p></th></tr><tr><td class="confluenceTd"><p><strong>Iain Davidson</strong></p></td><td class="confluenceTd"><p><strong>Peer Reviewer</strong></p></td><td class="confluenceTd"><p>Approves UAT database updates</p></td></tr><tr><td class="confluenceTd"><p><strong>Fabio Zigliani</strong></p></td><td class="confluenceTd"><p><strong>Infrastructure/DevOps</strong></p></td><td class="confluenceTd"><p>Azure DevOps pipelines</p></td></tr><tr><td class="confluenceTd"><p><strong>Christopher Church</strong></p></td><td class="confluenceTd"><p><strong>Bitbucket &amp; Branching</strong></p></td><td class="confluenceTd"><p>Code repo management</p></td></tr></tbody></table></div><hr/><p>📌 <strong>Next Steps</strong>:</p><ol start="1"><li><p><strong>Apply manual updates to UAT stored procedures.</strong></p></li><li><p><strong>Fix Azure DevOps pipeline to auto-deploy UAT changes.</strong></p></li><li><p><strong>Ensure all team members follow the correct UAT workflow.</strong></p></li></ol><hr/><p>This updated version correctly highlights that:</p><ul><li><p>The <code>develop</code><strong> branch in Bitbucket is up to date</strong>.</p></li><li><p>The <strong>UAT database is outdated due to manual script deployments</strong>.</p></li><li><p>The <strong>fix requires updating the UAT database and improving automation</strong>.</p></li></ul><p>🚀 Let me know if you need any refinements!</p>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2982445162/2982641699.png">image-20250129-205923.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2982445162/2982641706.png">image-20250129-210001.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

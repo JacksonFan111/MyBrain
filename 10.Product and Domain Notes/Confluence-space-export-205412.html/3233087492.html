@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : US TAX Payers with US Securities end‑to‑end flows</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : US TAX Payers with US Securities end‑to‑end flows
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 15-07-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h3 id="USTAXPayerswithUSSecuritiesend‑to‑endflows-Doestheend‑to‑endflowmakebusinesssense?">Does the end‑to‑end flow make business sense?</h3><p><strong>Yes—at a high level the query chain lines up with the compliance use‑case.</strong><br/>You are:</p><ol start="1"><li><p><strong>Identifying “US taxpayers” in Dynamics</strong> (step 1).</p></li><li><p><strong>Pulling positions that could breach policy</strong> from Fusion (step 3).</p></li><li><p><strong>Joining the two</strong> so you can show “who owns what” (step 4).</p></li></ol><p>That maps exactly to the requirement: <em>“List every US‑tax‑domiciled client that currently holds US securities so Compliance can chase a W‑9 or force a sell‐down.”</em></p><hr/><h2 id="USTAXPayerswithUSSecuritiesend‑to‑endflows-Whatyoualreadycoverwell">What you already cover well</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="06c01b67-d81a-44bb-8f38-4e81cda92bbf" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>✔</p></th><th class="confluenceTh"><p>Why it matters</p></th></tr><tr><td class="confluenceTd"><p><strong>Cross‑system join (Dynamics ↔ Fusion ↔ ACE)</strong></p></td><td class="confluenceTd"><p>You need Dynamics for residency flags, Fusion for holdings, ACE to assert the ledger is active.</p></td></tr><tr><td class="confluenceTd"><p><strong>Nominee filter (</strong><code>holdingTypeID = 3266</code><strong>)</strong></p></td><td class="confluenceTd"><p>CIP’s biggest exposure is nominee holdings—those hit CIP’s own custody chain and carry the 24 % backup‑withholding risk.</p></td></tr><tr><td class="confluenceTd"><p><strong>Settled only (</strong><code>trnStatusID = 502</code><strong>)</strong></p></td><td class="confluenceTd"><p>Removes phantom trades that will wash out in T‑plus settlement.</p></td></tr><tr><td class="confluenceTd"><p><strong>USD filter (</strong><code>currencyID = 1</code><strong>)</strong></p></td><td class="confluenceTd"><p>99 % of US equities are USD‑denominated, so this is a pragmatic first pass that performs well.</p></td></tr><tr><td class="confluenceTd"><p><strong>Collation‑safe join</strong></p></td><td class="confluenceTd"><p><code>COLLATE DATABASE_DEFAULT</code> avoids run‑time failures in mixed‑collation environments.</p></td></tr><tr><td class="confluenceTd"><p><strong>Global‑temp tables</strong></p></td><td class="confluenceTd"><p>Keeps the batch idempotent and easy to test from SSMS or an Agent job.</p></td></tr></tbody></table></div><hr/><h2 id="USTAXPayerswithUSSecuritiesend‑to‑endflows-Gaps&amp;edge‑casestothinkabout">Gaps &amp; edge‑cases to think about</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="2e2348f3-3f68-43b7-8edd-dcd6d09d2ef9" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Area</p></th><th class="confluenceTh"><p>Why it matters</p></th><th class="confluenceTh"><p>Quick fix / enhancement</p></th></tr><tr><td class="confluenceTd"><p><strong>Residency logic</strong></p></td><td class="confluenceTd"><p><code>LIKE '%united states%'</code> can miss <em>dual residents</em> (NZ + US) where the label is “New Zealand/United States”, and it <strong>ignores</strong> <code>dsl_USCitizensForTaxPurposes</code> (a definitive FATCA flag).</p></td><td class="confluenceTd"><p>Add: <code>OR a.dsl_USCitizensForTaxPurposes = 1</code>.</p></td></tr><tr><td class="confluenceTd"><p><strong>Safe‑Custody (“SC”) holdings</strong></p></td><td class="confluenceTd"><p>US securities <em>can</em> sit in Safe Custody for non‑managed clients. Compliance is still on the hook.</p></td><td class="confluenceTd"><p>Expand <code>holdingTypeID</code> filter to <code>IN (3266, 3270)</code> or join Glt for description‑based filter (<code>g.code IN ('NO','SC')</code>).</p></td></tr><tr><td class="confluenceTd"><p><strong>US security ≠ USD security</strong></p></td><td class="confluenceTd"><p>ADRs list in USD on the LSE; some US issuers have dual‑currency lines. You want <em>issuer domicile = US</em>, not (just) currency.</p></td><td class="confluenceTd"><p>Join Fusion <code>Asset.countryOfIncorporation</code> (or ACE <code>StIssuer.countryCode</code>) and filter on <code>= 'US'</code>.</p></td></tr><tr><td class="confluenceTd"><p><strong>Nominal vs cash amount</strong></p></td><td class="confluenceTd"><p><code>SUM(trnAmount)</code> is trade‑value. Two equal and opposite trades cancel to zero but the client may still hold stock.</p></td><td class="confluenceTd"><p><code>SUM(t.nominal)</code> (quantity) gets true position; for valuation multiply by an end‑of‑day price table later.</p></td></tr><tr><td class="confluenceTd"><p><strong>Erroneous dupes</strong></p></td><td class="confluenceTd"><p>Likely caused by <code>trnType</code> mix (BUY + SELL) or split corporate actions.</p></td><td class="confluenceTd"><p><code>WHERE t.trnType IN ('B','SUB','RINV')</code> etc., or group by sign.</p></td></tr><tr><td class="confluenceTd"><p><strong>Trailing space in temp‑table name</strong></p></td><td class="confluenceTd"><p><code>##USTAXPayers_Securities </code>is easy to mistype on reuse.</p></td><td class="confluenceTd"><p>Rename without the space (and update the two <code>DROP TABLE</code> guards).</p></td></tr><tr><td class="confluenceTd"><p><strong>Automation &amp; delivery</strong></p></td><td class="confluenceTd"><p>The ticket asks for a <strong>monthly Excel e‑mail</strong>.</p></td><td class="confluenceTd"><p>Wrap the batch in a stored proc and schedule via SQL Agent; use <code>sp_send_dbmail</code> with <code>@query_attachment_filename = 'US_Taxpayers_US_Securities.xlsx'</code> (or call an SSRS subscription).</p></td></tr></tbody></table></div><hr/><h2 id="USTAXPayerswithUSSecuritiesend‑to‑endflows-Aminimallogicdiagram">A minimal logic diagram</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Dynamics (CRM)
+   └── Account
+          └── PortfolioService (PSL)  ──┐
+Fusion (Custody)                        │    ACE (Client master)
+   └── Drum (Ledger)                    │       └── ensure Ledger Status = &#39;A&#39;
+       └── Trn (positions)  &lt;───────────┘
+</pre>
+</div></div><p><em>Filter path:</em><br/><code>US tax signal (domicile OR flag)</code> → <code>Active PSL</code> → <code>Ledger</code> → <code>Nominee/SafeCustody</code> → <code>USD/US‐issuer</code> → <code>Settled</code></p><hr/><h2 id="USTAXPayerswithUSSecuritiesend‑to‑endflows-Recommendednextsteps">Recommended next steps</h2><ol start="1"><li><p><strong>Formalise residency test</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">AND (
+     a.dsl_PrimaryTaxDomicileName LIKE &#39;%united states%&#39;
+     OR a.dsl_USCitizensForTaxPurposes = 1
+    )
+</pre>
+</div></div></li><li><p><strong>Switch to issuer‑domicile filter</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">JOIN fusion.dbo.Issuer i ON i.issuerID = a.issuerID
+WHERE i.countryCode = &#39;US&#39;
+</pre>
+</div></div></li><li><p><strong>Use quantity, not cash</strong><br/>Replace <code>SUM(t.trnAmount)</code> with <code>SUM(t.nominal)</code>; left‑join to a price view for NZD/valuation if Management wants a $$ number.</p></li><li><p><strong>Add Safe‑Custody (</strong><code>3270</code><strong>)</strong> if policy wording confirms SC is in scope.</p></li><li><p><strong>Package as a stored procedure</strong> and create a SQL Agent job:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">EXEC usp_US_Taxpayer_US_Securities_Report;
+</pre>
+</div></div><p>…then call <code>sp_send_dbmail</code> (HTML body + XLSX attachment) to <code>compliance@cip.co.nz</code>.</p></li><li><p><strong>Document the lineage</strong> (the four code blocks you’ve already commented) in Confluence or the Smartsheet Ben linked so audit can trace the numbers.</p></li></ol><hr/><h3 id="USTAXPayerswithUSSecuritiesend‑to‑endflows-Verdict">Verdict</h3><p><em>Functionally</em>, the script is <strong>on the right track</strong> and is defensible in a compliance audit once the extra edge‑cases above are closed.<br/><em>Operationally</em>, schedule it via SQL Agent and push to Compliance monthly; that meets the “urgent production insight” requirement without waiting for the long‑term remediation project.</p><p>Let me know if you want template code for the Agent job / e‑mail step, or a quick POC of the “issuer‑domicile” join.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

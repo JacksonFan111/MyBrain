@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 10. learning CIP Iaas - Terraform</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="1.-Internal_2555216013.html">1. Internal</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 10. learning CIP Iaas - Terraform
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 25-06-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <style type="text/css">/*<![CDATA[*/
+div.rbtoc1755550349991 {padding: 0px;}
+div.rbtoc1755550349991 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1755550349991 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style><div class="toc-macro rbtoc1755550349991"><style>[data-colorid=m8cp4lb6f6]{color:#ff5630} html[data-color-mode=dark] [data-colorid=m8cp4lb6f6]{color:#cf2600}</style>
+<ul class="toc-indentation">
+<li><a href="#id-10.learningCIPIaas-Terraform-Overview">Overview</a></li>
+<li><a href="#id-10.learningCIPIaas-Terraform-HighlevelFlow">High level Flow</a>
+<ul class="toc-indentation">
+<li><a href="#id-10.learningCIPIaas-Terraform-WorkflowOverview">\uD83D\uDCD8 Workflow Overview</a>
+<ul class="toc-indentation">
+
+<ul class="toc-indentation">
+<li><a href="#id-10.learningCIPIaas-Terraform-1.CodeDevelopment">1. Code Development</a></li>
+<li><a href="#id-10.learningCIPIaas-Terraform-2.PullRequestandReview">2. Pull Request and Review</a></li>
+<li><a href="#id-10.learningCIPIaas-Terraform-3.DailyIngestandWeeklyMerges">3. Daily Ingest and Weekly Merges</a></li>
+<li><a href="#id-10.learningCIPIaas-Terraform-4.Deployment">4. Deployment</a></li>
+</ul>
+<li><a href="#id-10.learningCIPIaas-Terraform-UnderstandingtheInfrastructureRepositories,Pipelines&amp;ProcessGraph">Understanding the Infrastructure Repositories, Pipelines &amp; Process Graph</a></li>
+<li><a href="#id-10.learningCIPIaas-Terraform-KeyComponentsandTheirFunctions">Key Components and Their Functions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#id-10.learningCIPIaas-Terraform-Howdowegetstarted">How do we get started</a></li>
+<li><a href="#id-10.learningCIPIaas-Terraform-**whatlevelofPermission!!!">** what level of Permission!!!</a>
+<ul class="toc-indentation">
+<li><a href="#id-10.learningCIPIaas-Terraform-AzurelandingzonesTerraformmodule">Azure landing zones Terraform module</a></li>
+<li><a href="#id-10.learningCIPIaas-Terraform-https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Module-Permissions">https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Module-Permissions</a></li>
+<li><a href="#id-10.learningCIPIaas-Terraform-Relatedarticles">\uD83D\uDCCB Related articles</a></li>
+</ul>
+</li>
+</ul>
+</div><h1 id="id-10.learningCIPIaas-Terraform-Overview"><img class="emoticon emoticon-laugh" data-emoji-id="1f600" data-emoji-shortname=":grinning:" data-emoji-fallback="😀" src="images/icons/emoticons/biggrin.png" width="16" height="16" data-emoticon-name="laugh" alt="(big grin)"/> Overview</h1><p>CIP Infrastructure Support team have the higest level of admin access and somehow they manage to do Terraform deployment (I am suprise they get this done)</p><p>How did they do it &gt;&gt; i would be interested to find out.</p><p>It seems like CIP is usinga Architecture called &ldquo;Azure Landing Zone for their Architectual Design&ldquo;</p><p>there are different deployment options but we used Terraform.</p><p>Important note:<a href="https://craigsip.atlassian.net/wiki/spaces/IS/pages/1833238554/Old+-+Handover+-+Keeragh+Cleland+March+2022" data-linked-resource-id="1833238554" data-linked-resource-version="13" data-linked-resource-type="page">Handover - Keeragh Cleland, March 2022</a> </p><p><a href="https://craigsip.atlassian.net/wiki/spaces/IS/pages/2001338406/Old+Infrastructure+as+code+workspace" data-linked-resource-id="2001338406" data-linked-resource-version="16" data-linked-resource-type="page">Infrastructure as code workspace</a> </p><p /><h1 id="id-10.learningCIPIaas-Terraform-HighlevelFlow">High level Flow</h1><p>Bitbucket &rarr; Pull Request &rarr; Synk &rarr; TerraForm Cloud platform &rarr; On prem TerraForm Agent &rarr; Deploy to Azure</p><h2 id="id-10.learningCIPIaas-Terraform-WorkflowOverview"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4d8" data-emoji-shortname=":blue_book:" data-emoji-fallback="\uD83D\uDCD8" src="images/icons/emoticons/72/1f4d8.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/>&nbsp;Workflow Overview</h2><h4 id="id-10.learningCIPIaas-Terraform-1.CodeDevelopment">1. Code Development</h4><ul><li><p>Developers create feature branches from <code>DEV</code> and work on their tasks.</p></li><li><p>Commit frequently and rebase as necessary.</p></li></ul><h4 id="id-10.learningCIPIaas-Terraform-2.PullRequestandReview">2. Pull Request and Review</h4><ul><li><p>Once a feature/task is completed, a PR is created.</p></li><li><p>The PR undergoes peer review and Synk security checks.</p></li><li><p>If approved, the PR is merged into the <code>DEV</code> branch.</p></li></ul><h4 id="id-10.learningCIPIaas-Terraform-3.DailyIngestandWeeklyMerges">3. Daily Ingest and Weekly Merges</h4><ul><li><p>Daily commits and updates are made into the <code>DEV</code> branch.</p></li><li><p><strong>Every Friday</strong>: Changes are merged from <code>DEV</code> to <code>STG</code>.</p></li><li><p><strong>Following Thursday</strong>: Changes are merged from <code>STG</code> to <code>PRD</code>.</p></li></ul><h4 id="id-10.learningCIPIaas-Terraform-4.Deployment">4. Deployment</h4><ul><li><p>Terraform Cloud Platform and On-Prem TF Agents are used for deployments.</p></li><li><p>Deployments to Azure are triggered from the <code>master</code> branch PR merges.</p></li><li><p>Separate workspaces manage different environments, and any failed workspace is rerun until successful.</p></li></ul><p /><p><a class="external-link" data-card-appearance="inline" href="https://developer.hashicorp.com/terraform/enterprise/application-administration/agents-on-tfe" rel="nofollow">https://developer.hashicorp.com/terraform/enterprise/application-administration/agents-on-tfe</a> </p><p /><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240625-021538.png" width="760" loading="lazy" src="attachments/2575237121/2574909478.png?width=760" data-image-src="attachments/2575237121/2574909478.png" data-height="747" data-width="1088" data-unresolved-comment-count="0" data-linked-resource-id="2574909478" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240625-021538.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2575237121" data-linked-resource-container-version="5" data-media-id="c075539b-190d-4a42-aaf1-e742f175215c" data-media-type="file" /></span><h3 id="id-10.learningCIPIaas-Terraform-UnderstandingtheInfrastructureRepositories,Pipelines&amp;ProcessGraph">Understanding the Infrastructure Repositories, Pipelines &amp; Process Graph</h3><p>The graph represents the infrastructure setup and deployment process using Terraform, Git, and various cloud services like Azure, Cloudflare, and Auth0. Here&rsquo;s a breakdown of what&rsquo;s happening in the graph:</p><ol start="1"><li><p><strong>Repositories and Branching:</strong></p><ul><li><p><strong>CAF Enterprise Scale</strong> and <strong>Infrastructure Platform</strong> repositories have multiple branches (<code>master</code>, <code>level0</code>, <code>prd</code>, <code>global</code>, <code>dr</code>) that handle different environments and scopes of deployment.</p></li><li><p><strong>Infrastructure Landing Zones</strong> and <strong>Direct Infrastructure</strong> repositories are branched for different environments and auto-approval stages.</p></li><li><p>Application-specific repositories (<code>app-x-infrastructure</code>, <code>app-y-infrastructure</code>) handle application-specific infrastructure code and changes.</p></li></ul></li><li><p><strong>Approval Process:</strong></p><ul><li><p>Changes in the repositories require pull requests (PRs) which are subject to operations team approval before being merged into the <code>master</code> branch.</p></li><li><p>The approval process ensures that only reviewed and approved changes are applied to the infrastructure, maintaining security and stability.</p></li></ul></li><li><p><strong>Merge and Trigger Plan:</strong></p><ul><li><p>Once the PRs are approved and merged into the <code>master</code> branch, they trigger a plan in the Terraform workflow.</p></li><li><p>This process is automated to ensure that any changes to the codebase are systematically deployed through a CI/CD pipeline.</p></li></ul></li><li><p><strong><span data-colorid="m8cp4lb6f6">Terraform Apply (Deployment):</span></strong></p><ul><li><p>The approved and merged changes from various branches trigger the <code>terraform apply</code> command, which deploys the infrastructure changes to the cloud.</p></li><li><p>Deployments are made to Azure, Cloudflare, and Auth0 based on the configuration and code present in the repositories.</p></li></ul></li><li><p><strong>User Principal CLI Authentication:</strong></p><ul><li><p>For the CAF Enterprise Scale and Platform repositories, user principal CLI authentication is used to authenticate and authorize the deployment process.</p></li><li><p>This step ensures that only authorized personnel can initiate deployments, adding a layer of security.</p></li></ul></li><li><p><strong>Terraform Remote State:</strong></p><ul><li><p>The graph mentions the use of Terraform remote state, which allows multiple team members to work on the infrastructure without conflicts by storing the state file remotely.</p></li><li><p>This ensures consistency and accuracy of the deployed infrastructure.</p></li></ul></li></ol><h3 id="id-10.learningCIPIaas-Terraform-KeyComponentsandTheirFunctions">Key Components and Their Functions</h3><ol start="1"><li><p><strong>Repositories:</strong></p><ul><li><p><strong>CAF Enterprise Scale</strong>: Manages the enterprise-wide Azure setup and configurations.</p></li><li><p><strong>Infrastructure Platform</strong>: Handles the core infrastructure required for applications.</p></li><li><p><strong>Infrastructure Landing Zones</strong>: Specific zones within the infrastructure that are isolated and managed independently.</p></li><li><p><strong>Direct Infrastructure</strong>: Direct changes and configurations for immediate infrastructure needs.</p></li><li><p><strong>App-specific Repositories</strong>: Infrastructure requirements specific to individual applications.</p></li></ul></li><li><p><strong>Branches and Approval:</strong></p><ul><li><p>Each repository contains multiple branches representing different environments and stages of deployment.</p></li><li><p>Pull requests are used to review and approve changes before merging them into the <code>master</code> branch.</p></li></ul></li><li><p><strong>Deployment Workflow:</strong></p><ul><li><p><strong>Trigger Plan</strong>: Automated plans are triggered when changes are merged.</p></li><li><p><strong>Terraform Apply</strong>: Applies the changes to the specified cloud services, ensuring the infrastructure is updated as per the latest configuration.</p></li></ul></li><li><p><strong>Security and Authentication:</strong></p><ul><li><p>User principal CLI authentication ensures secure access to deploy changes.</p></li><li><p>Operations team approval is required to maintain oversight and control over the infrastructure changes.</p></li></ul></li></ol><p>Template Repo:</p><p><a class="external-link" data-card-appearance="inline" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale" rel="nofollow">https://github.com/Azure/terraform-azurerm-caf-enterprise-scale</a> </p><p>Conceptual Diagram</p><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240625-021811.png" width="1344" loading="lazy" src="attachments/2575237121/2575138860.png?width=1344" data-image-src="attachments/2575237121/2575138860.png" data-height="1510" data-width="2001" data-unresolved-comment-count="0" data-linked-resource-id="2575138860" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240625-021811.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2575237121" data-linked-resource-container-version="5" data-media-id="1f7c2273-6c32-4681-851a-9162984ec9ac" data-media-type="file" /></span><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240625-022022.png" width="1340" loading="lazy" src="attachments/2575237121/2574876821.png?width=1340" data-image-src="attachments/2575237121/2574876821.png" data-height="2784" data-width="5184" data-unresolved-comment-count="0" data-linked-resource-id="2574876821" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240625-022022.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2575237121" data-linked-resource-container-version="5" data-media-id="8650b8c9-9b11-4dbd-ac3e-8d87148712c4" data-media-type="file" /></span><p /><p><a class="external-link" data-card-appearance="inline" href="https://learn.microsoft.com/en-nz/azure/cloud-adoption-framework/ready/enterprise-scale/faq" rel="nofollow">https://learn.microsoft.com/en-nz/azure/cloud-adoption-framework/ready/enterprise-scale/faq</a> </p><p><a class="external-link" data-card-appearance="inline" href="https://learn.microsoft.com/en-us/azure/architecture/landing-zones/terraform/landing-zone-terraform" rel="nofollow">https://learn.microsoft.com/en-us/azure/architecture/landing-zones/terraform/landing-zone-terraform</a> </p><p /><a class="external-link" data-card-appearance="embed" data-layout="wide" data-original-height="480.00" data-original-width="853.34" data-width="100.00" href="https://www.youtube.com/watch?v=PqfIeth62Yg" rel="nofollow">https://www.youtube.com/watch?v=PqfIeth62Yg</a><h1 id="id-10.learningCIPIaas-Terraform-Howdowegetstarted">How do we get started</h1><p>caf-enterprise-scale &gt;&gt; consume module as it is &gt;&gt; configured not customised</p><p>are there any other ways? &gt;&gt; mircosft advice don&rsquo;t customise it.</p><p>they provided a starting example for the things, but i think it is much more complicated for this</p><p /><h1 id="id-10.learningCIPIaas-Terraform-**whatlevelofPermission!!!">** what level of Permission!!!</h1><h2 id="id-10.learningCIPIaas-Terraform-AzurelandingzonesTerraformmodule">Azure landing zones Terraform module</h2><ul><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Home" rel="nofollow"><u>Home</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/User-Guide" rel="nofollow"><u>User guide</u></a></p><ul><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Getting-Started" rel="nofollow"><u>Getting started</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Module-Outputs" rel="nofollow"><u>Module outputs</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Module-Permissions" rel="nofollow"><u>Module permissions</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Module-Variables" rel="nofollow"><u>Module variables</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Module-Releases" rel="nofollow"><u>Module releases</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Module-upgrade-guidance" rel="nofollow"><u>Module upgrade guidance</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Provider-Configuration" rel="nofollow"><u>Provider configuration</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Archetype-Definitions" rel="nofollow"><u>Archetype definitions</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Core-Resources" rel="nofollow"><u>Core resources</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Management-Resources" rel="nofollow"><u>Management resources</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Connectivity-Resources" rel="nofollow"><u>Connectivity resources</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Identity-Resources" rel="nofollow"><u>Identity resources</u></a></p></li></ul></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Video-guides" rel="nofollow"><u>Video guides</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Examples" rel="nofollow"><u>Examples</u></a></p><ul><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Examples#basic-level-100" rel="nofollow"><u>Level 100</u></a></p><ul><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-Default-Configuration" rel="nofollow"><u>Deploy default configuration</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-Demo-Landing-Zone-Archetypes" rel="nofollow"><u>Deploy demo landing zone archetypes</u></a></p></li></ul></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Examples#intermediate-level-200" rel="nofollow"><u>Level 200</u></a></p><ul><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-Custom-Landing-Zone-Archetypes" rel="nofollow"><u>Deploy custom Landing Zone Archetypes</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-Connectivity-Resources" rel="nofollow"><u>Deploy connectivity resources (Hub and Spoke)</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-Virtual-WAN-Resources" rel="nofollow"><u>Deploy connectivity resources (Virtual WAN)</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-Identity-Resources" rel="nofollow"><u>Deploy identity resources</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-Management-Resources" rel="nofollow"><u>Deploy management resources</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Assign-a-Built-in-Policy" rel="nofollow"><u>Assign a built-in policy</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Create-and-Assign-Custom-RBAC-Roles" rel="nofollow"><u>Create and assign custom RBAC roles</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Set-parameter-values-for-Policy-Assignments" rel="nofollow"><u>Set parameter values for Policy Assignments</u></a></p></li></ul></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Examples#advanced-level-300" rel="nofollow"><u>Level 300</u></a></p><ul><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-Connectivity-Resources-With-Custom-Settings" rel="nofollow"><u>Deploy connectivity resources with custom settings (Hub and Spoke)</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-Virtual-WAN-Resources-With-Custom-Settings" rel="nofollow"><u>Deploy connectivity resources with custom settings (Virtual WAN)</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-ZT-Network" rel="nofollow"><u>Deploy with Zero Trust network principles (Hub and Spoke)</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-Identity-Resources-With-Custom-Settings" rel="nofollow"><u>Deploy identity resources with custom settings</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-Management-Resources-With-Custom-Settings" rel="nofollow"><u>Deploy management resources with custom settings</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Expand-Built-in-Archetype-Definitions" rel="nofollow"><u>Expand built-in archetype definitions</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Create-Custom-Policies-Policy-Sets-and-Assignments" rel="nofollow"><u>Create custom policies, initiatives and assignments</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Override-Module-Role-Assignments" rel="nofollow"><u>Override module role assignments</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-policies-without-enforcing-them" rel="nofollow"><u>Control policy enforcement mode</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Configure-Policy-UserAssignedIdentity" rel="nofollow"><u>Policy assignments with user assigned managed identities</u></a></p></li></ul></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Examples#advanced-level-400" rel="nofollow"><u>Level 400</u></a></p><ul><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-Using-Module-Nesting" rel="nofollow"><u>Deploy using module nesting</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-using-multiple-module-declarations-with-orchestration" rel="nofollow"><u>Deploy using multiple module declarations with orchestration</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BExamples%5D-Deploy-using-multiple-module-declarations-with-remote-state" rel="nofollow"><u>Deploy using multiple module declarations with remote state</u></a></p></li></ul></li></ul></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Frequently-Asked-Questions" rel="nofollow"><u>Frequently Asked Questions</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Troubleshooting" rel="nofollow"><u>Troubleshooting</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Contributing" rel="nofollow"><u>Contributing</u></a></p><ul><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Raising-an-Issue" rel="nofollow"><u>Raising an issue</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Feature-Requests" rel="nofollow"><u>Feature requests</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Contributing-to-Code" rel="nofollow"><u>Contributing to code</u></a></p></li><li><p><a class="external-link" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Contributing-to-Documentation" rel="nofollow"><u>Contributing to documentation</u></a></p></li></ul></li></ul><h2 id="id-10.learningCIPIaas-Terraform-https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Module-Permissions"><a class="external-link" data-card-appearance="inline" href="https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Module-Permissions" rel="nofollow">https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Module-Permissions</a> </h2><p /><h2 id="id-10.learningCIPIaas-Terraform-Relatedarticles"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4cb" data-emoji-shortname=":clipboard:" data-emoji-fallback="\uD83D\uDCCB" src="images/icons/emoticons/72/1f4cb.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/>&nbsp;Related articles</h2><p />
+
+
+
+
+
+
+
+
+
+
+
+    
+    <ul class="content-by-label">
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="3021504564" data-linked-resource-type="page" data-linked-resource-version="3" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/3021504564/Power+BI+Dynamic+Subscriptions+Set+Up+Guide">Power BI Dynamic Subscriptions Set Up Guide</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2698248202" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2698248202/10.+Known+Issues+-+Ace+Holdings+Data+at+Month+End">10. Known Issues - Ace Holdings Data at Month End</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2703098031" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2703098031/12.+Minors+turning+18">12. Minors turning 18</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2702376988" data-linked-resource-type="page" data-linked-resource-version="5" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2702376988/11.+CRM+advisers+and+PWAs+complex+relationships">11. CRM advisers and PWAs complex relationships</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2688352258" data-linked-resource-type="page" data-linked-resource-version="7" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2688352258/09.+CIP+0209441Cashman+accounts+balance+report+By+Brenden">09. CIP:0209441Cashman accounts balance report By Brenden</a>
+                        
+                        
+                    </div>
+    </li>
+    </ul>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2575237121/2574909478.png">image-20240625-021538.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2575237121/2575138860.png">image-20240625-021811.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2575237121/2574876821.png">image-20240625-022022.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:52</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

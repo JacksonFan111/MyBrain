@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 21.Knowledge Article: Resolving Sector Data Discrepancies in AXYS and Fusion Systems for CCP.ASX and CCP.LSE</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 21.Knowledge Article: Resolving Sector Data Discrepancies in AXYS and Fusion Systems for CCP.ASX and CCP.LSE
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 23-10-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <style type='text/css'>/*<![CDATA[*/
+div.rbtoc1755550411073 {padding: 0px;}
+div.rbtoc1755550411073 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1755550411073 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style><div class='toc-macro rbtoc1755550411073'>
+<ul class='toc-indentation'>
+<li><a href='#id-21.KnowledgeArticle:ResolvingSectorDataDiscrepanciesinAXYSandFusionSystemsforCCP.ASXandCCP.LSE-Background:'>Background:</a>
+<ul class='toc-indentation'>
+<li><a href='#id-21.KnowledgeArticle:ResolvingSectorDataDiscrepanciesinAXYSandFusionSystemsforCCP.ASXandCCP.LSE-KeyTerms:'>Key Terms:</a></li>
+<li><a href='#id-21.KnowledgeArticle:ResolvingSectorDataDiscrepanciesinAXYSandFusionSystemsforCCP.ASXandCCP.LSE-IssueSummary:'>Issue Summary:</a></li>
+<li><a href='#id-21.KnowledgeArticle:ResolvingSectorDataDiscrepanciesinAXYSandFusionSystemsforCCP.ASXandCCP.LSE-RootCause:'>Root Cause:</a></li>
+<li><a href='#id-21.KnowledgeArticle:ResolvingSectorDataDiscrepanciesinAXYSandFusionSystemsforCCP.ASXandCCP.LSE-ResolutionSteps:'>Resolution Steps:</a></li>
+<li><a href='#id-21.KnowledgeArticle:ResolvingSectorDataDiscrepanciesinAXYSandFusionSystemsforCCP.ASXandCCP.LSE-FutureActionsandGuidelinesforDevelopers:'>Future Actions and Guidelines for Developers:</a></li>
+<li><a href='#id-21.KnowledgeArticle:ResolvingSectorDataDiscrepanciesinAXYSandFusionSystemsforCCP.ASXandCCP.LSE-ExampleCase:'>Example Case:</a></li>
+</ul>
+</li>
+</ul>
+</div><h1 id="id-21.KnowledgeArticle:ResolvingSectorDataDiscrepanciesinAXYSandFusionSystemsforCCP.ASXandCCP.LSE-Background:">Background:</h1><p>Contacts: <strong>Kylie Frappell </strong>Custodial &amp; Portfolio Reporting Manager</p><p>This article provides a clear process for addressing the data discrepancies observed between the <strong>ARM (Asset Register Maintenance)</strong> system, which uses the <strong>Fusion</strong> database, and the <strong>AXYS/Portfolio Reporting (AP)</strong> system. AXYS is an older in-house system, originally developed by Richard Newton and Hugh. Despite their departure, Richard still offers insights as needed, though the system's data flow can be convoluted.</p><p>In 2024, a Portfolio Reporting Administrator, Cherry Ninon, raised an issue regarding an incorrect sector code for <strong>CCP.ASX</strong> in AXYS. After investigation, it became clear that even though the sector information was correct in ARM (Fusion), AXYS incorrectly listed CCP.ASX as &quot;International Equities&quot; instead of &quot;Australian Equities.&quot;</p><p>The <strong>root cause</strong> of the issue lies in the<strong><span style="background-color: rgb(211,241,167);"> AXYS setup and its synchronization process</span></strong>, where changes made in the AXYS application are not fully reflected in the <strong>AACPR</strong> database (the AP/Portfolio Reporting side), which is used for daily reporting.</p><p>  </p><p class="media-group"><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/2793799851/2794520584.sql" data-nice-type="null" data-file-src="/wiki/download/attachments/2793799851/No%203%20Test%20script%20-%20identify%20potential%20duplciatin%20from%20AXYS.sql?version=1&amp;modificationDate=1729720470422&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="2794520584" data-linked-resource-type="attachment" data-linked-resource-container-id="2793799851" data-linked-resource-default-alias="No 3 Test script - identify potential duplciatin from AXYS.sql" data-mime-type="binary/octet-stream" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="017d8b80-d7b6-4641-8b15-b09812c12c79" data-media-type="file"><img src="attachments/thumbnails/2793799851/2794520584" height="250"/></a></span></p><p class="media-group"><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/2793799851/2794881031.sql" data-nice-type="null" data-file-src="/wiki/download/attachments/2793799851/ARM-AP%20asset%20sector%20rec%20-%20Original%20Scripts%20-%20By%20Chris%20A.sql?version=1&amp;modificationDate=1729720483021&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="2794881031" data-linked-resource-type="attachment" data-linked-resource-container-id="2793799851" data-linked-resource-default-alias="ARM-AP asset sector rec - Original Scripts - By Chris A.sql" data-mime-type="binary/octet-stream" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="08045ae4-a17c-4719-8b03-965408a7ffbd" data-media-type="file"><img src="attachments/thumbnails/2793799851/2794881031" height="250"/></a></span></p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20241023-215242.png" width="760" loading="lazy" src="attachments/2793799851/2794881025.png?width=760" data-image-src="attachments/2793799851/2794881025.png" data-height="137" data-width="841" data-unresolved-comment-count="0" data-linked-resource-id="2794881025" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20241023-215242.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2793799851" data-linked-resource-container-version="3" data-media-id="a0c5279e-2e49-4d53-9da5-d81ca4c06c13" data-media-type="file"></span><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20241023-215232.png" width="760" loading="lazy" src="attachments/2793799851/2794782727.png?width=760" data-image-src="attachments/2793799851/2794782727.png" data-height="100" data-width="827" data-unresolved-comment-count="0" data-linked-resource-id="2794782727" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20241023-215232.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2793799851" data-linked-resource-container-version="3" data-media-id="e8fa0c06-95df-400d-b79e-812b80b869e4" data-media-type="file"></span><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20241023-215248.png" width="760" loading="lazy" src="attachments/2793799851/2794553349.png?width=760" data-image-src="attachments/2793799851/2794553349.png" data-height="151" data-width="1497" data-unresolved-comment-count="0" data-linked-resource-id="2794553349" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20241023-215248.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2793799851" data-linked-resource-container-version="3" data-media-id="2dd4bb06-1d70-460e-92b1-eeaaae2875a1" data-media-type="file"></span><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20241023-215254.png" width="760" loading="lazy" src="attachments/2793799851/2794520578.png?width=760" data-image-src="attachments/2793799851/2794520578.png" data-height="34" data-width="1054" data-unresolved-comment-count="0" data-linked-resource-id="2794520578" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20241023-215254.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2793799851" data-linked-resource-container-version="3" data-media-id="375e943e-7cf7-495f-bf2a-661262b4ba93" data-media-type="file"></span><p /><hr/><h3 id="id-21.KnowledgeArticle:ResolvingSectorDataDiscrepanciesinAXYSandFusionSystemsforCCP.ASXandCCP.LSE-KeyTerms:">Key Terms:</h3><ul><li><p><strong>ARM (Asset Register Maintenance)</strong>: The system that interacts with the Fusion database and is considered the <strong>source of truth</strong> for securities information.</p></li><li><p><strong>AXYS/Portfolio Reporting (AP)</strong>: An in-house portfolio reporting system where discrepancies have been identified. It uses AACPR, AACAXYS, AACEI as DB and BizTalk to migrate data.</p></li><li><p><strong>AACPR</strong>: The database where client data from AXYS and other systems (AACEI and AACPR) is stored and reported on.</p></li><li><p><strong>BizTalk</strong>: The integration service that migrates and synchronizes data between the AXYS application and the AACPR database.</p></li><li><p><strong>SEDOL (Stock Exchange Daily Official List)</strong>: Unique identifiers for securities.</p></li><li><p><strong>ISIN (International Securities Identification Number)</strong>: Unique identifiers used to track securities.</p></li></ul><hr/><h3 id="id-21.KnowledgeArticle:ResolvingSectorDataDiscrepanciesinAXYSandFusionSystemsforCCP.ASXandCCP.LSE-IssueSummary:">Issue Summary:</h3><p>The issue was identified with <strong>CCP.ASX (Asset ID: 134420)</strong>, where its sector classification in <strong>AXYS</strong> was incorrectly listed as <strong>International Equities</strong>, while in <strong>Fusion (ARM)</strong>, it was correctly listed as <strong>Australian Equities</strong>. This caused a discrepancy in portfolio reports. Even though AXYS data was updated later to <strong>CCP.LSE</strong>, the changes were not reflected in the AACPR database due to BizTalk's failure to synchronize the update.</p><hr/><h3 id="id-21.KnowledgeArticle:ResolvingSectorDataDiscrepanciesinAXYSandFusionSystemsforCCP.ASXandCCP.LSE-RootCause:">Root Cause:</h3><ol start="1"><li><p><strong>Non-Unique Security Code Setup</strong>: </p><ul><li><p>In AXYS, the combination of <strong>Security Code</strong> and <strong>Exchange Code</strong> is not unique. This means that the same Asset ID can be entered multiple times with different exchanges, leading to potential errors.</p></li></ul></li><li><p><strong>User Entry Error</strong>: </p><ul><li><p>The user initially entered <strong>CCP.ASX</strong> (Asset ID: 134420) with the incorrect sector <strong>International Equities</strong> in the AXYS system, and this data was migrated to AACPR through BizTalk, leading to duplicated entries.</p></li></ul></li><li><p><strong>Manual Correction in AXYS</strong>: </p><ul><li><p>After realizing the mistake, the user manually updated AXYS to change <strong>CCP.ASX</strong> to <strong>CCP.LSE</strong> with the correct sector <strong>International Equities</strong>. However, the changes did not propagate to the AACPR database due to an incomplete data sync via BizTalk.</p></li></ul></li><li><p><strong>Mismatch in Reporting</strong>: </p><ul><li><p>The <strong>ARM-AP Daily Report</strong> compares the sector data between Fusion (ARM) and AXYS (AACPR). Since the incorrect sector was still stored in AACPR, the report flagged a discrepancy between <strong>CCP.ASX</strong> and <strong>CCP.LSE</strong>.</p></li></ul></li></ol><hr/><h3 id="id-21.KnowledgeArticle:ResolvingSectorDataDiscrepanciesinAXYSandFusionSystemsforCCP.ASXandCCP.LSE-ResolutionSteps:">Resolution Steps:</h3><ol start="1"><li><p><strong>Update AXYS Sector Classification</strong>:</p><ul><li><p>The issue resides in the <strong>AXYS/Portfolio Reporting (AP)</strong> system. The correct <strong>sector classification</strong> should be set manually using the <strong>Daily Report Editor</strong> tool.</p></li><li><p>To fix the discrepancy, the following updates are needed:</p><ul><li><p><strong>Asset ID: 134420</strong> should be changed from <strong>CCP.ASX</strong> (International Equities) to <strong>CCP.LSE</strong> with the correct sector <strong>Australian Equities</strong> in <strong>Daily Report Editor</strong>.</p></li><li><p>Additionally, update the incorrect <strong>SEDOL code 6287658</strong> to <strong>0433918</strong> for <strong>CCP.LSE</strong>.</p></li></ul></li></ul></li><li><p><strong>Validation</strong>:</p><ul><li><p>After making these updates in the <strong>Daily Report Editor</strong>, wait for the next data synchronization (usually overnight) for the changes to reflect in the <strong>AACPR</strong> database.</p></li><li><p>Validate the updated information in AXYS, and verify that the <strong>ARM-AP Daily Report</strong> shows the correct sector classification (matching Fusion data).</p></li></ul></li><li><p><strong>Consult IT or Backend Team if the Sync Fails</strong>:</p><ul><li><p>If the updates do not reflect after the overnight sync, consult the IT or backend team to check BizTalk configuration or other underlying issues in the data migration process.</p></li></ul></li></ol><hr/><h3 id="id-21.KnowledgeArticle:ResolvingSectorDataDiscrepanciesinAXYSandFusionSystemsforCCP.ASXandCCP.LSE-FutureActionsandGuidelinesforDevelopers:">Future Actions and Guidelines for Developers:</h3><ul><li><p><strong>ARM (Fusion) as the Source of Truth</strong>: Always consider <strong>Fusion (ARM)</strong> as the authoritative source when investigating data discrepancies. Errors usually stem from the AXYS/Portfolio Reporting (AP) system.</p></li><li><p><strong>BizTalk Sync</strong>: Be aware that <strong>BizTalk</strong> is responsible for syncing data from AXYS to AACPR. If discrepancies persist even after correcting the AXYS data, the issue may be with BizTalk's synchronization process.</p></li><li><p><strong>Redirect User Tickets</strong>: </p><ul><li><p>If similar discrepancies occur in the future, redirect the end user to their own team and provide them with this knowledge article for reference. They should use the <strong>Daily Report Editor</strong> to correct sector classification issues in AXYS.</p></li><li><p>Encourage users to consult their Confluence page for more guidance: <a href="https://craigsip.atlassian.net/wiki/spaces/PRO/pages/1808302122/Securities" data-linked-resource-id="1808302122" data-linked-resource-version="8" data-linked-resource-type="page">Link to Confluence Space</a>.</p></li></ul></li><li><p><strong>No Direct Database Access</strong>: </p><ul><li><p>The data team does not have direct access to update the AACPR database. Any necessary updates must be made through the <strong>Daily Report Editor</strong> by the end user (e.g., Kylie Frappell from Custodial &amp; Portfolio Reporting).</p></li></ul></li></ul><hr/><h3 id="id-21.KnowledgeArticle:ResolvingSectorDataDiscrepanciesinAXYSandFusionSystemsforCCP.ASXandCCP.LSE-ExampleCase:">Example Case:</h3><ul><li><p><strong>Asset</strong>: CCP.ASX (needs to be updated to CCP.LSE)  </p></li><li><p><strong>Asset ID</strong>: 134420  </p></li><li><p><strong>Incorrect Sector in AXYS</strong>: International Equities  </p></li><li><p><strong>Correct Sector in Fusion</strong>: Australian Equities  </p></li><li><p><strong>Required Action</strong>: Update <strong>Daily Report Editor</strong> to reflect the correct data and allow BizTalk to sync the changes. </p></li></ul>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2793799851/2794389511.png">image-20241023-213954.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2793799851/2793668805.png">image-20241023-214349.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2793799851/2793832592.png">image-20241023-214407.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2793799851/2793832598.png">image-20241023-214411.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2793799851/2794782727.png">image-20241023-215232.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2793799851/2794881025.png">image-20241023-215242.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2793799851/2794553349.png">image-20241023-215248.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2793799851/2794520578.png">image-20241023-215254.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2793799851/2794520584.sql">No 3 Test script - identify potential duplciatin from AXYS.sql</a> (binary/octet-stream)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2793799851/2794881031.sql">ARM-AP asset sector rec - Original Scripts - By Chris A.sql</a> (binary/octet-stream)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

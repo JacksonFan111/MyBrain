@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 12. Minors turning 18</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 12. Minors turning 18
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 16-09-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>To design an SSRS (SQL Server Reporting Services) data-driven subscription that sends out a list of minors turning 18 to each adviser on the first of each month, we'll need to set up two key components:</p><ol start="1"><li><p><strong>Main Report Dataset</strong>: This dataset fetches the list of minors turning 18, along with their advisers' details.</p></li><li><p><strong>Subscription Dataset</strong>: This dataset provides the list of advisers with their email addresses, which SSRS will use to send the reports.</p></li></ol><p>Below are the detailed steps to achieve this:</p><hr/><h3 id="id-12.Minorsturning18-1.AdjusttheMainReportDataset"><strong>1. Adjust the Main Report Dataset</strong></h3><p>First, we need to modify your existing SQL query to ensure it meets the requirements:</p><ul><li><p><strong>Filter minors turning 18 within a specific time frame (e.g., within the next three months).</strong></p></li><li><p><strong>Ensure the query is parameterized to filter data per adviser.</strong></p></li></ul><h4 id="id-12.Minorsturning18-ModifiedSQLQuery:"><strong>Modified SQL Query:</strong></h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Declare a parameter for Adviser SystemUserId
+DECLARE @AdviserId UNIQUEIDENTIFIER = @AdviserIdParam; -- This will be passed from the subscription dataset
+
+SELECT DISTINCT
+    -- Existing select columns...
+    -- (Include all the columns you have in your original query)
+    
+FROM 
+    CRM_MSCRM.dbo.[Contact] c
+INNER JOIN 
+    CRM_MSCRM.dbo.[dsl_rolesBase] r ON c.ContactId = r.dsl_IndividualId
+INNER JOIN 
+    CRM_MSCRM.dbo.[Account] a ON a.accountID = r.dsl_TradingEntityId
+-- Other joins...
+
+-- Filter for minors turning 18 in the next three months
+WHERE  
+    tet.Value = &#39;Minor Under 18 yrs&#39;
+    AND rt.dsl_name = &#39;Minor&#39;
+    AND DATEDIFF(MONTH, GETDATE(), DATEADD(YEAR, 18, c.BirthDate)) BETWEEN 0 AND 3
+    AND tes.Value &lt;&gt; &#39;Closed&#39;
+    AND SMC.value = &#39;Client&#39;
+    AND a.dsl_PrimaryAdviserId = @AdviserId -- Filter by AdviserId
+ORDER BY 
+    c.BirthDate ASC;</pre>
+</div></div><p><strong>Notes:</strong></p><ul><li><p><strong>Parameterized Query</strong>: Introduce a parameter <code>@AdviserIdParam</code> to filter minors per adviser.</p></li><li><p><strong>Time Frame Filtering</strong>: Adjust the <code>WHERE</code> clause to include minors turning 18 in the next three months.</p></li><li><p><strong>Adviser Filtering</strong>: Ensure the query filters data based on the adviser linked to the minors.</p></li></ul><hr/><h3 id="id-12.Minorsturning18-2.CreatetheSubscriptionDataset"><strong>2. Create the Subscription Dataset</strong></h3><p>This dataset retrieves the list of advisers who will receive the reports.</p><h4 id="id-12.Minorsturning18-SubscriptionDatasetSQLQuery:"><strong>Subscription Dataset SQL Query:</strong></h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT
+    su.SystemUserId AS AdviserId,       -- Adviser ID to pass as a parameter
+    su.FullName AS AdviserName,         -- Adviser&#39;s Name
+    su.InternalEMailAddress AS Email    -- Adviser&#39;s Email Address
+FROM 
+    CRM_MSCRM.dbo.SystemUser su
+INNER JOIN 
+    CRM_MSCRM.dbo.Account a ON su.SystemUserId = a.dsl_PrimaryAdviserId
+INNER JOIN 
+    CRM_MSCRM.dbo.[dsl_rolesBase] r ON a.AccountId = r.dsl_TradingEntityId
+INNER JOIN 
+    CRM_MSCRM.dbo.[Contact] c ON r.dsl_IndividualId = c.ContactId
+INNER JOIN 
+    CRM_MSCRM.dbo.StringMap tet ON tet.ObjectTypeCode = 1 
+        AND a.dsl_TradingEntityType = tet.AttributeValue 
+        AND tet.AttributeName = &#39;dsl_TradingEntityType&#39;
+WHERE
+    tet.Value = &#39;Minor Under 18 yrs&#39;
+    AND DATEDIFF(MONTH, GETDATE(), DATEADD(YEAR, 18, c.BirthDate)) BETWEEN 0 AND 3
+    AND su.InternalEMailAddress IS NOT NULL;</pre>
+</div></div><p><strong>Notes:</strong></p><ul><li><p><strong>Unique Advisers</strong>: Use <code>DISTINCT</code> to get a unique list of advisers who have minors turning 18 in the next three months.</p></li><li><p><strong>Valid Emails</strong>: Ensure advisers have a valid email address.</p></li></ul><hr/><h3 id="id-12.Minorsturning18-3.ConfiguretheSSRSData-DrivenSubscription"><strong>3. Configure the SSRS Data-Driven Subscription</strong></h3><p>Now, set up the data-driven subscription in SSRS using the two datasets.</p><h4 id="id-12.Minorsturning18-Steps:"><strong>Steps:</strong></h4><ol start="1"><li><p><strong>Open the Report Manager</strong>: Navigate to the SSRS report you want to subscribe to.</p></li><li><p><strong>Create a New Data-Driven Subscription</strong>:</p><ul><li><p>Click on <strong>Subscriptions</strong> and then <strong>New Data-driven Subscription</strong>.</p></li></ul></li><li><p><strong>Specify the Delivery Method</strong>:</p><ul><li><p>Choose <strong>E-mail</strong> as the delivery method.</p></li></ul></li><li><p><strong>Define the Subscription Dataset</strong>:</p><ul><li><p>Set the data source to your database.</p></li><li><p>Paste the <strong>Subscription Dataset SQL Query</strong> into the query box.</p></li><li><p>Validate the query.</p></li></ul></li><li><p><strong>Map the Subscription Fields</strong>:</p><ul><li><p><strong>To</strong>: Set to <code>Email</code> from your subscription dataset.</p></li><li><p><strong>Subject</strong>: Set as desired, e.g., <code>&quot;List of Minors Turning 18 - @AdviserName&quot;</code>.</p></li><li><p><strong>Render Format</strong>: Choose the desired format (e.g., PDF, Excel).</p></li><li><p><strong>Include Report</strong>: Ensure this is checked.</p></li><li><p><strong>Priority</strong>: Set as needed.</p></li></ul></li><li><p><strong>Set Report Parameters</strong>:</p><ul><li><p>Map the <code>@AdviserIdParam</code> in your main report dataset to <code>AdviserId</code> from your subscription dataset.</p></li></ul></li><li><p><strong>Schedule the Subscription</strong>:</p><ul><li><p>Set the schedule to run on the <strong>first of each month</strong>.</p></li></ul></li><li><p><strong>Complete the Subscription Setup</strong>:</p><ul><li><p>Review the settings.</p></li><li><p>Save the subscription.</p></li></ul></li></ol><hr/><h3 id="id-12.Minorsturning18-4.TesttheSubscription"><strong>4. Test the Subscription</strong></h3><p>Before deploying, it's crucial to test the setup.</p><h4 id="id-12.Minorsturning18-TestingSteps:"><strong>Testing Steps:</strong></h4><ol start="1"><li><p><strong>Run the Subscription Manually</strong>:</p><ul><li><p>Trigger the subscription to run immediately.</p></li><li><p>Verify that advisers receive emails with the correct data.</p></li></ul></li><li><p><strong>Check the Report Output</strong>:</p><ul><li><p>Ensure the report lists only the minors associated with each adviser.</p></li><li><p>Verify the time frame (minors turning 18 in the next three months).</p></li></ul></li><li><p><strong>Validate Email Delivery</strong>:</p><ul><li><p>Confirm that emails are sent to the correct email addresses.</p></li><li><p>Check for any delivery failures or errors.</p></li></ul></li></ol><hr/><h3 id="id-12.Minorsturning18-5.DeployandMonitor"><strong>5. Deploy and Monitor</strong></h3><p>After testing:</p><ul><li><p><strong>Deploy the Subscription</strong>: Ensure it's scheduled and will run automatically on the first of each month.</p></li><li><p><strong>Monitor Initial Runs</strong>: Keep an eye on the subscription's first few runs to ensure everything functions smoothly.</p></li><li><p><strong>Handle Errors</strong>: Set up notifications for any subscription errors or failures.</p></li></ul><hr/><h3 id="id-12.Minorsturning18-AdditionalConsiderations"><strong>Additional Considerations</strong></h3><ul><li><p><strong>Handling No Data Scenarios</strong>: If an adviser has no minors turning 18 in the next three months, decide whether to send an email notifying them or suppress the email.</p></li><li><p><strong>Email Template Customization</strong>: Customize the email body to include instructions or additional information.</p></li><li><p><strong>Security</strong>: Ensure that data access permissions are appropriately set so that advisers only receive data pertinent to them.</p></li><li><p><strong>Data Refresh</strong>: Make sure the data warehouse or CRM system is updated before the subscription runs, so the reports have the latest data.</p></li></ul><hr/><h3 id="id-12.Minorsturning18-Summary"><strong>Summary</strong></h3><p>By parameterizing your main report dataset and creating a subscription dataset that lists all advisers with minors turning 18 soon, you can leverage SSRS's data-driven subscriptions to automate the delivery of these reports. Each adviser will receive an email on the first of each month with a report detailing the minors they are responsible for who are nearing the age of 18.</p><p>This setup ensures timely communication and allows advisers to take any necessary actions as their clients reach adulthood.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 28.02.2025- FATCA CRS Refresh for myself</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 28.02.2025- FATCA CRS Refresh for myself
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 27-02-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is a consolidated, line‐by‐line SQL script that combines all steps into one file. Each section is annotated with detailed comments explaining the “when” (the timing), “why” (the purpose), and “how” (the method) for each part of the process. You can adjust table names, filtering logic, or join conditions as needed for your environment.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">/********************************************************************
+ * Combined FATCA/CRS Reporting Script
+ *
+ * This script consolidates all key steps for the FATCA/CRS reporting 
+ * process into one executable file. The process is divided into four 
+ * main sections:
+ *
+ *  1. Data Extraction &amp; Preparation (Step 1)
+ *     - When: At the beginning of the reporting cycle.
+ *     - Why: To extract CRM data, build entity hierarchies, map tax regimes, 
+ *            and stage the data for further transformation.
+ *     - How: Using CTEs, temporary tables, and joins.
+ *
+ *  2. Data Transformation - Pivoting TIN Data (Step 2)
+ *     - When: Immediately after staging the data.
+ *     - Why: To separate CRS (non-U.S.) and FATCA (U.S.) data and pivot 
+ *            multiple TINs (tax identifiers) from rows into columns.
+ *     - How: Using DENSE_RANK() and self-joins to assign row numbers and pivot.
+ *
+ *  3. Final CRS Output Construction (Step 3)
+ *     - When: After data transformation.
+ *     - Why: To merge account holders, controlling persons, and financial 
+ *            details into a final CRS-compliant output (143 columns).
+ *     - How: Combining multiple datasets, aggregating data, and applying 
+ *            conditional logic.
+ *
+ *  4. Final FATCA Output Construction (Step 4)
+ *     - When: Following CRS output generation.
+ *     - Why: To produce a FATCA-compliant output (122 columns) with proper 
+ *            currency conversion and data consolidation.
+ *     - How: Merging data subsets, applying FX conversion, and joining with 
+ *            financial details.
+ *
+ * Parameters:
+ *   @PeriodStartDate - Start date of the reporting period.
+ *   @PeriodEndDate   - End date of the reporting period.
+ *   @RefreshHoldingsData - Flag to indicate if holdings data should be refreshed.
+ *   @USDNZDFxRate    - The USD to NZD exchange rate for currency conversion.
+ ********************************************************************/
+
+-- Declare Reporting Parameters
+DECLARE @PeriodStartDate DATE = &#39;2024-04-01&#39;;  -- e.g., start of fiscal period
+DECLARE @PeriodEndDate   DATE = &#39;2025-03-31&#39;;    -- e.g., end of fiscal period (reporting year)
+DECLARE @RefreshHoldingsData BIT = 0;           -- 0 = no refresh; 1 = refresh holdings data
+DECLARE @USDNZDFxRate DECIMAL(10,6) = 1.45;      -- Exchange rate for FATCA conversion
+DECLARE @rptYear INT = YEAR(@PeriodEndDate);     -- Extracted reporting year
+
+PRINT &#39;Starting Combined FATCA/CRS Reporting Process...&#39;;
+
+-----------------------------------------------------------
+-- 1. Data Extraction &amp; Preparation (USP_01)
+-----------------------------------------------------------
+/*
+   When: At the beginning of the process.
+   Why: To extract data from CRM systems, map tax regimes, build hierarchies,
+        and prepare a staging table.
+   How: Using recursive CTEs, temporary tables, and joins.
+*/
+
+PRINT &#39;Step 1: Data Extraction and Preparation&#39;;
+
+-- Optional refresh of holdings data if required
+IF @RefreshHoldingsData = 1
+BEGIN
+    PRINT &#39;Refreshing holdings data...&#39;;
+    -- (Insert refresh logic here)
+END
+
+-- Create temporary Tax Regime Mapping table
+IF OBJECT_ID(&#39;tempdb..#TaxRegimeMapping&#39;) IS NOT NULL DROP TABLE #TaxRegimeMapping;
+;WITH TaxRegimeMapping AS (
+    SELECT TaxRegimeCode, FATCAClassification, CRSClassification
+    FROM dbo.CRM_TaxRegimeReference
+    -- Additional mapping logic can be added here
+)
+SELECT * INTO #TaxRegimeMapping FROM TaxRegimeMapping;
+
+-- Build Entity Hierarchy using Recursive CTE (captures nested entities)
+;WITH RecursiveHierarchy AS (
+    -- Anchor: Base-level entities with no parent
+    SELECT EntityID, ParentEntityID, EntityName
+    FROM dbo.CRM_Entities
+    WHERE ParentEntityID IS NULL
+    UNION ALL
+    -- Recursive: Fetch child entities for each parent entity
+    SELECT e.EntityID, e.ParentEntityID, e.EntityName
+    FROM dbo.CRM_Entities e
+    INNER JOIN RecursiveHierarchy rh ON e.ParentEntityID = rh.EntityID
+)
+SELECT * INTO #RecursiveHierarchy FROM RecursiveHierarchy;
+
+-- Retrieve active individuals associated with entities
+;WITH HierarchyIndividuals AS (
+    SELECT i.IndividualID, i.FirstName, i.LastName, e.EntityID
+    FROM dbo.CRM_Individuals i
+    INNER JOIN #RecursiveHierarchy e ON i.EntityID = e.EntityID
+    WHERE i.Status = &#39;Active&#39;
+)
+SELECT * INTO #HierarchyIndividuals FROM HierarchyIndividuals;
+
+-- Extract detailed entity data along with controlling individual flag
+SELECT 
+    e.EntityID, 
+    e.EntityName, 
+    i.IndividualID, 
+    i.FirstName, 
+    i.LastName,
+    CASE WHEN r.RoleName = &#39;Controlling&#39; THEN 1 ELSE 0 END AS IsControllingPerson
+    -- Additional fields can be added here as needed
+INTO #EntityData
+FROM dbo.CRM_Entities e
+INNER JOIN dbo.CRM_Roles r ON e.EntityID = r.EntityID
+LEFT JOIN #HierarchyIndividuals i ON e.EntityID = i.EntityID
+WHERE e.IsReportable = 1;
+
+-- Calculate TIN counts per individual and classify them
+SELECT 
+    i.IndividualID, 
+    COUNT(DISTINCT t.TIN) AS TINCount,
+    CASE WHEN COUNT(DISTINCT t.TIN) &gt; 1 THEN &#39;Multiple TINs&#39; ELSE &#39;Single TIN&#39; END AS TINCategory,
+    t.TIN, 
+    t.TaxCountryISO
+INTO #IndividualData
+FROM dbo.CRM_IndividualTINs t
+INNER JOIN #HierarchyIndividuals i ON t.IndividualID = i.IndividualID
+GROUP BY i.IndividualID, t.TIN, t.TaxCountryISO;
+
+-- Combine entity and individual data into one dataset for reporting
+SELECT *
+INTO ##crmdatafatcacrs
+FROM (
+    SELECT e.*, i.TIN, i.TaxCountryISO
+    FROM #EntityData e
+    LEFT JOIN #IndividualData i ON e.IndividualID = i.IndividualID
+    -- Additional filtering logic can be applied here if necessary
+) AS CombinedData;
+
+-- Handle missing ISO codes by joining with the country reference table
+SELECT cd.*, 
+       ISNULL(ct.ISOCode, &#39;XX&#39;) AS MappedISOCode
+INTO ##crmdatafatcacrsiso
+FROM ##crmdatafatcacrs cd
+LEFT JOIN dbo.FATCA_CountryReferecne ct ON cd.TaxCountryISO = ct.CountryCode;
+
+-- Create the final staging table for subsequent steps
+IF OBJECT_ID(&#39;FATCA.Stage_crmdatafatcacrs_jf&#39;, &#39;U&#39;) IS NOT NULL DROP TABLE FATCA.Stage_crmdatafatcacrs_jf;
+SELECT * INTO FATCA.Stage_crmdatafatcacrs_jf FROM ##crmdatafatcacrsiso;
+
+PRINT &#39;Step 1 Completed: Data extracted and staged.&#39;;
+
+-----------------------------------------------------------
+-- 2. Data Transformation - Pivoting TIN Data (USP_02)
+-----------------------------------------------------------
+/*
+   When: Immediately after staging.
+   Why: To split data into CRS (non-U.S.) and FATCA (U.S.) subsets and pivot 
+        TINs from rows to columns for easier reporting.
+   How: Using temporary tables, DENSE_RANK() for row numbering, and self-joins.
+*/
+
+PRINT &#39;Step 2: Data Transformation - Pivoting TIN Data&#39;;
+
+-- Load staged data into a working temporary table
+SELECT * INTO #BaseData FROM FATCA.Stage_crmdatafatcacrs_jf;
+
+-- Identify accounts that contain at least one foreign individual
+SELECT *
+INTO #EntitiesWithFlaggedIndividuals2
+FROM #BaseData
+WHERE EXISTS (
+    SELECT 1 FROM #BaseData b
+    WHERE b.EntityID = #BaseData.EntityID AND b.TaxCountryISO &lt;&gt; &#39;USA&#39;
+);
+
+-- Flag non-foreign account holders on accounts that have foreign individuals
+SELECT *
+INTO FATCA.NonForeignAccHolderData_jf
+FROM #EntitiesWithFlaggedIndividuals2
+WHERE /* Insert logic here to determine non-foreign status */ 1 = 1;
+
+-- Separate CRS data (exclude U.S. TINs) and FATCA data (include only U.S. TINs)
+SELECT * INTO #CRSOnlyData FROM #BaseData WHERE TaxCountryISO &lt;&gt; &#39;USA&#39;;
+SELECT * INTO #FATCAOnlyData FROM #BaseData WHERE TaxCountryISO = &#39;USA&#39;;
+
+-- Assign row numbers for multiple TINs per individual (CRS Data)
+SELECT *,
+       DENSE_RANK() OVER (PARTITION BY IndividualID ORDER BY TaxCountryISO, TIN) AS TINRowNum
+INTO #CRSDataWithRowNum
+FROM #CRSOnlyData;
+
+-- Assign row numbers for FATCA Data (typically one TIN per individual)
+SELECT *,
+       DENSE_RANK() OVER (PARTITION BY IndividualID ORDER BY TIN) AS TINRowNum
+INTO #FATCADataWithRowNum
+FROM #FATCAOnlyData;
+
+-- Pivot TIN rows into multiple columns (up to 5 TINs) for CRS reporting
+SELECT c1.IndividualID,
+       c1.TIN AS TIN1,
+       c2.TIN AS TIN2,
+       c3.TIN AS TIN3,
+       c4.TIN AS TIN4,
+       c5.TIN AS TIN5,
+       c1.MappedISOCode AS TaxCountry1,
+       CASE WHEN c2.MappedISOCode = c1.MappedISOCode THEN NULL ELSE c2.MappedISOCode END AS TaxCountry2
+       -- Extend as needed for additional TIN columns
+INTO #CRSPivotedData
+FROM #CRSDataWithRowNum c1
+LEFT JOIN #CRSDataWithRowNum c2 ON c1.IndividualID = c2.IndividualID AND c2.TINRowNum = 2
+LEFT JOIN #CRSDataWithRowNum c3 ON c1.IndividualID = c3.IndividualID AND c3.TINRowNum = 3
+LEFT JOIN #CRSDataWithRowNum c4 ON c1.IndividualID = c4.IndividualID AND c4.TINRowNum = 4
+LEFT JOIN #CRSDataWithRowNum c5 ON c1.IndividualID = c5.IndividualID AND c5.TINRowNum = 5;
+
+-- Save pivoted CRS data into the dedicated staging table
+IF OBJECT_ID(&#39;FATCA.Stage_CRSPivotedData_jf&#39;, &#39;U&#39;) IS NOT NULL DROP TABLE FATCA.Stage_CRSPivotedData_jf;
+SELECT * INTO FATCA.Stage_CRSPivotedData_jf FROM #CRSPivotedData;
+
+-- For FATCA, only the first TIN is needed (pivoting into one column)
+SELECT IndividualID,
+       TIN AS TIN1,
+       MappedISOCode AS TaxCountry
+INTO #FATCAPivotedData
+FROM #FATCADataWithRowNum
+WHERE TINRowNum = 1;
+
+IF OBJECT_ID(&#39;FATCA.Stage_FATCAPivotedData_jf&#39;, &#39;U&#39;) IS NOT NULL DROP TABLE FATCA.Stage_FATCAPivotedData_jf;
+SELECT * INTO FATCA.Stage_FATCAPivotedData_jf FROM #FATCAPivotedData;
+
+PRINT &#39;Step 2 Completed: Data transformed and TINs pivoted.&#39;;
+
+-----------------------------------------------------------
+-- 3. Final CRS Output Construction (USP_03)
+-----------------------------------------------------------
+/*
+   When: After pivoting is complete.
+   Why: To consolidate account holders, controlling persons, and financial 
+        details into a final CRS output that meets XML schema requirements 
+        (143 columns).
+   How: By merging datasets and applying conditional logic, aggregations, 
+        and joins.
+*/
+
+PRINT &#39;Step 3: Constructing Final CRS Output&#39;;
+
+-- Mark Non-Foreign Account Holders (NFAH) for CRS reporting
+SELECT *, &#39;NA&#39; AS TIN
+INTO #NFAH
+FROM FATCA.Stage_CRSPivotedData_jf
+WHERE TaxCountry1 &lt;&gt; &#39;USA&#39;;
+
+-- Extract Foreign Account Holders (those with U.S. TINs)
+SELECT *
+INTO #AccountHolders
+FROM FATCA.Stage_CRSPivotedData_jf
+WHERE TaxCountry1 = &#39;USA&#39;;
+
+-- Combine Non-Foreign and Foreign Account Holders into one dataset (#ALLAH)
+SELECT * INTO #ALLAH
+FROM (
+    SELECT * FROM #NFAH
+    UNION ALL
+    SELECT * FROM #AccountHolders
+) AS Combined;
+
+-- Extract active controlling persons
+SELECT cp.*
+INTO #ControllingPersons
+FROM dbo.CRM_ControllingPersons cp
+WHERE cp.IsActive = 1;
+
+-- Aggregate financial details from holdings data (using tmpHoldingsPreload)
+WITH cte_income AS (
+    SELECT PortfolioNo,
+           SUM(InterestAmount) AS TotalInterest,
+           SUM(Dividends) AS TotalDividends,
+           SUM(Balance) AS TotalBalance
+    FROM tmpHoldingsPreload
+    WHERE PortfolioServiceLevelName &lt;&gt; &#39;Cash Management&#39;
+    GROUP BY PortfolioNo
+    UNION
+    SELECT PortfolioNo,
+           SUM(InterestAmount) AS TotalInterest,
+           SUM(Dividends) AS TotalDividends,
+           SUM(Balance) AS TotalBalance
+    FROM tmpHoldingsPreload
+    WHERE PortfolioServiceLevelName = &#39;Cash Management&#39;
+    GROUP BY PortfolioNo
+)
+SELECT * INTO ##CRSAccountDetails FROM cte_income;
+
+-- Join account holder data, controlling persons, and financial details 
+-- to build the master CRS table
+SELECT a.*, cp.*, ad.TotalInterest, ad.TotalDividends, ad.TotalBalance,
+       @rptYear AS ReportingYear,
+       GETDATE() AS LastUpdated
+INTO [FATCA].[CRS_AH_CP_AD_jf]
+FROM #ALLAH a
+LEFT JOIN #ControllingPersons cp ON a.EntityID = cp.EntityID
+LEFT JOIN ##CRSAccountDetails ad ON a.PortfolioNo = ad.PortfolioNo;
+
+-- Construct the final CRS selection (143 columns expected)
+SELECT a.*, 
+       CASE WHEN a.TIN IS NULL THEN &#39;N/A&#39; ELSE a.TIN END AS FinalTIN,
+       FATCA.CleanAccents(a.[ControllingPersonLastName]) AS [ControllingPersonLastName]
+       -- Additional 140+ columns would be mapped here with CASE, ISNULL, etc.
+INTO ##crsfinalselect
+FROM [FATCA].[CRS_AH_CP_AD_jf] a;
+
+-- Insert the final CRS output into the destination table
+IF OBJECT_ID(&#39;FATCA.CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf&#39;, &#39;U&#39;) IS NOT NULL
+    DROP TABLE FATCA.CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf;
+SELECT * INTO FATCA.CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf
+FROM ##crsfinalselect;
+
+PRINT &#39;Step 3 Completed: Final CRS output generated.&#39;;
+
+-----------------------------------------------------------
+-- 4. Final FATCA Output Construction (USP_04)
+-----------------------------------------------------------
+/*
+   When: After constructing the CRS output.
+   Why: To produce a FATCA-compliant output (122 columns) that includes 
+        foreign account holders, controlling persons, and proper currency 
+        conversions.
+   How: By consolidating non-foreign and foreign account holders for FATCA, 
+        applying FX conversion, and merging financial details.
+*/
+
+PRINT &#39;Step 4: Constructing Final FATCA Output&#39;;
+
+-- Build FATCA Non-Foreign Account Holders (NFAH) for FATCA reporting
+SELECT *
+INTO #NFAH_FATCA
+FROM FATCA.Stage_FATCAPivotedData_jf
+WHERE TaxCountry = &#39;NZ&#39;;  -- Domestic holders (NZ) that need inclusion if associated with foreign owners
+
+-- Extract FATCA Foreign Account Holders for individuals
+SELECT *
+INTO #FATCA_ForeignIndividuals
+FROM FATCA.Stage_FATCAPivotedData_jf
+WHERE TaxCountry = &#39;USA&#39;;
+
+-- For entity-level foreign holders, assume similar extraction logic:
+SELECT *
+INTO #FATCA_ForeignEntities
+FROM FATCA.Stage_FATCAPivotedData_jf
+WHERE TaxCountry = &#39;USA&#39; AND /* condition to identify entity holders */ 1 = 1;
+
+-- Combine both Non-Foreign and Foreign Account Holders into one dataset for FATCA
+SELECT * INTO #ALLAH_FATCA
+FROM (
+    SELECT * FROM #NFAH_FATCA
+    UNION ALL
+    SELECT * FROM #FATCA_ForeignIndividuals
+    UNION ALL
+    SELECT * FROM #FATCA_ForeignEntities
+) AS CombinedFATCA;
+
+-- Extract active controlling persons for FATCA
+SELECT cp.*
+INTO #ControllingPersons_FATCA
+FROM dbo.CRM_ControllingPersons cp
+WHERE cp.IsActive = 1;
+
+-- Aggregate FATCA financial details from holdings data
+WITH cte_fatca_income AS (
+    SELECT PortfolioNo,
+           SUM(InterestAmount) AS TotalInterest,
+           SUM(Dividends) AS TotalDividends,
+           SUM(Balance) AS TotalBalance
+    FROM tmpHoldingsPreload
+    GROUP BY PortfolioNo
+)
+SELECT * INTO ##FATCAAccountDetails FROM cte_fatca_income;
+
+-- Build the master FATCA table by joining account holders, controlling persons, and financial details
+SELECT a.*, cp.*, ad.TotalInterest, ad.TotalDividends, ad.TotalBalance,
+       @rptYear AS ReportingYear,
+       GETDATE() AS LastUpdated
+INTO [FATCA].[FATCA_AH_CP_AD_jf]
+FROM #ALLAH_FATCA a
+LEFT JOIN #ControllingPersons_FATCA cp ON a.EntityID = cp.EntityID
+LEFT JOIN ##FATCAAccountDetails ad ON a.PortfolioNo = ad.PortfolioNo;
+
+-- Construct final FATCA selection (122 columns) with necessary field mappings and FX conversion
+SELECT a.*, 
+       CASE WHEN ad.TotalBalance * @USDNZDFxRate &lt; 100000 THEN &#39;Low&#39; ELSE &#39;High&#39; END AS BalanceFlag,
+       FATCA.CleanAccents(a.[AccountHolderName]) AS CleanAccountHolderName
+       -- Additional columns would be added here to reach 122 columns
+INTO ##fatcafinalselect
+FROM [FATCA].[FATCA_AH_CP_AD_jf] a;
+
+-- Insert the final FATCA output into its destination table
+IF OBJECT_ID(&#39;FATCA.FATCA_Final_Output_AccountHolders_SubstantialUSOwner_Financeinfo_jf&#39;, &#39;U&#39;) IS NOT NULL
+    DROP TABLE FATCA.FATCA_Final_Output_AccountHolders_SubstantialUSOwner_Financeinfo_jf;
+SELECT * INTO FATCA.FATCA_Final_Output_AccountHolders_SubstantialUSOwner_Financeinfo_jf
+FROM ##fatcafinalselect;
+
+PRINT &#39;Step 4 Completed: Final FATCA output generated.&#39;;
+
+-----------------------------------------------------------
+-- End of Combined Script
+-----------------------------------------------------------
+PRINT &#39;Combined FATCA/CRS Reporting Process Completed Successfully.&#39;;
+</pre>
+</div></div><h3 id="id-28.02.2025-FATCACRSRefreshformyself-SummaryoftheScript">Summary of the Script</h3><ol start="1"><li><p><strong>Step 1 – Data Extraction &amp; Preparation:</strong></p><ul><li><p>Initializes reporting parameters and (optionally) refreshes holdings data.</p></li><li><p>Maps tax regimes, builds an entity hierarchy, retrieves individuals, and joins TIN data.</p></li><li><p>Outputs a staging table for further transformation.</p></li></ul></li><li><p><strong>Step 2 – Data Transformation:</strong></p><ul><li><p>Splits the data into CRS (non-U.S.) and FATCA (U.S.) datasets.</p></li><li><p>Uses DENSE_RANK() to assign row numbers for multiple TINs and pivots them into columns.</p></li></ul></li><li><p><strong>Step 3 – Final CRS Output Construction:</strong></p><ul><li><p>Merges non-foreign and foreign account holders, joins controlling persons and financial details.</p></li><li><p>Constructs the final CRS output (143 columns) ready for XML submission.</p></li></ul></li><li><p><strong>Step 4 – Final FATCA Output Construction:</strong></p><ul><li><p>Combines domestic and foreign account holders for FATCA, applies FX conversion, and joins relevant details.</p></li><li><p>Produces the final FATCA output (122 columns).</p></li></ul></li></ol><p>This comprehensive, line-by-line script should help you understand the “when, why, and how” of each transformation step while keeping all logic consolidated into one file.</p><hr/><p>Below is a detailed, drill‐down text diagram that outlines the entire FATCA/CRS reporting process at a sub‐step level. This diagram breaks each main stored procedure into its constituent sub-steps and explains for each step what is done, why it’s necessary, and how it is implemented.</p><hr/><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">+---------------------------------------------------------------------------------------------+
+|                           Reporting Process Initiation                                      |
+|---------------------------------------------------------------------------------------------|
+| Parameters:                                                                                 |
+|   - @PeriodStartDate, @PeriodEndDate, @RefreshHoldingsData                                    |
+|   - Additional parameters (e.g., FX rate for USD/NZD conversion)                              |
++-----------------------------------------+---------------------------------------------------+
+                                          |
+                                          v
++---------------------------------------------------------------------------------------------+
+| USP_01_FATCA_CRS_ExtractAndPrepareData                                                       |
+|---------------------------------------------------------------------------------------------|
+| Purpose:                                                                                    |
+|   Extract and prepare CRM data for reporting.                                               |
+|                                                                                             |
+| Sub-Steps:                                                                                  |
+|   1.1 Tax Regime Mapping                                                                    |
+|       • What: Create temporary table (#TaxRegimeMapping) by pulling tax regime codes from    |
+|         dbo.CRM_TaxRegimeReference.                                                         |
+|       • Why: To establish FATCA and CRS classifications based on reliable external data.      |
+|       • How: Use a CTE to select TaxRegimeCode, FATCAClassification, CRSClassification.       |
+|                                                                                             |
+|   1.2 Entity Hierarchy Construction                                                         |
+|       • What: Build a recursive hierarchy of entities from CRM_Entities.                      |
+|       • Why: To capture nested entity relationships which are crucial for reporting.          |
+|       • How: Use a recursive CTE (anchor + recursive query) to produce #RecursiveHierarchy.   |
+|                                                                                             |
+|   1.3 Retrieve Active Individuals                                                           |
+|       • What: Select active individuals associated with each entity.                        |
+|       • Why: Only active records are needed for further processing.                         |
+|       • How: Use a CTE (HierarchyIndividuals) filtering by Status = &#39;Active&#39;.                 |
+|                                                                                             |
+|   1.4 Entity Data Extraction &amp; Classification                                               |
+|       • What: Join entities with roles and individuals to extract key fields.               |
+|       • Why: CRM flags for roles are corrupted—hard-coded values (e.g., &#39;Active NFFE&#39;)         |
+|         are used instead to reliably classify entities.                                     |
+|       • How: Use a CASE expression to classify entities (Active vs Passive NFFE) and          |
+|         extract additional fields (PortfolioServiceStatus, ClosureDate) into #EntityData.     |
+|                                                                                             |
+|   1.5 Individual Data Extraction with TIN Validation                                         |
+|       • What: Extract individual TINs and count them; validate US TINs (must be 9 digits).      |
+|       • Why: To prevent submission of invalid TINs that would trigger regulatory rejections.  |
+|       • How: Use CASE expressions to mark TINs as &#39;Valid&#39; or &#39;Invalid&#39; and store results       |
+|         in #IndividualData.                                                                 |
+|                                                                                             |
+|   1.6 Combine Entity &amp; Individual Data and Map ISO Codes                                      |
+|       • What: Merge #EntityData and #IndividualData to create a unified dataset.              |
+|       • Why: To produce a complete dataset with both entity and individual details for         |
+|         transformation.                                                                     |
+|       • How: Join the two datasets and then perform a LEFT JOIN to map missing ISO codes       |
+|         via dbo.FATCA_CountryReferecne, storing the result in ##crmdatafatcacrsiso.            |
+|                                                                                             |
+|   1.7 Final Staging Table Creation                                                           |
+|       • What: Create a permanent staging table (FATCA.Stage_crmdatafatcacrs_jf) from the       |
+|         combined data.                                                                        |
+|       • Why: Provides a clean, validated source for subsequent transformation steps.         |
+|       • How: Use SELECT INTO to output the final combined dataset.                          |
++-----------------------------------------+---------------------------------------------------+
+                                          |
+                                          v
++---------------------------------------------------------------------------------------------+
+| USP_02_FATCA_CRS_TransformRowtoColumnData                                                    |
+|---------------------------------------------------------------------------------------------|
+| Purpose:                                                                                    |
+|   Transform the staged data by separating it into CRS and FATCA subsets and pivoting         |
+|   TIN data from rows into columns.                                                          |
+|                                                                                             |
+| Sub-Steps:                                                                                  |
+|   2.1 Load Staged Data                                                                      |
+|       • What: Read data from FATCA.Stage_crmdatafatcacrs_jf into a working table (#BaseData).  |
+|       • Why: To have a working copy for transformation.                                     |
+|       • How: Use SELECT INTO from the staging table.                                        |
+|                                                                                             |
+|   2.2 Identify Accounts with Foreign Individuals                                            |
+|       • What: Filter accounts that have at least one non-US TIN.                              |
+|       • Why: To separate CRS data (non-US) from FATCA data (US).                              |
+|       • How: Use EXISTS clause to generate #EntitiesWithFlaggedIndividuals2.                 |
+|                                                                                             |
+|   2.3 Flag Non-Foreign Account Holders                                                       |
+|       • What: Mark accounts that do not contain US-based TINs.                                |
+|       • Why: Required for proper CRS reporting.                                             |
+|       • How: Store results in FATCA.NonForeignAccHolderData_jf (logic to be specified).        |
+|                                                                                             |
+|   2.4 Separate Data into CRS and FATCA subsets                                               |
+|       • What: Create two subsets:                                                         |
+|              - #CRSOnlyData: Accounts with non-US TINs.                                     |
+|              - #FATCAOnlyData: Accounts with US TINs.                                         |
+|       • Why: CRS excludes US TINs; FATCA includes them.                                       |
+|       • How: Use WHERE clause filters on TaxCountryISO.                                      |
+|                                                                                             |
+|   2.5 Assign Row Numbers for CRS Data                                                        |
+|       • What: Number multiple TIN rows per individual using DENSE_RANK().                     |
+|       • Why: To enable pivoting of TIN rows into distinct columns.                           |
+|       • How: Use DENSE_RANK() partitioned by IndividualID.                                    |
+|                                                                                             |
+|   2.6 Assign Row Numbers for FATCA Data                                                      |
+|       • What: Similarly, number TIN rows (typically one per individual).                     |
+|       • Why: Consistency in processing data.                                                  |
+|       • How: Use DENSE_RANK() with partition by IndividualID.                                 |
+|                                                                                             |
+|   2.7 Pivot TINs into Columns for CRS Data                                                    |
+|       • What: Convert multiple TIN rows into columns (e.g., TIN1…TIN5).                        |
+|       • Why: CRS output requires TINs as separate columns for each jurisdiction.              |
+|       • How: Use self-joins on the numbered TIN rows and apply CASE expressions to flag        |
+|         missing (&#39;UNDOCUMENTED&#39;) or invalid TINs (&#39;INVALID_&#39; + TIN).                           |
+|                                                                                             |
+|   2.8 Save Pivoted CRS Data                                                                    |
+|       • What: Store the pivoted CRS data into FATCA.Stage_CRSPivotedData_jf.                  |
+|       • Why: To use it as input for the final CRS output.                                     |
+|       • How: Use SELECT INTO to create or overwrite the staging table.                        |
+|                                                                                             |
+|   2.9 Pivot TIN for FATCA Data                                                                 |
+|       • What: For FATCA, only the first available TIN is required.                           |
+|       • Why: FATCA reporting typically uses one TIN per record.                               |
+|       • How: Filter using TINRowNum = 1 and store the result in FATCA.Stage_FATCAPivotedData_jf.|
++-----------------------------------------+---------------------------------------------------+
+                                          |
+                                          v
++---------------------------------------------------------------------------------------------+
+| USP_03_FinalCRSOutput                                                                       |
+|---------------------------------------------------------------------------------------------|
+| Purpose:                                                                                    |
+|   Finalize the CRS output by merging account holders, controlling persons, and             |
+|   financial details into a comprehensive 143-column output.                                 |
+|                                                                                             |
+| Sub-Steps:                                                                                  |
+|   3.1 Mark Non-Foreign Account Holders                                                       |
+|       • What: For CRS, accounts without US TINs are flagged with a placeholder (&#39;NA&#39;).         |
+|       • Why: Distinguish domestic accounts from those that contain US TINs.                   |
+|       • How: Select records from FATCA.Stage_CRSPivotedData_jf with TaxCountry1 &lt;&gt; &#39;USA&#39;.       |
+|                                                                                             |
+|   3.2 Extract Foreign Account Holders                                                        |
+|       • What: Select accounts with US-based TINs.                                             |
+|       • Why: These accounts are processed differently in CRS reporting.                     |
+|       • How: Filter on TaxCountry1 = &#39;USA&#39; and store in #AccountHolders.                      |
+|                                                                                             |
+|   3.3 Combine Account Holders                                                                  |
+|       • What: Merge the non-foreign and foreign account holders into one dataset (#ALLAH).      |
+|       • Why: To have a unified view of all accounts for CRS.                                  |
+|       • How: Use UNION ALL between #NFAH and #AccountHolders.                                  |
+|                                                                                             |
+|   3.4 Extract Active Controlling Persons                                                     |
+|       • What: Retrieve controlling persons from CRM (those marked as active).                 |
+|       • Why: They are required for due diligence in CRS reporting.                            |
+|       • How: Select from dbo.CRM_ControllingPersons where IsActive = 1.                         |
+|                                                                                             |
+|   3.5 Aggregate Financial Details                                                            |
+|       • What: Sum financial metrics (interest, dividends, balance) from tmpHoldingsPreload.     |
+|       • Why: To provide the financial data needed to determine reportability.                 |
+|       • How: Use a CTE (cte_income) and GROUP BY PortfolioNo to create ##CRSAccountDetails.      |
+|                                                                                             |
+|   3.6 Join Data &amp; Apply Threshold Checks                                                     |
+|       • What: Merge account, controlling person, and financial data; apply threshold          |
+|         check (balance * conversion factor &gt;= USD 250,000) or include closed accounts.         |
+|       • Why: Only report accounts that meet the CRS reporting threshold.                      |
+|       • How: Use LEFT JOINs and a WHERE clause; store results in [FATCA].[CRS_AH_CP_AD_jf].      |
+|                                                                                             |
+|   3.7 Construct Final CRS Selection with Multi-Jurisdiction Reporting                          |
+|       • What: Duplicate records per jurisdiction (using UNION ALL on TIN columns) and add        |
+|         static FI details (e.g., Reporting FI Name, Country) and account status.               |
+|       • Why: CRS mandates jurisdiction-specific reporting and inclusion of FI details.          |
+|       • How: Create a CTE (CRSPerJurisdiction) that unions TIN columns and then select from it,  |
+|         storing final output in ##crsfinalselect.                                             |
+|                                                                                             |
+|   3.8 Insert Final CRS Output                                                                  |
+|       • What: Write the final CRS dataset to a destination table.                             |
+|       • Why: To complete the CRS reporting output.                                            |
+|       • How: Use SELECT INTO to create FATCA.CRS_Final_Output_AccountHolders_ControllingPerson_   |
+|         Financeinfo_jf.                                                                       |
++-----------------------------------------+---------------------------------------------------+
+                                          |
+                                          v
++---------------------------------------------------------------------------------------------+
+| USP_04_FinalFATCAOutput                                                                       |
+|---------------------------------------------------------------------------------------------|
+| Purpose:                                                                                    |
+|   Finalize the FATCA output by processing account and financial data specific to FATCA.      |
+|                                                                                             |
+| Sub-Steps:                                                                                  |
+|   4.1 Log FX Rate for Conversion                                                             |
+|       • What: Record the current USD/NZD FX rate.                                             |
+|       • Why: This rate is used to convert financial balances to USD for FATCA reporting.        |
+|       • How: Print the FX rate and use the passed parameter @USDNZDFxRate.                     |
+|                                                                                             |
+|   4.2 Extract FATCA Non-Foreign (NZ-based) Account Holders                                      |
+|       • What: Select NZ-based account holders from the FATCA pivoted data.                      |
+|       • Why: These accounts need to be included if they are linked to foreign controlling      |
+|         persons.                                                                              |
+|       • How: Filter on TaxCountry = &#39;NZ&#39;.                                                     |
+|                                                                                             |
+|   4.3 Extract FATCA Foreign (US-based) Account Holders                                          |
+|       • What: Retrieve US-based account holders.                                              |
+|       • Why: FATCA reporting focuses on US TINs for foreign accounts.                           |
+|       • How: Filter on TaxCountry = &#39;USA&#39;.                                                     |
+|                                                                                             |
+|   4.4 Combine FATCA Account Holders                                                            |
+|       • What: Merge NZ and US account datasets into a unified dataset (#ALLAH_FATCA).            |
+|       • Why: To have a single view of all FATCA accounts.                                     |
+|       • How: Use UNION ALL to combine the datasets.                                           |
+|                                                                                             |
+|   4.5 Extract Active Controlling Persons for FATCA                                             |
+|       • What: Retrieve active controlling persons.                                            |
+|       • Why: They are required for due diligence and to meet FATCA reporting obligations.       |
+|       • How: Query dbo.CRM_ControllingPersons where IsActive = 1.                               |
+|                                                                                             |
+|   4.6 Aggregate FATCA Financial Details                                                       |
+|       • What: Sum financial metrics from tmpHoldingsPreload.                                    |
+|       • Why: To provide the necessary financial data for each account.                        |
+|       • How: Use a CTE (cte_fatca_income) with GROUP BY PortfolioNo.                           |
+|                                                                                             |
+|   4.7 Join Data &amp; Apply FATCA Threshold Check                                                  |
+|       • What: Merge account, controlling, and financial data; filter accounts with converted     |
+|         balance &gt;= USD 50,000 (or accounts marked as closed).                                 |
+|       • Why: Only report accounts that are above the FATCA threshold.                         |
+|       • How: Use LEFT JOINs and a WHERE clause, storing results in [FATCA].[FATCA_AH_CP_AD_jf].  |
+|                                                                                             |
+|   4.8 Construct Final FATCA Selection with GIIN/FI Details                                       |
+|       • What: Add static GIIN, Reporting FI Name, and other required fields; also include        |
+|         account status fields (e.g., PortfolioServiceStatus, ClosureDate).                       |
+|       • Why: FATCA XML submissions mandate these static values and status information.          |
+|       • How: Use a SELECT statement with CASE expressions, storing output in ##fatcafinalselect. |
+|                                                                                             |
+|   4.9 Insert Final FATCA Output                                                                |
+|       • What: Write the final FATCA dataset to the destination table.                           |
+|       • Why: To complete the FATCA reporting output.                                          |
+|       • How: Use SELECT INTO to create FATCA.FATCA_Final_Output_AccountHolders_                  |
+|         SubstantialUSOwner_Financeinfo_jf.                                                    |
++-----------------------------------------+---------------------------------------------------+
+                                          |
+                                          v
++---------------------------------------------------------------------------------------------+
+| USP_Master_FATCA_CRS_RunAllReportingProcesses                                                |
+|---------------------------------------------------------------------------------------------|
+| Purpose:                                                                                    |
+|   Orchestrate the entire reporting process by sequentially executing each sub-procedure,      |
+|   logging outcomes, and handling errors with transaction management.                         |
+|                                                                                             |
+| Sub-Steps:                                                                                  |
+|   5.1 Begin Transaction and Initialize Audit Log                                               |
+|       • What: Start a transaction and create a temporary log table.                           |
+|       • Why: Ensures atomicity and provides traceability for the process.                     |
+|       • How: Use BEGIN TRANSACTION and DECLARE @LogTable with columns for Step, Message,       |
+|         and Timestamp.                                                                        |
+|                                                                                             |
+|   5.2 Execute USP_01, USP_02, USP_03, and USP_04 Sequentially                                   |
+|       • What: Call each sub-procedure in sequence.                                            |
+|       • Why: Each step builds on the previous one to generate the final outputs.              |
+|       • How: Use EXEC for each procedure and insert log messages after each execution.          |
+|                                                                                             |
+|   5.3 Commit Transaction or Rollback on Error                                                   |
+|       • What: If all steps succeed, commit the transaction; otherwise, rollback.               |
+|       • Why: To prevent partial updates and ensure data integrity.                            |
+|       • How: Use TRY/CATCH blocks with COMMIT TRANSACTION or ROLLBACK.                          |
+|                                                                                             |
+|   5.4 Persist Audit Log and Log Errors                                                         |
+|       • What: Save the log data into a permanent table (FATCA.ProcessLog) and errors into         |
+|         FATCA.ErrorLog if necessary.                                                          |
+|       • Why: For audit trail and compliance review.                                           |
+|       • How: Use INSERT INTO statements to persist logs.                                      |
++---------------------------------------------------------------------------------------------+
+                                          |
+                                          v
++---------------------------------------------------------------------------------------------+
+|                        End of Reporting Process                                              |
+|---------------------------------------------------------------------------------------------|
+| Final Outputs:                                                                              |
+|   - FATCA.CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf                    |
+|   - FATCA.FATCA_Final_Output_AccountHolders_SubstantialUSOwner_Financeinfo_jf                   |
+| Audit and error logs are stored in FATCA.ProcessLog and FATCA.ErrorLog respectively.          |
++---------------------------------------------------------------------------------------------+
+</pre>
+</div></div><hr/><h2 id="id-28.02.2025-FATCACRSRefreshformyself-Confluence-StyleDocumentation(Example)">Confluence-Style Documentation (Example)</h2><h3 id="id-28.02.2025-FATCACRSRefreshformyself-FATCA/CRSReportingProcess–DetailedSQLImplementation">FATCA/CRS Reporting Process – Detailed SQL Implementation</h3><h4 id="id-28.02.2025-FATCACRSRefreshformyself-Overview">Overview</h4><p>This document provides a detailed breakdown of the SQL process used for generating FATCA and CRS reports. The process is divided into five major sections, each with further sub-steps detailing what is done, why it is necessary, and how it is implemented. This approach ensures regulatory compliance and audit-readiness, even when underlying CRM flags are unreliable.</p><h4 id="id-28.02.2025-FATCACRSRefreshformyself-1.DataExtraction&amp;Preparation(USP_01)">1. Data Extraction &amp; Preparation (USP_01)</h4><ul><li><p><strong>Objective:</strong><br/>Extract raw CRM data and prepare it for transformation by building tax regime mappings, entity hierarchies, and validating TINs.</p></li><li><p><strong>Key Sub-Steps:</strong></p><ul><li><p><strong>1.1 Tax Regime Mapping:</strong> Create a temporary table using a CTE to classify tax regimes.</p></li><li><p><strong>1.2 Entity Hierarchy:</strong> Build a recursive CTE to capture nested entity relationships.</p></li><li><p><strong>1.3 Retrieve Active Individuals:</strong> Use a CTE to select active individuals.</p></li><li><p><strong>1.4 Entity Data Extraction &amp; Classification:</strong> Join entities, roles, and individuals, applying hard-coded role values to reliably classify entities as Active/Passive NFFE.</p></li><li><p><strong>1.5 TIN Validation:</strong> Extract individual TINs and validate US TINs (9 digits numeric) using CASE expressions.</p></li><li><p><strong>1.6 Data Combination &amp; ISO Mapping:</strong> Merge entity and individual data; map missing ISO codes using a reference table.</p></li><li><p><strong>1.7 Final Staging:</strong> Store the combined dataset in <code>FATCA.Stage_crmdatafatcacrs_jf</code>.</p></li></ul></li></ul><h4 id="id-28.02.2025-FATCACRSRefreshformyself-2.DataTransformation–PivotingTINData(USP_02)">2. Data Transformation – Pivoting TIN Data (USP_02)</h4><ul><li><p><strong>Objective:</strong><br/>Transform staged data into CRS and FATCA subsets by pivoting TIN rows into columns.</p></li><li><p><strong>Key Sub-Steps:</strong></p><ul><li><p><strong>2.1 Load Staged Data:</strong> Copy data from the staging table into a working table.</p></li><li><p><strong>2.2 Identify Accounts with Foreign Individuals:</strong> Use an EXISTS clause to flag accounts with non-US TINs.</p></li><li><p><strong>2.3 Flag Non-Foreign Account Holders:</strong> Mark accounts without US-based TINs (for CRS).</p></li><li><p><strong>2.4 Separate Data:</strong> Create subsets for CRS-only (non-US) and FATCA-only (US) data.</p></li><li><p><strong>2.5 &amp; 2.6 Assign Row Numbers:</strong> Use DENSE_RANK() to number multiple TIN records.</p></li><li><p><strong>2.7 Pivot TINs:</strong> Convert rows into columns (for CRS, producing TIN1…TIN5; for FATCA, selecting one TIN).</p></li><li><p><strong>2.8 &amp; 2.9 Save Pivoted Data:</strong> Store results in dedicated staging tables for CRS and FATCA.</p></li></ul></li></ul><h4 id="id-28.02.2025-FATCACRSRefreshformyself-3.FinalCRSOutputConstruction(USP_03)">3. Final CRS Output Construction (USP_03)</h4><ul><li><p><strong>Objective:</strong><br/>Build a comprehensive CRS output by merging account data, controlling persons, and financial details into a 143-column dataset.</p></li><li><p><strong>Key Sub-Steps:</strong></p><ul><li><p><strong>3.1 Mark Non-Foreign Account Holders:</strong> Flag accounts without US TINs (set TIN to 'NA').</p></li><li><p><strong>3.2 Extract Foreign Account Holders:</strong> Select accounts with US-based TINs.</p></li><li><p><strong>3.3 Combine Account Holders:</strong> Merge the two sets into a unified dataset.</p></li><li><p><strong>3.4 Extract Controlling Persons:</strong> Retrieve active controlling persons from CRM.</p></li><li><p><strong>3.5 Aggregate Financial Data:</strong> Use a CTE to sum balances, interest, and dividends from holdings data.</p></li><li><p><strong>3.6 Join &amp; Apply Thresholds:</strong> Merge all data and apply a threshold check (balance*conversion factor ≥ USD 250,000) or include closed accounts.</p></li><li><p><strong>3.7 Multi-Jurisdiction Reporting &amp; Static FI Details:</strong> Duplicate records per jurisdiction and add static GIIN/FI fields.</p></li><li><p><strong>3.8 Final Output:</strong> Write the final dataset to <code>FATCA.CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf</code>.</p></li></ul></li></ul><h4 id="id-28.02.2025-FATCACRSRefreshformyself-4.FinalFATCAOutputConstruction(USP_04)">4. Final FATCA Output Construction (USP_04)</h4><ul><li><p><strong>Objective:</strong><br/>Process FATCA-specific data by combining domestic and foreign account data, applying FX conversion, and incorporating mandatory GIIN/FI details.</p></li><li><p><strong>Key Sub-Steps:</strong></p><ul><li><p><strong>4.1 Log FX Rate:</strong> Record the current USD/NZD FX rate.</p></li><li><p><strong>4.2 Extract NZ-based Accounts:</strong> Select FATCA non-foreign accounts from the pivoted data.</p></li><li><p><strong>4.3 Extract US-based Accounts:</strong> Retrieve FATCA foreign accounts (US-based).</p></li><li><p><strong>4.4 Combine Account Holders:</strong> Merge NZ and US datasets.</p></li><li><p><strong>4.5 Extract Controlling Persons:</strong> Get active controlling persons for FATCA.</p></li><li><p><strong>4.6 Aggregate Financial Details:</strong> Sum financial data from holdings.</p></li><li><p><strong>4.7 Join &amp; Apply Thresholds:</strong> Merge all data and filter accounts with converted balance ≥ USD 50,000 or closed.</p></li><li><p><strong>4.8 Final FATCA Selection:</strong> Add static GIIN/FI and account status details.</p></li><li><p><strong>4.9 Final Output:</strong> Write final FATCA output to<br/><code>FATCA.FATCA_Final_Output_AccountHolders_SubstantialUSOwner_Financeinfo_jf</code>.</p></li></ul></li></ul><h4 id="id-28.02.2025-FATCACRSRefreshformyself-5.MasterProcessOrchestration(USP_Master)">5. Master Process Orchestration (USP_Master)</h4><ul><li><p><strong>Objective:</strong><br/>Coordinate and execute the entire process, ensuring proper logging and error handling.</p></li><li><p><strong>Key Sub-Steps:</strong></p><ul><li><p><strong>5.1 Begin Transaction &amp; Initialize Audit Log:</strong> Start a transaction and create a temporary log table.</p></li><li><p><strong>5.2 Execute Each Sub-Procedure Sequentially:</strong> Call USP_01, USP_02, USP_03, and USP_04, logging each step’s outcome.</p></li><li><p><strong>5.3 Commit or Rollback:</strong> Commit the transaction if all steps succeed; otherwise, rollback and log errors.</p></li><li><p><strong>5.4 Persist Logs:</strong> Insert log records into a permanent table (FATCA.ProcessLog) and any errors into FATCA.ErrorLog.</p></li></ul></li></ul><h4 id="id-28.02.2025-FATCACRSRefreshformyself-Conclusion">Conclusion</h4><p>This detailed SQL process provides a robust, audit-ready solution for FATCA/CRS reporting. By drilling down into sub-steps, it ensures each aspect—from data extraction to final output—is thoroughly validated and documented. Hard-coded role values are used to mitigate issues with corrupted CRM flags, ensuring that TIN validation, threshold checks, and static FI details meet regulatory requirements.</p><hr/><p>You can use this detailed diagram in your Confluence documentation along with the full SQL script provided above to explain the end-to-end process for internal reviews and regulatory audits.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

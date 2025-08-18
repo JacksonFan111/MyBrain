@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Unlisted Funds Vs. Direct Securities Tech Docs V 0.1</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Unlisted Funds Vs. Direct Securities Tech Docs V 0.1
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 15-05-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h2 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-BusinessBackground">Business Background</h2><h3 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-CoreGoal">Core Goal</h3><p>Advisor Client Classification Measures (Unlisted Funds Vs. Direct Securities) Enable CIP to <strong>evaluate each advisor’s client mix</strong> by quantifying what proportion of their billed clients hold—and pay for—<span style="background-color: rgb(211,241,167);">active direct securities versus unlisted funds versus a combination of both</span>. This helps ensure advisors are providing the investment management service their clients are paying for.</p><h3 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-Context">Context</h3><ul><li><p>Advisors charge higher fees for active portfolio management (Portfolio Service).</p></li><li><p>Some Advisors’s clients may channel most assets into passive, unlisted funds to minimize hands-on work.</p></li><li><p>We need to spot whether an advisor’s book is overly tilted toward unlisted funds (i.e. low-touch) rather than active direct security selection.</p></li></ul><h3 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-Challenges">Challenges</h3><ol start="1"><li><p><strong>Overlapping Holdings</strong>: Many clients hold both direct securities and unlisted funds, so simple filters can misclassify them.</p></li><li><p><strong>Data Grain</strong>: The fact table is at the Account × Asset + FUM level; classification must roll up correctly to each advisor’s book.</p></li><li><p><strong>POWER BI DirectQuery Mode</strong>: No calculated columns; all logic must be written as measures that translate efficiently back to the SQL source. (In the Enhancement in SSAS we could just created the columns then just count the columns do the Rows Count)</p></li></ol><hr/><h2 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-ClassificationDefinitions&amp;Examples">Classification Definitions &amp; Examples</h2><p>Before we jump into DAX, let’s define exactly what we mean by each category—and illustrate with real-world scenarios.</p><h3 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-1.DirectSecuritiesOnly">1. Direct Securities Only</h3><ul><li><p><strong>Definition</strong>: Clients whose portfolios contain <strong>only</strong> <span style="background-color: rgb(211,241,167);">individual stocks, bonds, ETFs or other exchange-listed instruments</span>. No managed or private funds.</p></li><li><p><strong>Example Assets</strong>:</p><ul><li><p>NZX-listed shares (e.g. FPH, AIA)</p></li><li><p>Government or corporate bonds</p></li><li><p>Exchange-traded funds (ETFs)</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>An advisor builds a bespoke portfolio of 10 New Zealand shares and 5 corporate bonds for a client who wants hands-on stock selection and pays active management fees.</p></li></ul></li></ul><h3 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-2.UnlistedFundsOnly(QuayStreet,SmartSharesEtc.)">2. Unlisted Funds Only (QuayStreet, SmartShares Etc.)</h3><ul><li><p><strong>Definition</strong>: Clients whose portfolios contain <strong>only</strong> private or non-exchange-traded funds—often higher-fee, unlisted managed funds (NZUL. NZUT and AUUT).</p></li><li><p><strong>Example Assets</strong>:</p><ul><li><p>NZUT and NZUL unlisted property or private equity funds</p></li><li><p>AUUT Australian unlisted trusts</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A retirement-focused client places all savings into an unlisted KiwiSaver fund (market code NZUT) for simplicity. The advisor’s role is primarily administrative, not stock selection.</p></li></ul></li></ul><h3 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-3.MixedClients">3. Mixed Clients</h3><ul><li><p><strong>Definition</strong>: Clients whose portfolios include <strong>both</strong> direct securities <strong>and</strong> unlisted funds.</p></li><li><p><strong>Example Assets</strong>:</p><ul><li><p>A mix of NZX shares (direct) plus a 20% allocation to an NZUT unlisted property fund</p></li><li><p>Combination of ASX shares and an AUUT private equity trust</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A growth-oriented investor asks the advisor to pick individual stocks for 80% of assets, and “park” the remaining 20% in a low-volatility unlisted fund.</p></li><li><p>This reflects a hybrid service: active stock picking plus passive fund administration.</p></li></ul></li></ul><hr/><h2 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-Overview">Overview</h2><p>i Have built  two sets of DAX measures (V1 and V2) in a Power BI desktop DirectQuery model to classify portfolios into those three categories. Designed for high-school–level learners to understand Tabular models and DirectQuery constraints.</p><div class="confluence-information-macro confluence-information-macro-information"><span class="aui-icon aui-icon-small aui-iconfont-info confluence-information-macro-icon"></span><div class="confluence-information-macro-body"><p>MEASURE 'Funds Under Management'[Current FUM Value] =</p><p>calculate( CALCULATE ( calculate(sum([FUM Value]))),'Account Holdings Date'[last holding date]=&quot;yes&quot;)</p></div></div><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250515-000049.png" width="760" loading="lazy" src="attachments/3108635010/3166142482.png?width=760" data-image-src="attachments/3108635010/3166142482.png" data-height="647" data-width="845" data-unresolved-comment-count="0" data-linked-resource-id="3166142482" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250515-000049.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3108635010" data-linked-resource-container-version="2" data-media-id="42727388-4fcb-44e8-b8fa-3455546d325e" data-media-type="file"></span><hr/><h2 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-DataModel&amp;Relationships">Data Model &amp; Relationships</h2><ul><li><p><strong>Account</strong>: client portfolios (<code>AccountKey</code>, <code>Adviser Code</code>, <code>Portfolio Service ID</code>, status flags)</p></li><li><p><strong>Asset</strong>: securities/funds (<code>AssetType</code>, <code>MarketCode</code>, <code>AssetName</code>) &gt;&gt; we have more than 7500 differsnt assets so mistake could happened.</p></li><li><p><strong>Funds Under Management (FUM)</strong>: fact linking Account × AssetID to <code>FUM Value</code>, a Snapshot of the Fund under Management</p></li><li><p><strong>Account Holdings Date</strong>: flags the latest snapshot date</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Account Holdings Date  (1)───(*) Account ───(*) Funds Under Management ───(1)─── Asset
+</pre>
+</div></div><hr/><h2 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-AllPagesReportFilters">All Pages Report Filters</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Account[IsCurrent]     = TRUE
+Account[AccountStatus] = &quot;Open&quot;
+Account[IsValid]       = TRUE
+Asset[AssetType]      &lt;&gt; &quot;Cash&quot;
+Asset[AssetStatus]     = &quot;Active&quot;
+Asset[AssetName]    does not contain &quot;app/red&quot;
+</pre>
+</div></div><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250515-000219.png" width="316" loading="lazy" src="attachments/3108635010/3165847568.png?width=316" data-image-src="attachments/3108635010/3165847568.png" data-height="404" data-width="316" data-unresolved-comment-count="0" data-linked-resource-id="3165847568" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250515-000219.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3108635010" data-linked-resource-container-version="2" data-media-id="00dfaae9-bbc7-4faf-a3ed-1e495488aa02" data-media-type="file"></span><p /><hr/><h1 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-V1Design:ClassificationattheAccountLevel">V1 Design: Classification at the Account Level</h1><h3 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-1.BaseMeasure:CurrentFUMValue">1. Base Measure: Current FUM Value</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">MEASURE &#39;Funds Under Management&#39;[Current FUM Value] =
+CALCULATE(
+    SUM([FUM Value]),                                    // 1) Sum all holdings
+    &#39;Account Holdings Date&#39;[last holding date] = &quot;yes&quot;    // 2) Only the latest date
+)
+</pre>
+</div></div><hr/><h3 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-2.CategoryCounts">2. Category Counts</h3><h4 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-2.1DirectSecuritiesOnly">2.1 Direct Securities Only</h4><p>So in V1 -- I used a 10 Measures Approaches to represent the the % of advisers per portfolio Services level</p><p>We are count of the [AccountKey] For V1 because I think that was used to Linked with [Fund under management] table</p><p>I have checked the <strong><span style="background-color: rgb(211,241,167);">Portfolio Service , Portfolio Service ID, And then The Account Key</span></strong> is at the same Data Level of the Grain which represent the Clients in CIP context.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence"># Count Direct Securities Clients =
+CALCULATE(
+    DISTINCTCOUNT(&#39;Account&#39;[AccountKey]),                 // A) count each client once
+    FILTER(
+        &#39;Funds Under Management&#39;,                        // B) examine each holding row
+        NOT ISBLANK([Current FUM Value])                 // 1) has non-blank assets
+        &amp;&amp; NOT(RELATED(&#39;Asset&#39;[Market Code])             // 2) exclude unlisted-fund markets
+            IN {&quot;NZUT&quot;,&quot;NZUL&quot;,&quot;AUUT&quot;})
+        &amp;&amp; NOT(RELATED(&#39;Asset&#39;[Asset Type])              // 3) exclude Fund &amp; Cash Asset Type
+            IN {&quot;Cash&quot;,&quot;Fund&quot;})
+    )
+)
+</pre>
+</div></div><h4 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-2.2UnlistedFundsOnly">2.2 Unlisted Funds Only</h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence"># Count Unlisted Funds Clients =
+CALCULATE(
+    DISTINCTCOUNT(&#39;Account&#39;[AccountKey]),
+    FILTER(
+        &#39;Funds Under Management&#39;,
+        NOT ISBLANK([Current FUM Value])                    // 1) has assets
+        &amp;&amp; RELATED(&#39;Asset&#39;[Asset Type]) = &quot;Fund&quot;            // 2) is a Fund
+        &amp;&amp; RELATED(&#39;Asset&#39;[Market Code])                    // 3) in unlisted markets
+            IN {&quot;NZUT&quot;,&quot;NZUL&quot;,&quot;AUUT&quot;}
+    )
+)
+</pre>
+</div></div><h4 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-2.3MixedClients">2.3 Mixed Clients</h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence"># Count Mixed Clients =
+SUMX(
+    VALUES(&#39;Account&#39;[AccountKey]),                        // 1) for each client...
+    VAR acct = &#39;Account&#39;[AccountKey]                      //    store key
+    VAR hasDir =                                          // 2) check direct holdings
+        COUNTROWS(
+            FILTER(
+                &#39;Funds Under Management&#39;,
+                [AccountKey] = acct
+                &amp;&amp; NOT ISBLANK([Current FUM Value])
+                &amp;&amp; RELATED(&#39;Asset&#39;[Asset Type]) &lt;&gt; &quot;Fund&quot;
+                &amp;&amp; RELATED(&#39;Asset&#39;[Asset Type]) &lt;&gt; &quot;Cash&quot;
+            )
+        ) &gt; 0
+    VAR hasFun =                                          // 3) check unlisted funds
+        COUNTROWS(
+            FILTER(
+                &#39;Funds Under Management&#39;,
+                [AccountKey] = acct
+                &amp;&amp; NOT ISBLANK([Current FUM Value])
+                &amp;&amp; RELATED(&#39;Asset&#39;[Asset Type]) = &quot;Fund&quot;
+                &amp;&amp; RELATED(&#39;Asset&#39;[Market Code])        // in unlisted markets
+                   IN {&quot;NZUT&quot;,&quot;NZUL&quot;,&quot;AUUT&quot;}
+            )
+        ) &gt; 0
+    RETURN
+      IF(hasDir &amp;&amp; hasFun, 1, 0)                         // 4) 1 if both true
+)
+</pre>
+</div></div><h4 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-2.4TotalValidClients">2.4 Total Valid Clients</h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence"># Valid Client Accounts =
+[# Count Direct Securities Clients]
++ [# Count Unlisted Funds Clients]
++ [# Count Mixed Clients]
+</pre>
+</div></div><hr/><h3 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-3.PercentageMeasures">3. Percentage Measures</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence"># % Mixed Clients = DIVIDE([# Count Mixed Clients], [# Valid Client Accounts], 0)
+# % Direct Securities Only Clients = DIVIDE([# Count Direct Securities Clients], [# Valid Client Accounts], 0)
+# % Unlisted Funds Only Clients = DIVIDE([# Count Unlisted Funds Clients], [# Valid Client Accounts], 0)
+</pre>
+</div></div><hr/><h1 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-V2Design:FlagsatthePortfolioServiceIDLevel">V2 Design: Flags at the Portfolio Service ID Level</h1><h3 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-1.BaseAssetFlags">1. Base Asset Flags</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">#Count Direct AssetID =
+CALCULATE(
+    DISTINCTCOUNT(&#39;Funds Under Management&#39;[AssetID]),
+    &#39;Asset&#39;[Asset Type] &lt;&gt; &quot;Fund&quot;
+    &amp;&amp; &#39;Asset&#39;[Asset Type] &lt;&gt; &quot;Cash&quot;
+)
+
+#Count Fund AssetID =
+CALCULATE(
+    DISTINCTCOUNT(&#39;Funds Under Management&#39;[AssetID]),
+    FILTER(
+        ALL(&#39;Asset&#39;),
+        Asset[Asset Type] = &quot;Fund&quot;
+        &amp;&amp; Asset[Market Code] IN {&quot;NZUT&quot;,&quot;NZUL&quot;,&quot;AUUT&quot;}
+        &amp;&amp; CONTAINSSTRING(Asset[Asset Name], &quot;FUND&quot;)
+        &amp;&amp; NOT ISBLANK([Current FUM Value])
+    )
+)
+
+#ISDirect = IF([#Count Direct AssetID] &gt; 0, 1, 0)
+#ISFund   = IF([#Count Fund AssetID]   &gt; 0, 1, 0)
+#ISMixed  = IF(AND([#ISDirect] = 1, [#ISFund] = 1), 1, 0)
+</pre>
+</div></div><hr/><h3 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-2.FinalCountsbyFlags">2. Final Counts by Flags</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence"># MixedV2 =
+COUNTROWS(
+  FILTER(
+    ADDCOLUMNS(
+      VALUES(&#39;Account&#39;[Portfolio Service ID]),
+      &quot;IsDirect&quot;, CALCULATE([#ISDirect]),
+      &quot;IsFund&quot;,   CALCULATE([#ISFund]),
+      &quot;IsMixed&quot;,  CALCULATE([#ISMixed])
+    ),
+    [IsMixed] = 1
+  )
+)
+
+# DirectOnlyV2 = COUNTROWS(FILTER(..., [IsDirect] = 1 &amp;&amp; [IsMixed] = 0))
+# FundOnlyV2   = COUNTROWS(FILTER(..., [IsFund]   = 1 &amp;&amp; [IsMixed] = 0))
+
+# ValidClientsV2 = [MixedV2] + [DirectOnlyV2] + [FundOnlyV2]
+</pre>
+</div></div><hr/><h2 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-DirectQueryConsiderations">DirectQuery Considerations</h2><ol start="1"><li><p><strong>No calculated columns</strong> – all logic must be measures.</p></li><li><p><strong>Context transitions</strong> – <code>CALCULATE</code> + <code>FILTER</code> push filters to the source; <code>SUMX</code>/<code>ADDCOLUMNS</code> iterate row by row.</p></li><li><p><strong>Performance</strong> – simpler filters translate more efficiently to SQL.</p></li></ol><hr/><h2 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-Conclusion">Conclusion</h2><p>These annotated measures show how to classify advisor portfolios under DirectQuery. Students should now understand:</p><ul><li><p>How to filter and count at different granularities.</p></li><li><p>The difference between filter context and row context.</p></li><li><p>How to write efficient DirectQuery-friendly DAX.</p></li></ul><h2 id="UnlistedFundsVs.DirectSecuritiesTechDocsV0.1-VennDiagramPerspective">Venn Diagram Perspective</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">               +---------------------+
+               |  # Valid Client     |
+               |    Accounts         |
+               | (non-blank FUM)     |
+               +---------+-----------+
+                         |
+                         v
+            +---------------------------+
+            |         Unlisted         |
+            |  (# Count Unlisted Funds)|
+            +-------------+------------+
+                          |  (Mixed = intersection)
+            +-------------+------------+
+            |         Direct          |
+            | (# Count Direct         |
+            |  Securities)            |
+            +-------------------------+
+</pre>
+</div></div><ul><li><p><strong># Valid Client Accounts</strong>:<br/>The overall universe of accounts with non‐blank FUM.</p></li><li><p><strong># Count Unlisted Funds Clients</strong>:<br/>All valid accounts that have at least one <strong>Unlisted</strong> row (Equity + Fund + Market Code in {NZUT, NZUL}).</p></li><li><p><strong># Count Direct Securities Clients</strong>:<br/>All valid accounts that have at least one <strong>Direct</strong> row (i.e., do <strong>not</strong> match the Unlisted criteria).</p></li><li><p><strong>Overlap (Mixed)</strong>:<br/>Accounts that appear in both sets—i.e., hold <strong>at least one</strong> Unlisted row <strong>and</strong> at least one Direct row.</p></li></ul><p class="media-group"><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/3108635010/3165913126.pbix" data-nice-type="null" data-file-src="/wiki/download/attachments/3108635010/Unlisted%20Funds%20Vs.%20Direct%20Securities%20V2%20JF%20-%20Used%20Tab%20mdoel%20PREP0.pbix?version=1&amp;modificationDate=1747267735037&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="3165913126" data-linked-resource-type="attachment" data-linked-resource-container-id="3108635010" data-linked-resource-default-alias="Unlisted Funds Vs. Direct Securities V2 JF - Used Tab mdoel PREP0.pbix" data-mime-type="binary/octet-stream" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="240aaf2e-44ea-45b5-a57e-36a6dd5bd23d" data-media-type="file"><img src="attachments/thumbnails/3108635010/3165913126" height="250"/></a></span></p><p />
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3108635010/3166142482.png">image-20250515-000049.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3108635010/3165847568.png">image-20250515-000219.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3108635010/3165913126.pbix">Unlisted Funds Vs. Direct Securities V2 JF - Used Tab mdoel PREP0.pbix</a> (binary/octet-stream)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

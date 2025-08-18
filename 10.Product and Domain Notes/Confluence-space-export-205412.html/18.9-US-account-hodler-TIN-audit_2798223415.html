@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 18.9 US account hodler TIN audit</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="2762113156.html">18. Rebuild FATCA/CRS step 1 - 10</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 18.9 US account hodler TIN audit
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 25-10-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Certainly! Let's rewrite your SQL code to accommodate the specific requirements for a Financial Institution (FI) based in New Zealand (NZ), considering the detailed rules for Tax Identification Numbers (TINs) provided.</p><p>Here's the updated code:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Tax Identification Numbers for NZ FI
+CASE 
+    WHEN ah.[AccountType] IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;) THEN 
+        -- Entity Account Holder
+        CASE 
+            WHEN ah.[EntityTIN] IS NOT NULL THEN ah.[EntityTIN]
+            WHEN ah.[EntityTIN] IS NULL AND ah.[TaxCountry1] = &#39;US&#39; THEN &#39;999999999&#39;
+            WHEN ah.[EntityTIN] IS NULL AND ah.[TaxCountry1] &lt;&gt; &#39;US&#39; THEN &#39;NA&#39;
+            ELSE NULL  -- This should not occur
+        END
+    ELSE
+        -- Individual Account Holder
+        CASE
+            WHEN ah.TIN1 IS NOT NULL THEN ah.TIN1
+            WHEN ah.TIN1 IS NULL AND ah.[TaxCountry1] = &#39;US&#39; THEN &#39;999999999&#39;
+            WHEN ah.TIN1 IS NULL AND ah.[TaxCountry1] &lt;&gt; &#39;US&#39; THEN &#39;NA&#39;
+            ELSE NULL  -- This should not occur
+        END
+END AS &#39;Account Holder TIN&#39;,</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>For Entities:</strong></p><ul><li><p><strong>If </strong><code>EntityTIN</code> is available, use it.</p></li><li><p><strong>If </strong><code>EntityTIN</code> is missing and <code>TaxCountry1</code> is 'US':</p><ul><li><p>Use <code>'999999999'</code> as an alternative TIN code. According to the NZ-specific requirements, when a U.S. TIN is not available for a U.S. entity, you should use one of the alternative codes provided for Model 1 jurisdictions. Since we may not have sufficient information to choose among specific codes like <code>'444444444'</code> or <code>'555555555'</code>, using <code>'999999999'</code> is appropriate as it indicates that none of the other codes apply.</p></li></ul></li><li><p><strong>If </strong><code>EntityTIN</code> is missing and <code>TaxCountry1</code> is not 'US':</p><ul><li><p>Use <code>'NA'</code> to indicate that the TIN is not available for a non-U.S. entity.</p></li></ul></li><li><p><strong>Else </strong><code>NULL</code>:</p><ul><li><p>This condition should not occur, but it's included as a fallback.</p></li></ul></li></ul></li><li><p><strong>For Individuals:</strong></p><ul><li><p><strong>If </strong><code>TIN1</code> is available, use it.</p></li><li><p><strong>If </strong><code>TIN1</code> is missing and <code>TaxCountry1</code> is 'US':</p><ul><li><p>Use <code>'999999999'</code> as an alternative TIN code for the same reasons as above.</p></li></ul></li><li><p><strong>If </strong><code>TIN1</code> is missing and <code>TaxCountry1</code> is not 'US':</p><ul><li><p>Use <code>'NA'</code> to indicate that the TIN is not available for a non-U.S. individual.</p></li></ul></li><li><p><strong>Else </strong><code>NULL</code>:</p><ul><li><p>This condition should not occur but is included as a fallback.</p></li></ul></li></ul></li></ul><p><strong>Important Considerations for New Zealand FI:</strong></p><ul><li><p><strong>Do Not Use 'AAAAAAAAA' or '000000000':</strong></p><ul><li><p>As per the NZ-specific requirements, you should no longer report using nine A's ('AAAAAAAAA') or nine zeros ('000000000'). These values are not acceptable for New Zealand reporting.</p></li></ul></li><li><p><strong>Use Alternative Codes:</strong></p><ul><li><p>When a U.S. TIN is not held for an Account Holder or U.S. Substantial Owner/Controlling Person, you should use the alternative codes provided for Model 1 jurisdictions. Since we may lack the specific information to select among <code>'222222222'</code>, <code>'333333333'</code>, etc., using <code>'999999999'</code> is acceptable as it covers any account where none of the other codes apply.</p></li></ul></li><li><p><strong>Valid U.S. TIN Format:</strong></p><ul><li><p>If a U.S. TIN is provided, ensure it is in the valid format:</p><ul><li><p><strong>For individuals:</strong> <code>###-##-####</code></p></li><li><p><strong>For entities:</strong> <code>##-#######</code></p></li></ul></li><li><p>This code assumes that validation of the TIN format is handled elsewhere in your process.</p></li></ul></li><li><p><strong>Reporting Jurisdiction:</strong></p><ul><li><p>Since the FI is based in New Zealand, the <code>ReportingJurisdiction</code> is 'NZ'. This is relevant for compliance with NZ-specific rules.</p></li></ul></li><li><p><strong>Tax Residence Country Code (</strong><code>TaxCountry1</code>):</p><ul><li><p>This field is used to determine whether the Account Holder is a U.S. person (<code>'US'</code>) or not.</p></li></ul></li></ul><p><strong>Additional Notes:</strong></p><ul><li><p><strong>Error Handling:</strong></p><ul><li><p>According to the requirements, the use of <code>'999999999'</code> may still generate an error notification from the IRS system, which provides 120 days to correct the issue. However, using this code indicates that you have completed your due diligence in attempting to obtain the TIN.</p></li></ul></li><li><p><strong>RAT Codes and Specific Alternative Codes:</strong></p><ul><li><p>The specific alternative codes like <code>'222222222'</code>, <code>'333333333'</code>, etc., are associated with particular scenarios and Reportable Account Types (RATs). If you have access to the RAT codes and additional account information, you can refine the code further to select the appropriate alternative code based on the specific circumstances.</p></li></ul></li><li><p><strong>Compliance with NZ Requirements:</strong></p><ul><li><p>This code is designed to meet the requirements for a New Zealand FI by ensuring that invalid TIN placeholders are not used and that alternative codes are applied appropriately when TINs are missing.</p></li></ul></li></ul><p><strong>Example Usage:</strong></p><ul><li><p><strong>U.S. Individual with TIN:</strong></p><ul><li><p><code>ah.TIN1</code> is <code>'123-45-6789'</code> and <code>ah.[TaxCountry1]</code> is <code>'US'</code> ⇒ Output: <code>'123-45-6789'</code></p></li></ul></li><li><p><strong>U.S. Individual without TIN:</strong></p><ul><li><p><code>ah.TIN1</code> is <code>NULL</code> and <code>ah.[TaxCountry1]</code> is <code>'US'</code> ⇒ Output: <code>'999999999'</code></p></li></ul></li><li><p><strong>Non-U.S. Individual without TIN:</strong></p><ul><li><p><code>ah.TIN1</code> is <code>NULL</code> and <code>ah.[TaxCountry1]</code> is <code>'GB'</code> ⇒ Output: <code>'NA'</code></p></li></ul></li><li><p><strong>U.S. Entity with TIN:</strong></p><ul><li><p><code>ah.[EntityTIN]</code> is <code>'12-3456789'</code> and <code>ah.[TaxCountry1]</code> is <code>'US'</code> ⇒ Output: <code>'12-3456789'</code></p></li></ul></li><li><p><strong>Non-U.S. Entity without TIN:</strong></p><ul><li><p><code>ah.[EntityTIN]</code> is <code>NULL</code> and <code>ah.[TaxCountry1]</code> is <code>'AU'</code> ⇒ Output: <code>'NA'</code></p></li></ul></li></ul><p><strong>Final Thoughts:</strong></p><ul><li><p>Ensure that any additional validation or data requirements are handled elsewhere in your process.</p></li><li><p>Keep abreast of any changes in reporting requirements from both the IRS and New Zealand authorities to maintain compliance.</p></li><li><p>If you can access more detailed account information (like RAT codes or specific scenarios), consider refining the code to use the precise alternative TIN codes as per the guidelines.</p></li></ul>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

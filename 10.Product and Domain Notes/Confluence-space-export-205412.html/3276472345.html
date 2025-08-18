@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : blue-print- Citi CSL QI 15% Account Recs VS ACE</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : blue-print- Citi CSL QI 15% Account Recs VS ACE
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 31-07-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below are the <strong>go-to visuals</strong> Power BI pros reach for when they need to <strong>surface and explore how often “Qty Diff ≠ 0” happens</strong>. I’ve grouped them by the questions they answer best, then given the one-liner DAX measure you’ll reuse in every visual.</p><hr/><h2 id="blue-print-CitiCSLQI15%AccountRecsVSACE-1Headline:“Howmanybreaksrightnow?”">1 Headline: “How many breaks right now?”</h2><div class="table-wrap"><table data-layout="default" data-local-id="8ec75432-804c-4556-9cf3-cbdccbb8627b" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Visual</p></th><th class="confluenceTh"><p>Why it’s ideal</p></th><th class="confluenceTh"><p>Tips</p></th></tr><tr><td class="confluenceTd"><p><strong>Card</strong> (or KPI)</p></td><td class="confluenceTd"><p>Biggest, simplest way to put today’s / this file’s total front-and-centre.</p></td><td class="confluenceTd"><ul><li><p>Use <em>Card</em> for a static number; <em>KPI</em> if you also want a trend line and goal. • Turn on “callout value” (£ 14 pt+, bold) so it jumps off the page.</p></li></ul></td></tr></tbody></table></div><hr/><h2 id="blue-print-CitiCSLQI15%AccountRecsVSACE-2Timeview:“Whendobreaksspike?”">2 Time view: “When do breaks spike?”</h2><div class="table-wrap"><table data-layout="default" data-local-id="47cabc0e-a9a9-44b3-b5c1-7ce99497fac2" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Visual</p></th><th class="confluenceTh"><p>Why it shines</p></th><th class="confluenceTh"><p>Tips</p></th></tr><tr><td class="confluenceTd"><p><strong>Line chart</strong> or <strong>Area chart</strong></p></td><td class="confluenceTd"><p>Shows the ebb and flow of break counts across dates, file batches, or versions.</p></td><td class="confluenceTd"><ul><li><p>Put <em>Date</em> (or <em>FileDate</em>) on X-axis, the <strong>Events</strong> measure on Y-axis. • Add a <em>rolling 7-day average</em> (quick measure) to smooth noisy daily files.</p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>Column chart</strong></p></td><td class="confluenceTd"><p>Same story but easier to read exact numbers at each point—great for weekly or monthly buckets.</p></td><td class="confluenceTd"><ul><li><p>Cluster by <em>Source</em> (e.g., CITI vs CIP) if you load more than one feed.</p></li></ul></td></tr></tbody></table></div><hr/><h2 id="blue-print-CitiCSLQI15%AccountRecsVSACE-3Root-causescan:“Wheredotheyhappenmost?”">3 Root-cause scan: “Where do they happen most?”</h2><div class="table-wrap"><table data-layout="default" data-local-id="7c6dd651-3a50-4bae-9fd8-6b1ae3868328" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Visual</p></th><th class="confluenceTh"><p>Why it helps</p></th><th class="confluenceTh"><p>Tips</p></th></tr><tr><td class="confluenceTd"><p><strong>Stacked bar / column</strong></p></td><td class="confluenceTd"><p>Quick ranking of <em>ISIN</em>, <em>Sec Code</em>, <em>Hold Type</em>, etc. by break frequency.</p></td><td class="confluenceTd"><ul><li><p>Sort descending by <strong>Events</strong> so the worst offenders are on top.</p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>Decomposition Tree</strong></p></td><td class="confluenceTd"><p>Lets users drill from global count → ISIN → Sec Code → Hold Type without pre-building lots of pages.</p></td><td class="confluenceTd"><ul><li><p>Drop <strong>Events</strong> as “Analyze”, then add several categorical fields into <em>Explain by</em>. • Turn on “High value” so the tree auto-expands down the biggest cause path.</p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>Treemap</strong></p></td><td class="confluenceTd"><p>Compact, visual at-a-glance breakdown when you’ve many categories.</p></td><td class="confluenceTd"><ul><li><p>Put <em>Asset Name</em> or <em>Exchange Code</em> in Group; colour by <strong>Events</strong>.</p></li></ul></td></tr></tbody></table></div><hr/><h2 id="blue-print-CitiCSLQI15%AccountRecsVSACE-4Severityvsfrequency:“Arebiggapsrareorcommon?”">4 Severity vs frequency: “Are big gaps rare or common?”</h2><div class="table-wrap"><table data-layout="default" data-local-id="4c92051c-9f11-4484-af3f-a3cc92424a40" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Visual</p></th><th class="confluenceTh"><p>Why it’s ideal</p></th><th class="confluenceTh"><p>Tips</p></th></tr><tr><td class="confluenceTd"><p><strong>Scatter plot</strong></p></td><td class="confluenceTd"><p>X-axis = Avg <strong>Qty Diff</strong>, Y-axis = <strong>Events</strong> count, bubble size = Max Diff. Flags “small but often” vs “huge one-off” problems.</p></td><td class="confluenceTd"><ul><li><p>Add a constant line at zero on X-axis to split positive and negative net positions.</p></li></ul></td></tr></tbody></table></div><hr/><h2 id="blue-print-CitiCSLQI15%AccountRecsVSACE-5Operational:“Whichbreaksarestillopenvscleared?”">5 Operational: “Which breaks are still open vs cleared?”</h2><div class="table-wrap"><table data-layout="default" data-local-id="5e6d486e-f43a-4b69-b564-12ee26d081e3" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Visual</p></th><th class="confluenceTh"><p>Why it helps</p></th><th class="confluenceTh"><p>Tips</p></th></tr><tr><td class="confluenceTd"><p><strong>Matrix</strong></p></td><td class="confluenceTd"><p>Dynamic tabular view (ISIN rows, dates columns) with conditional formatting.</p></td><td class="confluenceTd"><ul><li><p>Colour cells where <strong>Qty Diff ≠ 0</strong> red; zeros green/blank.</p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>Table with conditional icons</strong></p></td><td class="confluenceTd"><p>Perfect when auditors want the raw list but you still need visual cues.</p></td><td class="confluenceTd"><ul><li><p>Add an <em>SVG Measure</em> that shows ✔ or ✖ based on Diff = 0.</p></li></ul></td></tr></tbody></table></div><hr/><h3 id="blue-print-CitiCSLQI15%AccountRecsVSACE-ReusableDAXmeasure(putitinaMeasurestable)">Reusable DAX measure (put it in a <code>Measures</code> table)</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Events :=
+COUNTROWS (
+    FILTER ( &#39;Reconcile&#39;, NOT ISBLANK ( &#39;Reconcile&#39;[Qty Diff] ) &amp;&amp; &#39;Reconcile&#39;[Qty Diff] &lt;&gt; 0 )
+)
+</pre>
+</div></div><blockquote><p><strong>Shortcut</strong>: If performance matters, materialise a boolean column in Power Query called <code>[IsBreak]</code> (<code>Qty Diff &lt;&gt; 0</code>) and use <code>CALCULATE ( COUNTROWS ( 'Reconcile' ), 'Reconcile'[IsBreak] )</code>. Bitwise tests in VertiPaq filter faster than row context filters on the fly.</p></blockquote><hr/><h2 id="blue-print-CitiCSLQI15%AccountRecsVSACE-Quicklayoutrecipe">Quick layout recipe</h2><ol start="1"><li><p><strong>Top row</strong> – <em>Card</em> with total breaks + <em>KPI</em> showing 7-day trend.</p></li><li><p><strong>Middle row</strong> – <em>Line</em> or <em>Area</em> chart across dates (left) &amp; <em>Stacked bar</em> ranking ISIN (right).</p></li><li><p><strong>Bottom row</strong> – <em>Decomposition Tree</em> for ad-hoc drill or <em>Scatter</em> for severity analysis.</p></li><li><p>Small <em>Table</em> on a hidden “Details” page, linked via drill-through on ISIN.</p></li></ol><p>Wrap those visuals around the <code>Events</code> measure and your reconciliation report will tell both <strong>executives</strong> (“How bad is it?”) and <strong>analysts</strong> (“Where do I fix it first?”) everything they need—without dumping them into raw data hell.</p><p /><p>Perfect — your <strong>Automatic Daily QI Rec - Incre</strong> now returns the rows we need:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Source.Name | FileDate | Name (sheet)                 | Data (table)
+------------|----------|-------------------------------|-------------
+…xlsx       | …        | Citi_Positions_AsAt          | [Table]
+…xlsx       | …        | Citi_Transactions_Last14Days | [Table]
+…           | …        | CIP_Positions_AsAt           | [Table]
+…           | …        | CIP_ContractsLast14Days      | [Table]
+…           | …        | ACE_CSL_Trans_Last14Days     | [Table]
+</pre>
+</div></div><p>Below are <strong>5 small functions</strong> (one per sheet) and <strong>5 fact tables</strong> that loop all files in the incremental window, open the sheet, type columns, stamp <code>FileDate</code>, add a stable <code>Key</code>, and (optionally) de-dup.</p><blockquote><p>⚠️ Adjust the <em>typing lists</em> if your real columns differ.<br/>If a column isn’t present, Power Query will error — so match names exactly.</p></blockquote><hr/><h2 id="blue-print-CitiCSLQI15%AccountRecsVSACE-Functions(saveeachasafunctionquery;EnableLoad=false)">Functions (save each as a <em>function</em> query; <strong>Enable Load = false</strong>)</h2><h3 id="blue-print-CitiCSLQI15%AccountRecsVSACE-1)fxCitiPositions">1) <code>fxCitiPositions</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">// fxCitiPositions (SheetTable, FileDateTime) -&gt; table
+(Sheet as table, FileDate as datetime) as table =&gt;
+let
+    Headers = Table.PromoteHeaders(Sheet, [PromoteAllScalars = true]),
+    Typed   = Table.TransformColumnTypes(
+                Headers,
+                {
+                    {&quot;Acc ID&quot;,        type text},   // keep/remove as needed
+                    {&quot;ISIN&quot;,          type text},
+                    {&quot;Asset Name&quot;,    type text},
+                    {&quot;Sec Code&quot;,      type text},
+                    {&quot;Hold Type&quot;,     type text},
+                    {&quot;Exchange Code&quot;, type text},
+                    {&quot;Currency&quot;,      type text},
+                    {&quot;Citi Qty&quot;,      Int64.Type}
+                }),
+    WithDate = Table.AddColumn(Typed, &quot;FileDate&quot;, each Date.From(FileDate), type date),
+    WithKey  = Table.AddColumn(
+                WithDate, &quot;Key&quot;,
+                each [ISIN] &amp; &quot;|&quot; &amp; [Sec Code] &amp; &quot;|&quot;
+                   &amp; Date.ToText([FileDate], &quot;yyyy-MM-dd&quot;),
+                type text)
+in
+    WithKey
+</pre>
+</div></div><h3 id="blue-print-CitiCSLQI15%AccountRecsVSACE-2)fxCitiTx">2) <code>fxCitiTx</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">// fxCitiTx (SheetTable, FileDateTime) -&gt; table
+(Sheet as table, FileDate as datetime) as table =&gt;
+let
+    H = Table.PromoteHeaders(Sheet, [PromoteAllScalars = true]),
+    T = Table.TransformColumnTypes(
+          H,
+          {
+              {&quot;Trade Date&quot;, type date},
+              {&quot;ISIN&quot;,       type text},
+              {&quot;Asset Name&quot;, type text},
+              {&quot;Sec Code&quot;,   type text},
+              {&quot;Qty&quot;,        Int64.Type},
+              {&quot;Currency&quot;,   type text},
+              {&quot;Acc ID&quot;,     type text}
+          }),
+    D = Table.AddColumn(T, &quot;FileDate&quot;, each Date.From(FileDate), type date),
+    K = Table.AddColumn(
+          D, &quot;Key&quot;,
+          each [ISIN] &amp; &quot;|&quot; &amp; [Sec Code] &amp; &quot;|&quot;
+             &amp; Date.ToText([Trade Date], &quot;yyyy-MM-dd&quot;) &amp; &quot;|&quot;
+             &amp; Number.ToText([Qty]),
+          type text)
+in
+    K
+</pre>
+</div></div><h3 id="blue-print-CitiCSLQI15%AccountRecsVSACE-3)fxCipPositions">3) <code>fxCipPositions</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">// fxCipPositions (SheetTable, FileDateTime) -&gt; table
+(Sheet as table, FileDate as datetime) as table =&gt;
+let
+    H = Table.PromoteHeaders(Sheet, [PromoteAllScalars = true]),
+    T = Table.TransformColumnTypes(
+          H,
+          {
+              {&quot;Acc ID&quot;,        type text},   // if present
+              {&quot;ISIN&quot;,          type text},
+              {&quot;Asset Name&quot;,    type text},
+              {&quot;Sec Code&quot;,      type text},
+              {&quot;Hold Type&quot;,     type text},
+              {&quot;Exchange Code&quot;, type text},
+              {&quot;Currency&quot;,      type text},
+              {&quot;ACE Qty&quot;,       Int64.Type}
+          }),
+    D = Table.AddColumn(T, &quot;FileDate&quot;, each Date.From(FileDate), type date),
+    K = Table.AddColumn(
+          D, &quot;Key&quot;,
+          each [ISIN] &amp; &quot;|&quot; &amp; [Sec Code] &amp; &quot;|&quot;
+             &amp; Date.ToText([FileDate], &quot;yyyy-MM-dd&quot;),
+          type text)
+in
+    K
+</pre>
+</div></div><h3 id="blue-print-CitiCSLQI15%AccountRecsVSACE-4)fxCipContracts">4) <code>fxCipContracts</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">// fxCipContracts (SheetTable, FileDateTime) -&gt; table
+(Sheet as table, FileDate as datetime) as table =&gt;
+let
+    H = Table.PromoteHeaders(Sheet, [PromoteAllScalars = true]),
+    T = Table.TransformColumnTypes(
+          H,
+          {
+              {&quot;Contract ID&quot;, type text},
+              {&quot;ISIN&quot;,        type text},
+              {&quot;Sec Code&quot;,    type text},
+              {&quot;Start Date&quot;,  type date},
+              {&quot;End Date&quot;,    type date},
+              {&quot;Qty&quot;,         Int64.Type},
+              {&quot;Currency&quot;,    type text},
+              {&quot;Acc ID&quot;,      type text}
+          }),
+    D = Table.AddColumn(T, &quot;FileDate&quot;, each Date.From(FileDate), type date),
+    K = Table.AddColumn(
+          D, &quot;Key&quot;,
+          each [Contract ID] &amp; &quot;|&quot; &amp; [ISIN] &amp; &quot;|&quot; &amp; [Sec Code],
+          type text)
+in
+    K
+</pre>
+</div></div><h3 id="blue-print-CitiCSLQI15%AccountRecsVSACE-5)fxAceTx">5) <code>fxAceTx</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">// fxAceTx (SheetTable, FileDateTime) -&gt; table
+(Sheet as table, FileDate as datetime) as table =&gt;
+let
+    H = Table.PromoteHeaders(Sheet, [PromoteAllScalars = true]),
+    T = Table.TransformColumnTypes(
+          H,
+          {
+              {&quot;Trade Date&quot;, type date},
+              {&quot;ISIN&quot;,       type text},
+              {&quot;Asset Name&quot;, type text},
+              {&quot;Sec Code&quot;,   type text},
+              {&quot;Qty&quot;,        Int64.Type},
+              {&quot;Currency&quot;,   type text},
+              {&quot;Account&quot;,    type text}
+          }),
+    D = Table.AddColumn(T, &quot;FileDate&quot;, each Date.From(FileDate), type date),
+    K = Table.AddColumn(
+          D, &quot;Key&quot;,
+          each [ISIN] &amp; &quot;|&quot; &amp; [Sec Code] &amp; &quot;|&quot;
+             &amp; Date.ToText([Trade Date], &quot;yyyy-MM-dd&quot;) &amp; &quot;|&quot;
+             &amp; Number.ToText([Qty]),
+          type text)
+in
+    K
+</pre>
+</div></div><hr/><h2 id="blue-print-CitiCSLQI15%AccountRecsVSACE-Facttables(eachloopsyourAutomaticDailyQIRec-Incre)">Fact tables (each loops your <strong>Automatic Daily QI Rec - Incre</strong>)</h2><blockquote><p>Replace only the sheet name and the function call in each block.</p></blockquote><h3 id="blue-print-CitiCSLQI15%AccountRecsVSACE-A)Citi_Positions">A) <code>Citi_Positions</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">let
+    Sheets   = #&quot;Automatic Daily QI Rec - Incre&quot;,
+    Filtered = Table.SelectRows(Sheets, each [Name] = &quot;Citi_Positions_AsAt&quot;),
+    Applied  = Table.AddColumn(Filtered, &quot;Rows&quot;, each fxCitiPositions([Data], [FileDate])),
+    Combined = Table.Combine(Applied[Rows]),
+    Deduped  = Table.Distinct(Combined, {&quot;Key&quot;})
+in
+    Deduped
+</pre>
+</div></div><h3 id="blue-print-CitiCSLQI15%AccountRecsVSACE-B)Citi_Transactions">B) <code>Citi_Transactions</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">let
+    Sheets   = #&quot;Automatic Daily QI Rec - Incre&quot;,
+    Filtered = Table.SelectRows(Sheets, each [Name] = &quot;Citi_Transactions_Last14Days&quot;),
+    Applied  = Table.AddColumn(Filtered, &quot;Rows&quot;, each fxCitiTx([Data], [FileDate])),
+    Combined = Table.Combine(Applied[Rows])
+in
+    Combined
+</pre>
+</div></div><h3 id="blue-print-CitiCSLQI15%AccountRecsVSACE-C)Cip_Positions">C) <code>Cip_Positions</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">let
+    Sheets   = #&quot;Automatic Daily QI Rec - Incre&quot;,
+    Filtered = Table.SelectRows(Sheets, each [Name] = &quot;CIP_Positions_AsAt&quot;),
+    Applied  = Table.AddColumn(Filtered, &quot;Rows&quot;, each fxCipPositions([Data], [FileDate])),
+    Combined = Table.Combine(Applied[Rows]),
+    Deduped  = Table.Distinct(Combined, {&quot;Key&quot;})
+in
+    Deduped
+</pre>
+</div></div><h3 id="blue-print-CitiCSLQI15%AccountRecsVSACE-D)Cip_Contracts">D) <code>Cip_Contracts</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">let
+    Sheets   = #&quot;Automatic Daily QI Rec - Incre&quot;,
+    Filtered = Table.SelectRows(Sheets, each [Name] = &quot;CIP_ContractsLast14Days&quot;),
+    Applied  = Table.AddColumn(Filtered, &quot;Rows&quot;, each fxCipContracts([Data], [FileDate])),
+    Combined = Table.Combine(Applied[Rows])
+in
+    Combined
+</pre>
+</div></div><h3 id="blue-print-CitiCSLQI15%AccountRecsVSACE-E)Ace_Transactions">E) <code>Ace_Transactions</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">let
+    Sheets   = #&quot;Automatic Daily QI Rec - Incre&quot;,
+    Filtered = Table.SelectRows(Sheets, each [Name] = &quot;ACE_CSL_Trans_Last14Days&quot;),
+    Applied  = Table.AddColumn(Filtered, &quot;Rows&quot;, each fxAceTx([Data], [FileDate])),
+    Combined = Table.Combine(Applied[Rows])
+in
+    Combined
+</pre>
+</div></div><hr/><h3 id="blue-print-CitiCSLQI15%AccountRecsVSACE-Notes/gotchas">Notes / gotchas</h3><ul><li><p><strong>Column names</strong> are case-sensitive; confirm on one file then lock them in the function’s typing section.</p></li><li><p><code>FileDate</code> comes from the workbook’s <strong>Date modified</strong>; we cast to <code>date</code> for stable partitioning.</p></li><li><p>For <strong>dedup</strong>, I used a conservative <code>Key</code>. If you need finer grain, add <code>Hold Type</code> / <code>Exchange Code</code> for positions and <code>{Trade Date, Acc ID}</code> for transactions.</p></li><li><p>Keep the <strong>functions</strong> “connection only” (no load) to avoid clutter.</p></li></ul><p>If you paste these in as-is, you should be able to refresh and see each fact table populate from all files inside the incremental window. Want me to tune the typing lists off a single sample of each sheet? Send the column headers and I’ll lock them in.</p><p /><p /><p /><p>Below is a <strong>blue-print</strong> you can copy-paste into your own environment.<br/>It keeps the familiar folder-query approach but adds incremental refresh, deduplication, and guard-rails so a single pasted row—or a stray parallel refresh—no longer brings the whole model to its knees.</p><hr/><h2 id="blue-print-CitiCSLQI15%AccountRecsVSACE-1|Staging:parameterisedfolderquery">1 | Staging: parameterised folder query</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">// *** once per model ***  
+// Create two Date/Time parameters (case-sensitive)  
+//   RangeStart = #datetime(2023,01,01, 0,0,0)   (any old date)  
+//   RangeEnd   = #datetime(2023,01,02, 0,0,0)
+</pre>
+</div></div><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">// FileIndex : lists only the files in the incremental window
+let
+    Source      = Sftp.Files(&quot;sftp://…/Automatic Daily QI Rec/&quot;),
+    WithDate    = Table.AddColumn(Source, &quot;FileDate&quot;,
+                     each Date.From(Text.Middle([Name], 55, 10)), type date),
+    Filtered    = Table.SelectRows(WithDate,
+                     each [FileDate] &gt;= RangeStart
+                       and [FileDate]  &lt; RangeEnd)
+in
+    Filtered
+</pre>
+</div></div><blockquote><p><strong>Why?</strong> When you publish the dataset and turn on <em>Incremental Refresh</em>, the service automatically moves <code>RangeStart/RangeEnd</code> forward at every refresh, so only <strong>new</strong> files are touched. (<a class="external-link" href="https://learn.microsoft.com/en-us/power-bi/connect-data/incremental-refresh-configure?utm_source=chatgpt.com" rel="nofollow">learn.microsoft.com</a>, <a class="external-link" href="https://learn.microsoft.com/en-us/power-bi/connect-data/incremental-refresh-overview?utm_source=chatgpt.com" rel="nofollow">learn.microsoft.com</a>)</p></blockquote><hr/><h2 id="blue-print-CitiCSLQI15%AccountRecsVSACE-2|Asinglefunctionforeachsheetlayout">2 |<strong> A single function for each sheet layout</strong></h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">// fxCitiPositions (save as a query and mark as &#39;function&#39;)
+(FileContent as binary, FileDate as date) as table =&gt;
+let
+    Excel    = Excel.Workbook(FileContent, true),
+    Raw      = Excel{[Item=&quot;Citi_Positions_AsAt&quot;,Kind=&quot;Sheet&quot;]}[Data],
+    Headers  = Table.PromoteHeaders(Raw, [PromoteAllScalars=true]),
+    Types    = Table.TransformColumnTypes(Headers,{
+                    {&quot;ISIN&quot;, type text}, {&quot;Sec Code&quot;, type text},
+                    {&quot;Citi Qty&quot;, Int64.Type}, {&quot;Currency&quot;, type text}}),
+    AddDate  = Table.AddColumn(Types , &quot;FileDate&quot;, each FileDate, type date),
+
+    // Build your *surrogate key* once and for all
+    AddKey   = Table.AddColumn(AddDate, &quot;Key&quot;,
+                each Text.Combine(
+                     { [ISIN], [Sec Code], Text.From(FileDate)}, &quot;|&quot; ))
+in
+    AddKey
+</pre>
+</div></div><p>Repeat for <code>fxCitiTx</code>, <code>fxCipPositions</code>, <code>fxAceTx</code>.</p><hr/><h2 id="blue-print-CitiCSLQI15%AccountRecsVSACE-3|Facttablesthatappend–neverfull-reload">3 | Fact tables that <em>append</em> – never full-reload</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">// Citi_Positions (IMPORT MODE)
+let
+    Files   = FileIndex,  // already date-filtered
+    Tables  = Table.AddColumn(Files, &quot;Rows&quot;,
+                each fxCitiPositions([Content],[FileDate])),
+    Combine = Table.Combine(Tables[Rows]),
+
+    // kill accidental copy-&amp;-paste duplicates
+    Dedup   = Table.Distinct(Combine, &quot;Key&quot;)
+in
+    Dedup
+</pre>
+</div></div><p>Duplicate logic for <code>CITI_Transactions</code>, <code>CIP_Positions</code>, <code>ACE_Tx</code>, etc.</p><hr/><h2 id="blue-print-CitiCSLQI15%AccountRecsVSACE-4|IncrementalRefreshpolicy(pertable)">4 | Incremental Refresh policy (per table)</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="d9aae235-e2da-4373-aa87-616c8b4fcbd8" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Setting</p></th><th class="confluenceTh"><p>Value</p></th></tr><tr><td class="confluenceTd"><p>Archive data</p></td><td class="confluenceTd"><p>3 years</p></td></tr><tr><td class="confluenceTd"><p>Incrementally refresh</p></td><td class="confluenceTd"><p>Last 15 days</p></td></tr><tr><td class="confluenceTd"><p>Detect data changes on</p></td><td class="confluenceTd"><p><code>FileDate</code></p></td></tr></tbody></table></div><p>If the model grows further, convert partitions older than ~90 days to <strong>DirectQuery</strong> for a <em>Hybrid</em> table – the Premium tier supports this. (<a class="external-link" href="https://community.fabric.microsoft.com/t5/Service/Reversed-hybrid-table-with-incremental-refresh/m-p/4410835?utm_source=chatgpt.com" rel="nofollow">community.fabric.microsoft.com</a>)</p><hr/><h2 id="blue-print-CitiCSLQI15%AccountRecsVSACE-5|ModellinginsteadofheavyMjoins">5 | Modelling instead of heavy M joins</h2><p><em>In the model view</em></p><ol start="1"><li><p>Relate <code>Citi_Positions</code> ⇄ <code>Cip_Positions</code> on <code>[ISIN]</code> + <code>[Sec Code]</code> (or the compound Key).</p></li><li><p>Move break-age maths to <strong>DAX measures</strong>; e.g.</p></li></ol><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Difference := SUM ( Citi_Positions[Citi Qty] ) - SUM ( Cip_Positions[Ace Qty] )
+
+Current Break? :=
+IF ( [Difference] &lt;&gt; 0
+   &amp;&amp; MAX ( Citi_Positions[FileDate] ) &gt;= TODAY() - 1, 1 )
+</pre>
+</div></div><ol start="3"><li><p>Latest comment with:</p></li></ol><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Latest Comment :=
+VAR _date = MAX ( Comments[Comment Date] )
+RETURN
+    CALCULATE ( MAX ( Comments[Comment] ),
+                Comments[Comment Date] = _date )
+</pre>
+</div></div><p>Result: the heaviest transforms now run <strong>once</strong> (initial load); every later refresh runs only on the last 15 days and finishes in a few minutes.</p><hr/><h2 id="blue-print-CitiCSLQI15%AccountRecsVSACE-6|PowerAutomaterefreshguard-rail">6 | Power Automate refresh guard-rail</h2><p><em>Refresh a dataset</em> → <strong>Settings</strong> → <em>Concurrency control</em> → <strong>On</strong><br/><code>Degree of Parallelism = 1</code><br/>Add a <em>Do Until</em> loop calling <strong>Get Refresh History</strong>; only fire a second refresh when the previous one is <code>completed</code>.</p><hr/><h3 id="blue-print-CitiCSLQI15%AccountRecsVSACE-🎯Whatchangesfortheteam">🎯 What changes for the team</h3><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="e20d0045-4bbd-44d9-8f18-4ed5d9491a17" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Before</p></th><th class="confluenceTh"><p>After (this design)</p></th></tr><tr><td class="confluenceTd"><p>Any M tweak ⇒ 600 files re-ingested</p></td><td class="confluenceTd"><p>Only files whose <code>FileDate</code> ≥ RangeStart</p></td></tr><tr><td class="confluenceTd"><p>30-40 min refresh; frequent time-outs</p></td><td class="confluenceTd"><p>~3-5 min incremental refresh</p></td></tr><tr><td class="confluenceTd"><p>Duplicates pasted in Excel break model</p></td><td class="confluenceTd"><p><code>Table.Distinct</code> on the composite <strong>Key</strong></p></td></tr><tr><td class="confluenceTd"><p>Parallel refresh calls collide</p></td><td class="confluenceTd"><p>Concurrency flag &amp; loop in Power Automate</p></td></tr></tbody></table></div><hr/><p><strong>Next steps</strong></p><ol start="1"><li><p>Add the <code>RangeStart/RangeEnd</code> parameters.</p></li><li><p>Convert your sheet-specific queries into <em>functions</em> and rebuild the fact tables with the pattern above.</p></li><li><p>Enable Incremental Refresh, publish, run the one-time full refresh.</p></li><li><p>Turn on the Power Automate safeguard.</p></li></ol><p>Send over a sample workbook when you’re ready; I can whip up the function skeletons so you only drop in column names.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:54</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

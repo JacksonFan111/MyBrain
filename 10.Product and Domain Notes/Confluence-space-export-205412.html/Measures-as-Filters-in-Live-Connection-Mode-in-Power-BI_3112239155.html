@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Measures as Filters in Live Connection Mode in Power BI</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Measures as Filters in Live Connection Mode in Power BI
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 02-04-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is a technical blog post that explains the limitations of using measures as slicer filters in Live Connection mode, and how that affects our [IsMixedClient] scenario:</p><hr/><h1 id="MeasuresasFiltersinLiveConnectionModeinPowerBI-UsingMeasuresasFiltersinLiveConnectionModeinPowerBI:Challenges&amp;Workarounds">Using Measures as Filters in Live Connection Mode in Power BI: Challenges &amp; Workarounds</h1><p>When working with Power BI, one common requirement is to filter visuals based on calculated logic—for example, flagging clients that hold “mixed” assets. A typical approach might be to create a measure like this:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">// Option 1: Using distinct asset classification
+IsMixedClient =
+VAR ClientAssetCount =
+    CALCULATE(
+        DISTINCTCOUNT(&#39;Asset&#39;[RBNZ Classification]),
+        ALLEXCEPT(&#39;Account&#39;, &#39;Account&#39;[Portfolio Service ID])
+    )
+RETURN
+    IF(ClientAssetCount &gt; 1, 1, 0)
+</pre>
+</div></div><p>Alternatively, you might see a measure that uses the counts of valid client accounts and mixed clients, like so:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">IsMixedClient =
+VAR CurrentAccountCount =
+    CALCULATE([# Valid Client Accounts], ALLSELECTED())
+VAR MixedCount = [# Mixed Clients]
+RETURN
+    IF(
+        (MixedCount &gt; 0) &amp;&amp; (CurrentAccountCount = MixedCount),
+        1,
+        0
+    )
+</pre>
+</div></div><p>While these measures work perfectly in many Power BI scenarios, they introduce a unique challenge in <strong>Live Connection mode</strong>.</p><h2 id="MeasuresasFiltersinLiveConnectionModeinPowerBI-LiveConnectionModeLimitations">Live Connection Mode Limitations</h2><p>In a standard Power BI Desktop model (using Import or DirectQuery with composite models), you have the freedom to add calculated columns, create new tables, and use measures in interactive slicers. However, with <strong>Live Connection mode</strong>—such as when connecting live to an Analysis Services model or a published Power BI dataset—the following restrictions apply:</p><ul><li><p><strong>Model Lockdown:</strong><br/>You cannot modify the underlying data model. This means no adding new columns or tables in the report layer.</p></li><li><p><strong>Report-Level Measures Only:</strong><br/>You can only create measures (and visual calculations) in the report. These measures are dynamic, recalculated based on the current filter context.</p></li><li><p><strong>Slicer Limitation:</strong><br/>Slicers require a field from a table or column that holds discrete values. Because measures return a single scalar value that depends on context rather than row-by-row values, you cannot directly drag and drop a measure (such as [IsMixedClient]) onto a slicer.</p></li></ul><p>In other words, while you can add your [IsMixedClient] measure as a <strong>visual-level filter</strong> (e.g., filtering a table or matrix to show only rows where [IsMixedClient] equals 1), you cannot use it as an interactive slicer that end users can adjust on the report canvas.</p><h2 id="MeasuresasFiltersinLiveConnectionModeinPowerBI-The[IsMixedClient]MeasureinContext">The [IsMixedClient] Measure in Context</h2><p>Let’s revisit our measure that flags a client as “mixed”:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">IsMixedClient =
+VAR CurrentAccountCount =
+    CALCULATE([# Valid Client Accounts], ALLSELECTED())
+VAR MixedCount = [# Mixed Clients]
+RETURN
+    IF(
+        (MixedCount &gt; 0) &amp;&amp; (CurrentAccountCount = MixedCount),
+        1,
+        0
+    )
+</pre>
+</div></div><h3 id="MeasuresasFiltersinLiveConnectionModeinPowerBI-HowItWorks">How It Works</h3><ul><li><p><strong>CurrentAccountCount:</strong><br/>This variable calculates the number of valid client accounts—using <code>ALLSELECTED()</code> to respect the user’s filter context in the visual.</p></li><li><p><strong>MixedCount:</strong><br/>This variable represents the count of “mixed clients” as determined by another measure.</p></li><li><p><strong>Return Logic:</strong><br/>If there is at least one mixed client and every valid account is a mixed client (i.e. <code>CurrentAccountCount = MixedCount</code>), then the measure returns <strong>1</strong>; otherwise, it returns <strong>0</strong>.</p></li></ul><p>When you add this measure as a visual-level filter (e.g., in the Filters pane of a table visual), you can set the filter to only show rows where <strong>IsMixedClient</strong> is 1. This works well for filtering within that visual.</p><h2 id="MeasuresasFiltersinLiveConnectionModeinPowerBI-WhyMeasuresCan’tBeUsedinSlicers">Why Measures Can’t Be Used in Slicers</h2><p>A slicer in Power BI requires a column or field that has a value on a per-row basis. Measures, on the other hand, are dynamic calculations that produce a single value in the current context. In Live Connection mode, where you are restricted to report-level measures, you do not have the ability to create new columns that could hold the “Mixed” flag for each row.</p><p><strong>As a result:</strong></p><ul><li><p>You can’t drag and drop [IsMixedClient] into a slicer because slicers expect a field (from a table) and not a measure.</p></li><li><p>This limitation forces report authors to rely on visual-level filtering rather than interactive slicers when working in a Live Connection environment.</p></li></ul><h2 id="MeasuresasFiltersinLiveConnectionModeinPowerBI-WorkaroundsandAlternatives">Workarounds and Alternatives</h2><p>If interactive filtering is a requirement in your scenario, here are a few approaches you might consider:</p><ol start="1"><li><p><strong>Request Model Enhancements:</strong><br/>Work with the data model owner to incorporate the necessary calculated column (for example, a “Mixed Client Flag” column) into the underlying model. Once the flag is part of the model, it will be available for use in slicers.</p></li><li><p><strong>Composite Models (if Available):</strong><br/>Power BI Premium (or certain configurations in Pro) now supports composite models and DirectQuery for Power BI datasets. In such cases, you can sometimes import a small table or create calculated columns locally. This approach allows you to generate a field that can be used in a slicer, though it requires your environment to support these newer features.</p></li><li><p><strong>Visual-Level Filtering Only:</strong><br/>If you must remain in a strict Live Connection mode and cannot modify the model, your only option is to use your [IsMixedClient] measure as a visual-level filter. Although this isn’t as interactive as a slicer, it still allows you to control which rows appear in a specific visual.</p></li></ol><h2 id="MeasuresasFiltersinLiveConnectionModeinPowerBI-Conclusion">Conclusion</h2><p>Live Connection mode in Power BI offers robust real-time connectivity to your data model but comes with important modeling restrictions—especially regarding the creation of new columns or tables and the use of measures in slicers. The [IsMixedClient] measure described above is a good example of dynamic logic that works as a visual-level filter; however, its nature as a measure means it cannot be directly used in a slicer.</p><p>For interactive filtering capabilities in scenarios like this, consider discussing enhancements with your model owner or leveraging composite models if your organization supports them. In the meantime, understanding these limitations and using visual-level filters is key to developing effective reports in Live Connection mode.</p><hr/><p>This post illustrates the technical challenges and workarounds when dealing with dynamic filtering using measures in Live Connection mode. Feel free to share your experiences or ask questions in the comments below!</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

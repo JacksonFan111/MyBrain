@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : CRM - Adviser domain tables</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : CRM - Adviser domain tables
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 30-01-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is a <em>conceptual</em> (high-level) diagram showing how the <strong>Adviser domain</strong> tables typically connect in your CRM. This is <strong>not</strong> a strict entity-relationship diagram with every column, but rather a helpful mental map for how these objects relate. Afterwards, you’ll see some explanatory notes describing each relationship and how the code snippets tie it all together.</p><hr/><h2 id="CRM-Adviserdomaintables-High-LevelConceptualDiagram">High-Level Conceptual Diagram</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">                           +-----------------------------------+
+                           |          BusinessUnit (bu)         |
+                           |-------------------------------------|
+                           | BusinessUnitId (PK)                |
+                           | dsl_BranchCode, Name, etc.         |
+                           +--------------------^----------------+
+                                                | 1
+                                                | (One BU can be associated
+                                                |  with multiple advisers)
+                                                |
+                           +---------------------+--------------------+
+                           | dsl_advisercommissioncode (acc)         |
+                           |------------------------------------------|
+                           | dsl_advisercommissioncodeId (PK)        |
+                           | dsl_name (AdviserCode)                   |
+                           | dsl_BranchId -&gt; BusinessUnitId (FK)      |
+                           | dsl_Retired (0/1)                        |
+                           +--------------------v---------------------+
+                                                | 1
+                                                | (One code can have
+                                                |  many links)
+                                                |
+                      +-------------------------+--------------------------+
+                      |      dsl_advisercommissionlink (acl)              |
+                      |---------------------------------------------------|
+                      | dsl_advisercommissionlinkId (PK)                  |
+                      | dsl_AdvisersId -&gt; acc.dsl_advisercommissioncodeId |
+                      | dsl_Adviser -&gt; SystemUser.SystemUserId (FK)       |
+                      | statecode (active/inactive)                       |
+                      +-------------------------v--------------------------+
+                                                |  (One link references
+                                                |   exactly one SystemUser)
+                                                | 
+                               +----------------+------------------+
+                               |   SystemUser (su)                 |
+                               |------------------------------------|
+                               | SystemUserId (PK)                  |
+                               | FullName (AdvisorName)             |
+                               | InternalEMailAddress, DomainName   |
+                               | BusinessUnitId (often -&gt; bu)       |
+                               | IsDisabled (0/1)                   |
+                               +------------------------------------+
+
+  ──────────────────────────────────────────────────────────────────────────
+                   +-----------------------------------+
+                   |          TeamBase (t)             |
+                   |-----------------------------------|
+                   | TeamId (PK)                       |
+                   | Name (possibly AdvisorID)         |
+                   | dsl_IsFromAdvisorCode (0/1)       |
+                   +--------------------^--------------+
+                                        |
+                     (TeamMembership)   | Many-to-Many
+                                        |
+                   +--------------------+-------------------+
+                   |        SystemUserBase (su)            |
+                   | (or same SystemUser table, different   |
+                   |  “Base” vs “Filtered” or region)       |
+                   +----------------------------------------+
+</pre>
+</div></div><blockquote><p><strong>Note:</strong><br/>In Microsoft Dynamics CRM, you often see the suffixes “Base,” “Filtered,” or no suffix at all, which refer to different <em>views</em> of the underlying table. For simplicity, above we’ve labeled everything with the logical names: <em>SystemUser</em>, <em>Team</em>, <em>BusinessUnit</em>, etc.</p></blockquote><hr/><h2 id="CRM-Adviserdomaintables-ExplanationofKeyRelationships">Explanation of Key Relationships</h2><ol start="1"><li><p><strong>dsl_advisercommissioncode (acc) → BusinessUnit (bu)</strong></p><ul><li><p>Each Adviser Commission Code record (<code>acc</code>) has a foreign key <code>acc.dsl_BranchId</code> which references <code>bu.BusinessUnitId</code>.</p></li><li><p>In your code, you often see <code>acc.dsl_BranchId = bu.BusinessUnitId</code> joins. This lets you retrieve <em>BranchName</em> and <em>BranchCode</em> from the <em>BusinessUnit</em> table.</p></li></ul></li><li><p><strong>dsl_advisercommissionlink (acl) → dsl_advisercommissioncode (acc)</strong></p><ul><li><p>The link table (<code>acl</code>) ties an <em>adviser record</em> to a Commission Code.</p></li><li><p><code>acl.dsl_AdvisersId</code> → <code>acc.dsl_advisercommissioncodeId</code>.</p></li><li><p>This means many “links” can refer to a single “commission code,” i.e., a 1:N relationship from <code>acc</code> → <code>acl</code>.</p></li></ul></li><li><p><strong>dsl_advisercommissionlink (acl) → SystemUser (su)</strong></p><ul><li><p>The same <em>link</em> also references a <em>SystemUser</em> record: <code>acl.dsl_Adviser = su.SystemUserId</code>.</p></li><li><p>This indicates which user (i.e., <em>adviser</em>) is tied to a commission code. You can retrieve <em>su.FullName</em> (“AdvisorName”), <em>DomainName</em>, <em>Email</em>, etc.</p></li></ul></li><li><p><strong>SystemUser (su) → BusinessUnit (bu)</strong></p><ul><li><p>Each <em>SystemUser</em> belongs to exactly one <em>BusinessUnit</em> in CRM. This is a standard CRM relationship for security roles.</p></li><li><p><em>SystemUser</em> also might appear in <em>TeamMembership</em> linking to <em>TeamBase</em>, as you see in the snippet that queries <code>TeamBase t, TeamMembership tm, SystemUserBase su</code>.</p></li></ul></li><li><p><strong>TeamBase (t) and TeamMembership</strong></p><ul><li><p>A <em>Team</em> can contain multiple users, and a <em>User</em> can belong to multiple teams. This is a standard N:N relationship in CRM.</p></li><li><p>The snippet referencing “<code>t.dsl_IsFromAdvisorCode=1</code>” suggests that certain Teams are used to group advisers by code or region.</p></li></ul></li><li><p><strong>Adviser vs. Private Wealth</strong></p><ul><li><p>Sometimes you will see separate “teams” or “sub-teams” for certain divisions such as “Private Wealth.”</p></li><li><p>The same linking logic applies: <em>SystemUser</em> is a member of zero or more Teams.</p></li></ul></li></ol><hr/><h2 id="CRM-Adviserdomaintables-MappingYourCodeSnippetstotheDiagram">Mapping Your Code Snippets to the Diagram</h2><ol start="1"><li><p><strong>Subquery for Adviser Name and Code</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">LEFT JOIN 
+    (SELECT acc.dsl_name AS AdvisorID,
+            su.FullName AS AdvisorName,
+            su.InternalEMailAddress AS Email,
+            LOWER(REPLACE(su.DomainName, &#39;AACRAIGS\&#39;, &#39;&#39;)) AS ID,
+            bu.Name AS BranchName,
+            bu.BusinessUnitId AS Branch,
+            su.SystemUserId AS Individual,
+            REPLACE(REPLACE(REPLACE(bu.dsl_BranchCode, &#39;BR_&#39;, &#39;&#39;), &#39;BK_&#39;, &#39;&#39;), &#39;WR_&#39;, &#39;&#39;) AS BranchCode
+     FROM dsl_advisercommissioncode acc
+     INNER JOIN dsl_advisercommissionlink acl 
+             ON acl.dsl_AdvisersId = acc.dsl_advisercommissioncodeId
+     INNER JOIN SystemUser su 
+             ON su.SystemUserId = acl.dsl_Adviser
+     INNER JOIN BusinessUnit bu 
+             ON acc.dsl_BranchId = bu.BusinessUnitId
+    ) ac
+</pre>
+</div></div><ul><li><p>This subquery joins all four relevant tables to return a <em>flattened</em> “adviser info” record. You see <em>acc → acl → su</em>, plus <em>acc → bu</em>.</p></li></ul></li><li><p><strong>Branch Query</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    acc.dsl_name AS AdviserCode, 
+    su.FullName AS AdvisorName,
+    su.InternalEMailAddress AS EmailAddress
+FROM 
+    dsl_advisercommissioncode acc
+INNER JOIN 
+    dsl_advisercommissionlink acl 
+        ON acl.dsl_AdvisersId = acc.dsl_advisercommissioncodeId
+INNER JOIN 
+    SystemUser su 
+        ON su.SystemUserId = acl.dsl_Adviser
+WHERE 
+    acc.dsl_Retired = 0 
+    AND acl.statecode = 0 
+    AND acc.dsl_name &lt;&gt; &#39;HEADOFFICE&#39;
+</pre>
+</div></div><ul><li><p>This is a simpler query to get <em>active</em> advisers (those with <code>acc.dsl_Retired = 0</code>, <code>acl.statecode = 0</code>) from the <em>Commission Code</em> to the <em>Link</em> to the <em>SystemUser</em>.</p></li></ul></li><li><p><strong>Advisor (Team) Query</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT t.Name as AdvisorId,
+       su.FullName as DAName, 
+       su.InternalEMailAddress as Email,
+       lower(replace(su.DomainName,&#39;AACRAIGS\&#39;,&#39;&#39;)) as ID,
+       bu.Name as Branch,
+       su.SystemUserId as Individual
+FROM TeamBase t
+INNER JOIN TeamMembership tm 
+        ON t.TeamId = tm.TeamId
+INNER JOIN SystemUserBase su 
+        ON su.SystemUserId = tm.SystemUserId
+INNER JOIN StringMap fsm 
+        ON fsm.Value=&#39;DA&#39; 
+       AND fsm.AttributeName=&#39;dsl_usertype&#39; 
+       AND su.dsl_UserType=fsm.AttributeValue
+INNER JOIN BusinessUnitBase bu 
+        ON su.BusinessUnitId=bu.BusinessUnitId
+WHERE t.dsl_IsFromAdvisorCode=1 
+  AND su.IsDisabled=0
+</pre>
+</div></div><ul><li><p>This snippet queries <em>Teams</em> and <em>TeamMembership</em>, then picks out only SystemUsers who have a user type of “DA” (whatever that business logic might be).</p></li><li><p>Notice the condition <code>t.dsl_IsFromAdvisorCode=1</code>, which is how your system differentiates <em>Teams</em> that represent “Adviser code” groupings.</p></li><li><p>Again, it shows that advisers can also be looked up by <em>Team</em> if your organization uses <em>Team</em> entities for “Advisor code.”</p></li></ul></li><li><p><strong>Private Wealth / Sub-teams</strong></p><ul><li><p>Often, large adviser groups can be broken into sub-teams by region or specialization (e.g., “Private Wealth”).</p></li><li><p>The same fundamental relationships apply (User → Team, Code → Link → User, etc.), just partitioned or labeled differently.</p></li></ul></li></ol><hr/><h2 id="CRM-Adviserdomaintables-PuttingItAllTogether">Putting It All Together</h2><ul><li><p><strong>Account</strong> (not shown in the diagram above) might store a <code>dsl_AdviserCommisionCodeIdName</code> field. That textual field may line up with or be associated to the <code>dsl_advisercommissionlink</code> or <code>dsl_advisercommissioncode</code> records.</p></li><li><p><strong>dsl_advisercommissionlink</strong> (acl) acts as the “glue” tying the <em>SystemUser (adviser)</em> to the <em>dsl_advisercommissioncode</em>.</p></li><li><p><strong>SystemUser</strong> (su) holds the adviser’s personal details (FullName, DomainName, Email) and belongs to a <em>BusinessUnit</em>.</p></li><li><p><strong>BusinessUnit</strong> (bu) can represent the “branch” or organizational unit.</p></li><li><p><strong>Team</strong> (TeamBase) and <strong>TeamMembership</strong> are used to group multiple SystemUsers (e.g., all advisers under a specific code or region).</p></li></ul><p>With this conceptual diagram and explanations, you should have a clearer picture of how to navigate the various tables—both for day-to-day queries (like pulling back adviser name/code/branch) and for ensuring data integrity (checking for orphaned links, etc.).</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

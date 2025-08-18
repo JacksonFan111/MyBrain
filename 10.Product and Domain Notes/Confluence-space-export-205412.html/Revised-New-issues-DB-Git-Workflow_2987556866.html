@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Revised New issues DB Git Workflow</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Revised New issues DB Git Workflow
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 09-02-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Here’s the <strong>corrected workflow</strong> to resolve the UAT/PROD linked server mismatch and ensure consistency:  </p><hr/><h4 id="RevisedNewissuesDBGitWorkflow-Step1:UsePRODastheSourceofTruth"><strong>Step 1: Use PROD as the Source of Truth</strong></h4><ul><li><p>Copy SPs from the <strong>PROD database</strong> (<code>[TGASQLPROD\\TGASQLCRM]</code>).  </p></li><li><p><strong>Why</strong>: PROD is the stable, audited version.  </p></li></ul><h4 id="RevisedNewissuesDBGitWorkflow-Step2:RefactorLinkedServersforUAT"><strong>Step 2: Refactor Linked Servers for UAT</strong></h4><ul><li><p>Manually replace <code>[TGASQLPROD\\TGASQLCRM]</code> with <code>[TGASQLTST01\\CRMUAT]</code> in all SPs.  </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Example:  
+-- Original (PROD):  
+SELECT * FROM [TGASQLPROD\\TGASQLCRM].[CRM].[dbo].[Data];  
+-- UAT Version:  
+SELECT * FROM [TGASQLTST01\\CRMUAT].[CRM_UAT].[dbo].[Data];  </pre>
+</div></div></li><li><p><strong>Risk</strong>: Human error (e.g., missed references).  </p></li></ul><h4 id="RevisedNewissuesDBGitWorkflow-Step3:TestinUAT"><strong>Step 3: Test in UAT</strong></h4><ul><li><p>Deploy refactored SPs to the <strong>UAT database</strong> and validate functionality (e.g., Cynthia’s <code>A + B = C</code> report).  </p></li><li><p><strong>Critical Check</strong>: Ensure UAT-specific data/logic works.  </p></li></ul><h4 id="RevisedNewissuesDBGitWorkflow-Step4:CreateaFeatureBranch"><strong>Step 4: Create a Feature Branch</strong></h4><ul><li><p>Branch name: <code>syncing/[JIRA-ID]-[Description]</code> (e.g., <code>syncing/CIP101-ReconciliationFix</code>).  </p></li><li><p>Base branch: <code>develop</code> (which uses PROD references).  </p></li></ul><h4 id="RevisedNewissuesDBGitWorkflow-Step5:RevertLinkedServersforPRODCompatibility"><strong>Step 5: Revert Linked Servers for PROD Compatibility</strong></h4><ul><li><p>Before committing, revert references in your local code to PROD:  </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Revert UAT → PROD  
+[TGASQLTST01\\CRMUAT] → [TGASQLPROD\\TGASQLCRM]  </pre>
+</div></div></li><li><p><strong>Automate This</strong>: Use a script to avoid errors:  </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: powershell; gutter: false; theme: Confluence" data-theme="Confluence">(Get-Content &quot;sprocs/*.sql&quot;) -replace &#39;TGASQLTST01\\\\CRMUAT&#39;, &#39;TGASQLPROD\\\\TGASQLCRM&#39; | Set-Content &quot;sprocs/*.sql&quot;  </pre>
+</div></div></li></ul><h4 id="RevisedNewissuesDBGitWorkflow-Step6:Commit&amp;CreateaPullRequest(PR)"><strong>Step 6: Commit &amp; Create a Pull Request (PR)</strong></h4><ul><li><p>Merge <code>syncing/[JIRA-ID]</code> into <code>develop</code>.  </p></li><li><p><strong>Requirement</strong>: Karl reviews to confirm PROD references are restored.  </p></li></ul><h4 id="RevisedNewissuesDBGitWorkflow-Step7:DocumenttheReferenceSwap"><strong>Step 7: Document the Reference Swap</strong></h4><ul><li><p>Add a note in the PR description or <code>UAT_CHANGELOG.md</code>:  </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">### [Date] - [JIRA-ID]  
+- **Change**: Reverted UAT references to PROD in `develop`.  
+- **Reason**: UAT requires `[TGASQLTST01\\CRMUAT]`, but `develop` aligns with PROD.  </pre>
+</div></div></li></ul><h4 id="RevisedNewissuesDBGitWorkflow-Step8:RedeploytoUAT(CriticalFix)"><strong>Step 8: Redeploy to UAT (Critical Fix)</strong></h4><ul><li><p>After merging to <code>develop</code>, <strong>redeploy the code to UAT</strong> with UAT references:  </p><ol start="1"><li><p>Use tokens or environment variables to auto-replace <code>[TGASQLPROD\\TGASQLCRM]</code> → <code>[TGASQLTST01\\CRMUAT]</code>.  </p></li><li><p>Example Azure DevOps task:  </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">- task: replacetokens@3  
+  inputs:  
+    targetFiles: &#39;**/*.sql&#39;  
+    tokens: &#39;LINKED_SERVER=[TGASQLTST01\\CRMUAT]&#39;  </pre>
+</div></div></li></ol></li></ul><hr/><h3 id="RevisedNewissuesDBGitWorkflow-WhyThisWorks"><strong>Why This Works</strong></h3><ol start="1"><li><p><strong>Eliminates Drift</strong>:  </p><ul><li><p>The <code>develop</code> branch retains PROD references for PROD compatibility.  </p></li><li><p>UAT DB uses UAT references via automated token replacement.  </p></li></ul></li><li><p><strong>Reduces Human Error</strong>:  </p><ul><li><p>Scripts automate reference swaps.  </p></li><li><p>Tokenization ensures environment-specific configs.  </p></li></ul></li><li><p><strong>Traceability</strong>:  </p><ul><li><p>PR descriptions and <code>UAT_CHANGELOG.md</code> track why changes were made.  </p></li></ul></li></ol><hr/><h3 id="RevisedNewissuesDBGitWorkflow-ToolstoImplement"><strong>Tools to Implement</strong></h3><ol start="1"><li><p><strong>SQL Aliases in UAT</strong>:  </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Map PROD server name to UAT resources  
+EXEC sp_addlinkedserver   
+  @server = &#39;TGASQLPROD\\TGASQLCRM&#39;,   
+  @srvproduct = &#39;&#39;,  
+  @provider = &#39;SQLNCLI&#39;,   
+  @datasrc = &#39;TGASQLTST01\\CRMUAT&#39;;  </pre>
+</div></div></li><li><p><strong>Azure DevOps Pipeline</strong>:  </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">stages:  
+  - stage: Deploy_UAT  
+    jobs:  
+    - job: Deploy  
+      steps:  
+      - task: replacetokens@3  
+        inputs:  
+          targetFiles: &#39;**/*.sql&#39;  
+          tokens: &#39;LINKED_SERVER=[TGASQLTST01\\CRMUAT]&#39;  
+      - task: SqlAzureDacpacDeployment@1  
+        inputs:  
+          serverName: &#39;TGASQLTST01\\CRMUAT&#39;  
+          databaseName: &#39;NewIssues_UAT&#39;  </pre>
+</div></div></li></ol><hr/><h3 id="RevisedNewissuesDBGitWorkflow-FinalChecklist"><strong>Final Checklist</strong></h3><ul><li><p>✅ Tested in UAT with UAT references.  </p></li><li><p>✅ Reverted references before merging to <code>develop</code>.  </p></li><li><p>✅ Redeployed to UAT using tokens/aliases.  </p></li><li><p>✅ Updated documentation for traceability.  </p></li></ul><p>By following this revised workflow, you ensure UAT and PROD stay synchronized while eliminating manual errors.</p><p /><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">### **Issue Summary: UAT vs PROD/Code Repo Discrepancy**
+
+| **Aspect**               | **Details**                                                                 |
+|--------------------------|-----------------------------------------------------------------------------|
+| **Environment**          | `SVSQLTST001\SQLUAT` (UAT Database: `NewIssues`)                            |
+| **Last Update**          | UAT database not updated since **2022**.                                    |
+| **Affected SPs**         | `[dbo].[rpt_SOEReconciliation_Valid_MSCRM]`, `[dbo].[rpt_SOEReconciliation_Invalid_MSCRM]` |
+| **Reported By**          | Business user **Cynthia** (discrepancy: **A + B ≠ C** in UAT reports).      |
+
+---
+
+### **Key Differences Identified**
+#### Stored Procedure: `[rpt_SOEReconciliation_Invalid_MSCRM]`
+| **Environment/Repo** | **Filter Logic**                                   |
+|-----------------------|---------------------------------------------------|
+| **PROD**              | `CountryOfResidence NOT IN (&#39;NZ&#39;, &#39;NZL&#39;)`         |
+| **UAT**               | `CountryOfResidence &lt;&gt; &#39;NZ&#39;`                      |
+| **Develop Code Repo** | Matches **PROD** logic (confirmed via repository). |
+| **Master Code Repo**  | Likely matches PROD (assumed standard workflow).  |
+
+---
+
+### **Root Causes**
+1. **UAT Database Outdated**  
+   - UAT not refreshed since 2022; **develop branch code never deployed**.
+   - Business users testing against obsolete logic.
+
+2. **Code-Environment Misalignment**  
+   - PROD, Develop, and Master repos are in sync.  
+   - UAT is **stale** and diverges from all repositories.
+
+3. **Deployment Process Failure**  
+   - No recent deployments to UAT, breaking the CI/CD pipeline integrity.
+
+---
+
+### **Urgency &amp; Impact**
+- **High Risk**: Business users relying on invalid UAT logic for testing.  
+- **Data Integrity**: Incorrect filters (e.g., missing `&#39;NZL&#39;` exclusion) skew report results.  
+- **Reputation**: Mismatched reports erode trust in system accuracy.
+
+---
+
+### **Recommended Actions**
+1. **Immediate**:  
+   - Halt UAT testing for affected reports.  
+   - Refresh UAT database with **latest code from Develop branch**.  
+
+2. **Process Improvement**:  
+   - Audit deployment history to UAT.  
+   - Enforce automated sync between Develop branch and UAT.  
+
+3. **Communication**:  
+   - Notify Cynthia/team of UAT refresh and retest.  
+   - Document discrepancies to prevent recurrence.</pre>
+</div></div>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Citi CSL QI 15 % Power Query Model – Technical Documentationti</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Citi CSL QI 15 % Power Query Model – Technical Documentationti
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 01-08-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h1 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-PowerQueryModel–TechnicalDocumentation">Power Query Model – Technical Documentation</h1><p><em>(scope: all code blocks you pasted above – dated 1 Aug 2025)</em></p><p /><p>Files (partitioned by Date modified) → Automatic Daily QI Rec - Incre<br/>         │<br/>         ├─ fxCiti… / fxCIP… → *_All fact tables<br/>         │<br/>         └─ Reconciliations History  (partitioned by FileDate)  ← incremental !!<br/>               ├─ TodayRecon     (reference view)<br/>               └─ Last14Recon    (reference view)</p><hr/><h2 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-1.Top-levelarchitecture">1. Top-level architecture</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">  ┌── Parameters        (RangeStart / RangeEnd)
+  │
+  ├── File ingestion
+  │     ├─ Folder.Files ➜ Automatic Daily QI Rec - Incre  (incremental window)
+  │     │    └─ Transform File  /  Sample File
+  │     │
+  │     └─ Sheet-level queries
+  │            • Citi_Positions_AsAt
+  │            • Citi_Transactions_Last14Days
+  │            • CIP_Positions_AsAt
+  │            • CIP_ContractsLast14Days
+  │            • ACE_CSL_Trans_Last14Days
+  │
+  ├── Fact &amp; dim tables
+  │     ├─ Citi_Positions_AsAt[_All]
+  │     ├─ CIP_Positions_AsAt[_All]   ➔ CIP_Positions_Grouped[_All]
+  │     ├─ Citi_Transactions_Last14Days_All
+  │     ├─ CIP_ContractsLast14Days_All
+  │     └─ ACE_CSL_Trans_Last14Days_All
+  │
+  ├── Reconciliation logic
+  │     ├─ Reconciliations CITI ACE                 (latest only)
+  │     ├─ Reconciliations CITI ACE AGING           (full history)
+  │     └─ Reconciliations CITI ACE AGING_V2        (+ ageing &amp; metrics)
+  │
+  └── Comments (external XLSX)
+</pre>
+</div></div><hr/><h2 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-2.Parameters&amp;helpers">2. Parameters &amp; helpers</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="719c7788-ff8d-401c-952a-7b36dc92fcec" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Object</p></th><th class="confluenceTh"><p>Purpose</p></th><th class="confluenceTh"><p>Key points</p></th></tr><tr><td class="confluenceTd"><p><strong>RangeStart / RangeEnd</strong></p></td><td class="confluenceTd"><p>Drive incremental‐refresh window.</p></td><td class="confluenceTd"><p>Declared as mandatory <code>DateTime</code> parameters.</p></td></tr><tr><td class="confluenceTd"><p><strong>Sample File / Transform File</strong></p></td><td class="confluenceTd"><p>Standard “binary parameter + sample” pattern from Folder connector wizard.</p></td><td class="confluenceTd"><p><em>Transform File</em> simply exposes <code>Excel.Workbook()</code> – heavy lifting is in the per-sheet functions.</p></td></tr></tbody></table></div><hr/><h2 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-3.Reusablefunctions(fx…)">3. Reusable functions (<code>fx…</code>)</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="02f47fb2-4616-4d95-b4f5-ba2a2c9026f4" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Function</p></th><th class="confluenceTh"><p>Signature</p></th><th class="confluenceTh"><p>Role</p></th><th class="confluenceTh"><p>Highlights</p></th></tr><tr><td class="confluenceTd"><p><strong>fxCiti_Positions_AsAt</strong></p></td><td class="confluenceTd"><p><code>(Sheet, FileDate) ⇒ table</code></p></td><td class="confluenceTd"><p>Cleans a single <em>Citi Positions AsAt</em> sheet.</p></td><td class="confluenceTd"><ul><li><p>Robust header mapping (aliases) • Ensures required columns • Defensive type casting • Adds <code>FileDate</code> &amp; composite <code>Key</code>.</p></li></ul></td></tr><tr><td class="confluenceTd"><p><strong>fxCiti_Transactions_Last14Days</strong></p></td><td class="confluenceTd"><p><code>(Sheet, FileDate)</code></p></td><td class="confluenceTd"><p>Cleans Citi trade sheets.</p></td><td class="confluenceTd"><p>Date parsing tolerant to text/datetime; composite key carefully built.</p></td></tr><tr><td class="confluenceTd"><p><strong>fxCIP_Positions_AsAt</strong></p></td><td class="confluenceTd"><p><code>(Sheet, FileDate)</code></p></td><td class="confluenceTd"><p>Cleans ACE positions sheet.</p></td><td class="confluenceTd"><p>Same pattern; extra optional columns such as <code>Hold Type</code>, <code>Exchange Code</code>.</p></td></tr><tr><td class="confluenceTd"><p><strong>fxCIP_ContractsLast14Days</strong></p></td><td class="confluenceTd"><p><code>(Sheet, FileDate)</code></p></td><td class="confluenceTd"><p>Cleans ACE contract trades.</p></td><td class="confluenceTd"><p>Most complex alias map; covers 17 columns incl. monetary fields.</p></td></tr><tr><td class="confluenceTd"><p><strong>fxACE_CSL_Trans_Last14Days</strong></p></td><td class="confluenceTd"><p><code>(Sheet, FileDate)</code></p></td><td class="confluenceTd"><p>Cleans CSL portfolio transactions sheet.</p></td><td class="confluenceTd"><p>Generates a <em>tiered</em> unique key (TRNID▸TxTime▸fallback columns).</p></td></tr></tbody></table></div><hr/><h2 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-4.Folderingestionquery">4. Folder ingestion query</h2><p><strong>Automatic Daily QI Rec - Incre</strong></p><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="197cc5da-d961-49fc-a404-b331e5d84646" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Step</p></th><th class="confluenceTh"><p>Function</p></th><th class="confluenceTh"><p>Notes</p></th></tr><tr><td class="confluenceTd"><p>0</p></td><td class="confluenceTd"><p><code>Folder.Files</code></p></td><td class="confluenceTd"><p>Path = UNC share.</p></td></tr><tr><td class="confluenceTd"><p>2</p></td><td class="confluenceTd"><p>Hidden-file filter</p></td><td class="confluenceTd"><p>Keeps visible rows only.</p></td></tr><tr><td class="confluenceTd"><p>3</p></td><td class="confluenceTd"><p><strong>Window</strong></p></td><td class="confluenceTd"><p><code>Date modified</code> filtered by <strong>RangeStart / RangeEnd</strong> ⇒ <em>incremental refresh partitioning point</em>.</p></td></tr><tr><td class="confluenceTd"><p>4</p></td><td class="confluenceTd"><p>Invoke <strong>Transform File</strong> for each binary.</p></td><td class="confluenceTd"><p /></td></tr><tr><td class="confluenceTd"><p>5</p></td><td class="confluenceTd"><p>Clean-up renames; expand inner tables.</p></td><td class="confluenceTd"><p /></td></tr></tbody></table></div><hr/><h2 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-5.Fact/Dimensiontables">5. Fact/Dimension tables</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="849e11b0-61f4-4431-bfd6-6a53baf91a39" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Query</p></th><th class="confluenceTh"><p>Data</p></th><th class="confluenceTh"><p>Notable filters</p></th></tr><tr><td class="confluenceTd"><p><strong>Citi_Positions_AsAt</strong></p></td><td class="confluenceTd"><p><em>latest</em> positions sheet per file</p></td><td class="confluenceTd"><p>Takes <strong>max(FileDate)</strong>, dedupes by <code>Key</code>.</p></td></tr><tr><td class="confluenceTd"><p><strong>Citi_Positions_AsAt_All</strong></p></td><td class="confluenceTd"><p><em>all</em> Citi position rows</p></td><td class="confluenceTd"><p>No date filter.</p></td></tr><tr><td class="confluenceTd"><p><strong>Citi_Transactions_Last14Days_All</strong></p></td><td class="confluenceTd"><p>Citi latest-14-day trades</p></td><td class="confluenceTd"><p>Parses “BR NME” as text.</p></td></tr><tr><td class="confluenceTd"><p><strong>CIP_Positions_AsAt_All</strong></p></td><td class="confluenceTd"><p>All ACE positions</p></td><td class="confluenceTd"><p>No date filter.</p></td></tr><tr><td class="confluenceTd"><p><strong>CIP_Positions_Grouped</strong></p></td><td class="confluenceTd"><p><em>Latest</em> ACE positions aggregated by <code>ISIN…Currency</code>.</p></td><td class="confluenceTd"><p>Uses latest <code>FileDate</code>; removes GBP &amp; LSE rows.</p></td></tr><tr><td class="confluenceTd"><p><strong>CIP_Positions_Grouped_All</strong></p></td><td class="confluenceTd"><p>Same aggregation <strong>without</strong> date filter.</p></td><td class="confluenceTd"><p /></td></tr><tr><td class="confluenceTd"><p><strong>CIP_ContractsLast14Days_All</strong></p></td><td class="confluenceTd"><p>ACE contracts, GBP only.</p></td><td class="confluenceTd"><p>Currency filter at end.</p></td></tr><tr><td class="confluenceTd"><p><strong>ACE_CSL_Trans_Last14Days_All</strong></p></td><td class="confluenceTd"><p>CSL portfolio trades</p></td><td class="confluenceTd"><p>No extra filter.</p></td></tr></tbody></table></div><hr/><h2 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-6.Reconciliationengines">6. Reconciliation engines</h2><h3 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-6.1ReconciliationsCITIACE">6.1 <strong>Reconciliations CITI ACE</strong></h3><p><em>Latest snapshot only.</em></p><ol start="1"><li><p>Full-outer join <code>Citi_Positions_AsAt</code> ↔ <code>CIP_Positions_Grouped</code> on <code>{ISIN, FileDate}</code>.</p></li><li><p>Prefix “CITI ” / “CIP ” columns.</p></li><li><p><code>Qty Diff = CITI Qty – ACE Qty</code>.</p></li><li><p>Filter <code>Qty Diff ≠ 0</code>.</p></li><li><p>Sort by keys.</p></li></ol><h3 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-6.2ReconciliationsCITIACEAGING">6.2 <strong>Reconciliations CITI ACE AGING</strong></h3><p>Same logic but joins the <strong>_All</strong> tables → full history of breaks.</p><h3 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-6.3ReconciliationsCITIACEAGING_V2">6.3 <strong>Reconciliations CITI ACE AGING_V2</strong></h3><p>Adds break-tracking metrics:</p><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="cc57fc32-43bb-42ae-83f1-c762c8f349ec" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Column</p></th><th class="confluenceTh"><p>Logic</p></th></tr><tr><td class="confluenceTd"><p><strong>First Break Date</strong></p></td><td class="confluenceTd"><p><code>List.Min(FileDate)</code> per ISIN.</p></td></tr><tr><td class="confluenceTd"><p><strong>Days Open</strong></p></td><td class="confluenceTd"><p><code>FileDate – FirstBreakDate</code>.</p></td></tr><tr><td class="confluenceTd"><p><strong>Is_First_Day</strong></p></td><td class="confluenceTd"><p>Boolean flag.</p></td></tr><tr><td class="confluenceTd"><p><strong>Abs_Qty_Diff / %_Diff_vs_CIP / Direction</strong></p></td><td class="confluenceTd"><p>Extra analytics.</p></td></tr><tr><td class="confluenceTd"><p><strong>Age_Bucket</strong></p></td><td class="confluenceTd"><p>0–6 d / 7–29 d / 30 + d.</p></td></tr></tbody></table></div><p>This table underpins ageing dashboards and escalation KPIs.</p><hr/><h2 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-7.Commentstable">7. Comments table</h2><p><em>External workbook</em> <code>Comments for QI recs.xlsx → [data]</code> sheet<br/>Adds <code>ISINUniqueID</code> (<code>ISIN-SecCode-MarketCode</code>) to marry comments to breaks in reports.</p><hr/><h2 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-8.Data-lineageataglance">8. Data-lineage at a glance</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Folder.Files
+   └─ Transform File
+        ├─ fxCiti_Positions_AsAt      ─┐          ┌─ Citi_Positions_AsAt
+        ├─ fxCIP_Positions_AsAt       ─┴─► group ─┤
+        └─ (other fx…)                           │
+                                                └─ Reconciliations […]
+</pre>
+</div></div><p><em>(solid arrows = row expansion; dashed = grouping/aggregation)</em></p><hr/><h2 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-9.Performancenotes&amp;tips">9. Performance notes &amp; tips</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="b98c711c-e9ab-467e-96a6-6f8a6943a970" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Area</p></th><th class="confluenceTh"><p>Observation</p></th><th class="confluenceTh"><p>Suggestion</p></th></tr><tr><td class="confluenceTd"><p><strong>Incremental refresh</strong></p></td><td class="confluenceTd"><p>Window step already in place.</p></td><td class="confluenceTd"><p>Ensure Power BI table partitioning is enabled with <strong>RangeStart/End</strong> parameters bound.</p></td></tr><tr><td class="confluenceTd"><p><strong>Sheet filtering</strong></p></td><td class="confluenceTd"><p>Each fact query scans <em>all</em> sheet rows before filtering by <code>Name</code>.</p></td><td class="confluenceTd"><p>Move <code>Table.SelectRows</code> <em>before</em> invoking heavy <code>fx…</code> to avoid reading sheets you never process.</p></td></tr><tr><td class="confluenceTd"><p><strong>Buffering</strong></p></td><td class="confluenceTd"><p>Functions don’t <code>Table.Buffer()</code> inputs.</p></td><td class="confluenceTd"><p>Buffer source lists inside each <code>fx…</code> if you hit “evaluation cancelled” during joins.</p></td></tr><tr><td class="confluenceTd"><p><strong>Column types</strong></p></td><td class="confluenceTd"><p>Defensive <code>each _ &amp; &quot;&quot;</code> casts everything to text first.</p></td><td class="confluenceTd"><p>Fine for resilience; if refresh is slow, consider <code>Value.ReplaceType</code> pattern or enabling <em>Fast Combine</em> in Power Query options.</p></td></tr><tr><td class="confluenceTd"><p><strong>Key columns</strong></p></td><td class="confluenceTd"><p>Composite <code>Key</code> prevents duplicates.</p></td><td class="confluenceTd"><p>Perfect for incremental models; keep index length &lt; 900 bytes if pushing to SQL.</p></td></tr></tbody></table></div><hr/><h2 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-10.Possibleenhancements">10. Possible enhancements</h2><ol start="1"><li><p><strong>Central config record</strong> for alias lists ⇒ edit once.</p></li><li><p><strong>Error capture table</strong> (<code>try … otherwise</code>) to surface bad rows.</p></li><li><p><strong>Custom function </strong><code>fxBreaks_Summary</code> to aggregate ageing buckets &amp; $ impact in one call (as sketched in previous message).</p></li><li><p><strong>Parameterise path</strong> so dev/test/prod environments switch via UI.</p></li></ol><hr/><h3 id="CitiCSLQI15%PowerQueryModel–TechnicalDocumentationti-Deliverablesinsidethisdoc">Deliverables inside this doc</h3><ul><li><p><strong>High-level data-flow diagram</strong></p></li><li><p>Per-query purpose &amp; dependencies</p></li><li><p>Key calculated fields and their business meaning</p></li><li><p>Performance guidance</p></li></ul><p><em>You can paste this markdown into Confluence / SharePoint or keep it alongside the .pbix for future maintainers.</em></p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:54</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 17. Steps to FATCA and CRS Entity</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 17. Steps to FATCA and CRS Entity
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 06-10-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- This SQL script identifies entities that need to be reported under the Common Reporting Standard (CRS)
+-- and retrieves associated individuals who are the actual controlling persons of those entities.
+-- It handles both &#39;Normal&#39; entities and &#39;Layered&#39; entities (entities that are owned by other entities).
+
+-- Step 1: Identify CRS Entities (both Layered and Normal)
+-- We first select entities that need to be reported under CRS and determine if they are &#39;Layered&#39; or &#39;Normal&#39;.
+WITH CRS_Entities AS (
+    SELECT DISTINCT
+        a.AccountId AS EntityID,  -- Unique identifier for the entity
+        a.Name AS TEName,         -- Name of the trading entity
+        -- Determine if the entity is &#39;Layered&#39; (owned by other entities) or &#39;Normal&#39;
+        CASE
+            WHEN MAX(CASE WHEN i.FullName IS NULL THEN 1 ELSE 0 END) = 1 THEN &#39;Layered Entity&#39;
+            ELSE &#39;Normal Entity&#39;
+        END AS EntityFlag
+    FROM [Dynamics].[CRM_MSCRM].dbo.Account AS a
+    -- Join to get roles associated with the entity
+    LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.dsl_roles AS r
+        ON a.AccountId = r.dsl_TradingEntityID AND r.statuscode = 1
+    -- Join to get individuals associated with the roles
+    LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.Contact AS i
+        ON i.ContactId = r.dsl_IndividualId
+    -- Join to get the entity type
+    LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.StringMap AS sm
+        ON sm.AttributeValue = a.dsl_TradingEntityType AND sm.AttributeName = &#39;dsl_tradingentitytype&#39;
+    -- Join to get passive/active status
+    LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.StringMap AS sm2
+        ON sm2.AttributeName = &#39;dsl_passiveoractive&#39; AND sm2.AttributeValue = a.dsl_PassiveorActive
+    -- Join to get foreign tax records for the entity
+    LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.cip_foreigntaxrecordBase AS ft
+        ON a.AccountId = ft.cip_Entity
+    -- Join to get country information
+    LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.dsl_countryBase AS cc
+        ON cc.dsl_countryid = ft.cip_CountryJurisdiction AND cc.statuscode = 1
+    WHERE
+        -- Exclude certain entity types not relevant for CRS reporting
+        sm.Value NOT IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;, &#39;Estate Winding-Up&#39;)
+        -- Only include entities that are foreign tax residents
+        AND a.ots_foreigntaxresident = 1
+        -- Ensure foreign tax records have country jurisdiction and identification
+        AND ft.cip_CountryJurisdiction IS NOT NULL
+        AND ft.cip_Identification IS NOT NULL
+        -- Exclude entities from New Zealand
+        AND ISNULL(cc.cip_ISOCode, &#39;&#39;) &lt;&gt; &#39;NZL&#39;
+        -- Exclude certain trusts (e.g., passive trusts with charity numbers)
+        AND NOT (
+            sm.Value = &#39;Trust&#39; AND ISNULL(sm2.Value, &#39;&#39;) = &#39;Passive&#39; AND a.cip_CharityNumber IS NOT NULL
+        )
+    GROUP BY
+        a.AccountId,
+        a.Name
+),
+
+-- Step 2: Retrieve accounts for the identified entities
+-- We filter the Account table to include only the entities identified in Step 1 for better performance.
+CRS_Entities_a AS (
+    SELECT a.*, e.EntityFlag  -- Select all columns from Account and the EntityFlag
+    FROM [Dynamics].[CRM_MSCRM].dbo.Account AS a
+    INNER JOIN CRS_Entities AS e
+        ON a.AccountId = e.EntityID
+),
+
+-- Step 3: Tax Regime Mapping
+-- We create a mapping of tax regimes based on four flags indicating CRS and FATCA reporting requirements.
+TaxRegimeMapping AS (
+    SELECT 15 AS ReportCode, &#39;CRS &amp; FATCA (Entity &amp; Individual)&#39; AS TaxRegime UNION ALL
+    SELECT 14, &#39;CRS (Entity &amp; Individual) &amp; FATCA (Entity)&#39; UNION ALL
+    SELECT 13, &#39;CRS (Entity) &amp; FATCA (Entity &amp; Individual)&#39; UNION ALL
+    SELECT 12, &#39;CRS &amp; FATCA (Entity)&#39; UNION ALL
+    SELECT 11, &#39;CRS (Entity) &amp; FATCA (Individual)&#39; UNION ALL
+    SELECT 10, &#39;CRS (Entity &amp; Individual)&#39; UNION ALL
+    SELECT 9,  &#39;CRS (Entity) &amp; FATCA (Individual)&#39; UNION ALL
+    SELECT 8,  &#39;CRS (Entity)&#39; UNION ALL
+    SELECT 7,  &#39;CRS (Individual) &amp; FATCA (Entity &amp; Individual)&#39; UNION ALL
+    SELECT 6,  &#39;CRS (Individual) &amp; FATCA (Entity)&#39; UNION ALL
+    SELECT 5,  &#39;FATCA (Entity &amp; Individual)&#39; UNION ALL
+    SELECT 4,  &#39;FATCA (Entity)&#39; UNION ALL
+    SELECT 3,  &#39;CRS &amp; FATCA (Individual)&#39; UNION ALL
+    SELECT 2,  &#39;CRS (Individual)&#39; UNION ALL
+    SELECT 1,  &#39;FATCA (Individual)&#39; UNION ALL
+    SELECT 0,  &#39;Other&#39;
+)
+
+-- Main Query: Retrieve associated individuals and construct the narrative
+SELECT DISTINCT
+    a.EntityFlag AS AccountType,  -- &#39;Layered Entity&#39; or &#39;Normal Entity&#39;
+
+    -- Trading Entity Information
+    a.AccountId AS EntityId,               -- Unique ID of the entity
+    a.Name AS TEName,                      -- Name of the entity
+    sm.Value AS TEType,                    -- Type of the entity (decoded from a code)
+    a.dsl_CountryTrustEstablishedIdName AS TrustCountry,     -- Country where the trust was established
+    a.dsl_PrimaryTaxDomicileName AS OrgPrimaryTaxDomicile,   -- Primary tax domicile of the entity
+
+    -- Individual (Controlling Person) Information
+    i.ContactId AS IndividualId,                   -- Unique ID of the individual
+    i.FullName AS IndividualName,                  -- Full name of the individual
+    i.dsl_CountryofCitizenshipIdName AS CountryofCitizenship,    -- Country of citizenship
+    i.dsl_CountryofTaxResidencyName AS CountryofTaxResidency,    -- Country of tax residency
+
+    -- Role Information
+    r.dsl_RoleTypeIdName AS Role,                           -- Role of the individual in the entity
+    sm8.Value AS ControllingPersonTypeDecoded,              -- Controlling person type (decoded from a code)
+
+    -- Entity Tax Identification Number (TIN)
+    ft1.cip_identification AS EntityTIN,                    -- TIN of the entity
+    ft1.cip_IDTypeName AS EntityIDTypeName,                 -- Type of ID
+    ft1.cip_CountryJurisdictionName AS EntityCountryJurisdictionName,  -- Country of jurisdiction
+    cc1.cip_ISOcode COLLATE DATABASE_DEFAULT AS TaxCodeCountryISO,     -- ISO code of the country
+    cc1.dsl_countryname COLLATE DATABASE_DEFAULT AS TaxCodeCountryName, -- Name of the country
+
+    -- Individual Tax Identification Number (TIN)
+    ft2.cip_identification AS IndividualTIN,                -- TIN of the individual
+    ft2.cip_IDTypeName AS IndividualIDTypeName,             -- Type of ID
+    ft2.cip_CountryJurisdictionName AS IndividualCountryJurisdictionName,  -- Country of jurisdiction
+    cc2.cip_ISOcode COLLATE DATABASE_DEFAULT AS Ind_TaxCodeCountryISO,     -- ISO code of the country
+    cc2.dsl_countryname COLLATE DATABASE_DEFAULT AS Ind_TaxCodeCountryName, -- Name of the country
+
+    -- Portfolio Services details for each account (might not be needed at this stage)
+    ps.dsl_inceptiondate,                    -- Date when the portfolio service started
+    ps.dsl_CloseDate AS ClosureDate,         -- Date when the portfolio service closed
+    ps.dsl_PortfolioIdName AS PortfolioNo,   -- Portfolio number
+    ps.dsl_PortfolioServiceLevelName,        -- Service level of the portfolio
+
+    -- Flags for Entity/Individual CRS/FATCA reporting
+    CASE WHEN a.ots_foreigntaxresident = 1 THEN 1 ELSE 0 END AS Entity_CRS_Flag,           -- Entity is foreign tax resident (CRS)
+    CASE WHEN a.dsl_USCitizensforTaxPurposes = 1 THEN 1 ELSE 0 END AS Entity_FATCA_Flag,   -- Entity is US person (FATCA)
+    CASE WHEN i.ots_foreigntaxresident = 1 THEN 1 ELSE 0 END AS Individual_CRS_Flag,       -- Individual is foreign tax resident (CRS)
+    CASE WHEN i.dsl_USCitizensforTaxPurposes = 1 THEN 1 ELSE 0 END AS Individual_FATCA_Flag, -- Individual is US person (FATCA)
+
+    -- Determine if the individual has substantial controlling interest
+    CASE
+        WHEN r.dsl_BeneficialOwner = 1 AND r.dsl_BeneficiaryOwnership &gt; 10 AND sm.Value = &#39;Company&#39; THEN 1
+        WHEN sm.Value NOT IN (&#39;Individual&#39;,&#39;Joint&#39;,&#39;Minor Under 18 yrs&#39;,&#39;Company&#39;) AND r.dsl_BeneficialOwner = 1 THEN 1
+        ELSE 0
+    END AS SubstantialControllingInterest,
+
+    -- Compute ReportCode based on the four flags to identify the tax regime
+    ((CASE WHEN a.ots_foreigntaxresident = 1 THEN 1 ELSE 0 END) * 8 +
+     (CASE WHEN a.dsl_USCitizensforTaxPurposes = 1 THEN 1 ELSE 0 END) * 4 +
+     (CASE WHEN i.ots_foreigntaxresident = 1 THEN 1 ELSE 0 END) * 2 +
+     (CASE WHEN i.dsl_USCitizensforTaxPurposes = 1 THEN 1 ELSE 0 END)) AS ReportCode,
+
+    -- Tax Regime based on ReportCode
+    trm.TaxRegime,
+
+    -- Construct a narrative to help developers understand the data
+    CONCAT(
+        i.FullName, &#39; is the &#39;, r.dsl_RoleTypeIdName,
+        &#39; of the &#39;, LOWER(a.EntityFlag), &#39; &#39;, a.Name,
+        &#39; and reports for &#39;, trm.TaxRegime
+    ) AS Narrative
+
+-- Joins to retrieve related data
+FROM CRS_Entities_a AS a
+
+-- Join to get roles associated with the entity
+INNER JOIN [Dynamics].[CRM_MSCRM].dbo.dsl_roles AS r
+    ON a.AccountId = r.dsl_TradingEntityID AND r.statuscode = 1
+
+-- Join to get individuals associated with the roles
+INNER JOIN [Dynamics].[CRM_MSCRM].dbo.Contact AS i
+    ON i.ContactId = r.dsl_IndividualId
+
+-- Left join to get portfolio services associated with the entity
+LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.dsl_portfolioservice AS ps
+    ON ps.dsl_TradingEntityId = a.AccountId
+
+-- Join to decode entity type from code to text
+LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.StringMap AS sm
+    ON sm.AttributeValue = a.dsl_TradingEntityType AND sm.AttributeName = &#39;dsl_tradingentitytype&#39;
+
+-- Join to decode portfolio service status
+LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.StringMap AS smPS
+    ON smPS.AttributeName = &#39;dsl_PortfolioServiceStatus&#39; AND smPS.AttributeValue = ps.dsl_PortfolioServiceStatus
+
+-- Join to get passive/active status of the entity
+LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.StringMap AS sm2
+    ON sm2.AttributeName = &#39;dsl_passiveoractive&#39; AND sm2.AttributeValue = a.dsl_PassiveorActive
+
+-- Join to decode controlling person type from code to text
+LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.StringMap AS sm8
+    ON sm8.AttributeName = &#39;cip_controllingpersontype&#39; AND sm8.AttributeValue = r.cip_ControllingPersonType AND sm8.ObjectTypeCode = 10051
+
+-- Join to get foreign tax records for the entity
+LEFT JOIN [Dynamics].[CRM_MSCRM].[dbo].[cip_foreigntaxrecord] AS ft1
+    ON a.AccountId = ft1.cip_Entity
+
+-- Join to get foreign tax records for the individual
+LEFT JOIN [Dynamics].[CRM_MSCRM].[dbo].[cip_foreigntaxrecord] AS ft2
+    ON ft2.cip_Individual = i.ContactId
+
+-- Join to get country information for the entity&#39;s tax jurisdiction
+LEFT JOIN [Dynamics].[CRM_MSCRM].[dbo].[dsl_countryBase] AS cc1
+    ON cc1.dsl_countryid = ft1.cip_CountryJurisdiction AND cc1.statuscode = 1
+
+-- Join to get country information for the individual&#39;s tax jurisdiction
+LEFT JOIN [Dynamics].[CRM_MSCRM].[dbo].[dsl_countryBase] AS cc2
+    ON cc2.dsl_countryid = ft2.cip_CountryJurisdiction AND cc2.statuscode = 1
+
+-- Join to get the tax regime based on the ReportCode
+LEFT JOIN TaxRegimeMapping AS trm
+    ON trm.ReportCode = ((CASE WHEN a.ots_foreigntaxresident = 1 THEN 1 ELSE 0 END) * 8 +
+                         (CASE WHEN a.dsl_USCitizensforTaxPurposes = 1 THEN 1 ELSE 0 END) * 4 +
+                         (CASE WHEN i.ots_foreigntaxresident = 1 THEN 1 ELSE 0 END) * 2 +
+                         (CASE WHEN i.dsl_USCitizensforTaxPurposes = 1 THEN 1 ELSE 0 END))
+
+-- Filters to include only relevant data
+WHERE
+    -- Include only certain entity types relevant for reporting
+    sm.Value IN (&#39;Trust&#39;, &#39;Company&#39;, &#39;Incorporated Entity&#39;, &#39;Partnership&#39;)
+    -- Entity must be a foreign tax resident
+    AND a.ots_foreigntaxresident = 1
+    -- Entity must have foreign tax records with country jurisdiction and identification
+    AND ft1.cip_CountryJurisdiction IS NOT NULL
+    AND ft1.cip_Identification IS NOT NULL
+    -- Exclude entities from New Zealand
+    AND ISNULL(cc1.cip_ISOCode, &#39;&#39;) &lt;&gt; &#39;NZL&#39;
+    -- Exclude certain trusts with charity numbers
+    AND NOT (
+        sm.Value = &#39;Trust&#39; AND ISNULL(sm2.Value, &#39;&#39;) = &#39;Passive&#39; AND a.cip_CharityNumber IS NOT NULL
+    )
+    -- Include only roles associated with individuals
+    AND r.dsl_OrganisationName IS NULL
+    -- Role must be active
+    AND r.dsl_HasActiveRole = 1
+
+    -- Individual-level filters
+    -- Include individuals who are foreign tax residents or US persons
+    AND (i.ots_foreigntaxresident = 1 OR i.dsl_USCitizensforTaxPurposes = 1)
+    -- Exclude individuals with New Zealand tax identification numbers
+    AND ISNULL(cc2.cip_ISOCode, &#39;&#39;) &lt;&gt; &#39;NZL&#39;
+    -- Exclude US persons for CRS reporting
+    AND ft2.cip_IDTypeName != &#39;Social Security Number&#39;
+    AND ft2.cip_CountryJurisdictionName != &#39;United States of America&#39;;</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Joins and Why They Are Used:</strong></p><ul><li><p><strong>Roles Table (</strong><code>dsl_roles</code>): We join the <code>Account</code> table with the <code>Roles</code> table to get the roles associated with each entity. This tells us who is related to the entity and in what capacity.</p></li><li><p><strong>Contact Table (</strong><code>Contact</code>): We join the <code>Roles</code> table with the <code>Contact</code> table to get information about the individuals associated with those roles.</p></li><li><p><strong>StringMap Tables (</strong><code>StringMap</code>): These tables are used to decode codes into human-readable text (e.g., entity types, controlling person types).</p></li><li><p><strong>Foreign Tax Records (</strong><code>cip_foreigntaxrecord</code>): We join to get tax identification numbers and tax jurisdiction information for both entities and individuals.</p></li><li><p><strong>Country Information (</strong><code>dsl_countryBase</code>): We join to get ISO codes and country names for the tax jurisdictions.</p></li><li><p><strong>Tax Regime Mapping (</strong><code>TaxRegimeMapping</code>): We join to determine the applicable tax regime based on computed flags.</p></li></ul></li><li><p><strong>Error Handling and Data Quality:</strong></p><ul><li><p><strong>ISNULL Function:</strong> Used to handle NULL values and prevent errors in comparisons (e.g., <code>ISNULL(cc.cip_ISOCode, '') &lt;&gt; 'NZL'</code> ensures that NULL values do not cause the comparison to fail).</p></li><li><p><strong>Data Filters:</strong> We include various conditions in the <code>WHERE</code> clause to filter out incorrect or irrelevant data (e.g., excluding entities from New Zealand, ensuring tax identification numbers are present).</p></li></ul></li><li><p><strong>Why Certain Steps Are Taken:</strong></p><ul><li><p><strong>Identifying Layered vs. Normal Entities:</strong> Understanding whether an entity is 'Layered' helps in determining how to retrieve the controlling individuals.</p></li><li><p><strong>Computing ReportCode:</strong> By combining flags for CRS and FATCA reporting, we can uniquely identify the tax reporting requirements for each entity-individual combination.</p></li><li><p><strong>Constructing the Narrative:</strong> Provides a clear description of the relationship and reporting obligations, which is helpful for users and developers to understand the data.</p></li></ul></li></ul><p>This rewritten script includes detailed comments that explain each step, join, and filter in simple terms, making it easier for someone new to SQL or database querying to understand the logic and purpose of the code.</p><p /><hr/><p><strong>Step 3: Tax Regime Mapping</strong></p><p>In this step, we map combinations of CRS (Common Reporting Standard) and FATCA (Foreign Account Tax Compliance Act) reporting requirements for both entities and individuals to a <code>ReportCode</code> and corresponding <code>TaxRegime</code>. This mapping helps in systematically identifying the tax reporting obligations based on specific criteria flags.</p><p>As an experienced tax auditor, I'll explain each mapping in detail, analyze the implications for CRS and FATCA reporting, and provide use cases to illustrate how this mapping is applied.</p><hr/><h1 id="id-17.StepstoFATCAandCRSEntity-UnderstandingtheFlagsandReportCodeCalculation"><strong>Understanding the Flags and ReportCode Calculation</strong></h1><p>We use four binary flags to represent whether an entity or individual is subject to CRS and/or FATCA reporting:</p><ol start="1"><li><p><strong>Entity_CRS_Flag</strong> (Value: 8)</p><ul><li><p><strong>Flagged as 1</strong> if the <strong>entity</strong> is a <strong>foreign tax resident</strong> (CRS applicable).</p></li></ul></li><li><p><strong>Entity_FATCA_Flag</strong> (Value: 4)</p><ul><li><p><strong>Flagged as 1</strong> if the <strong>entity</strong> is a <strong>US person</strong> for tax purposes (FATCA applicable).</p></li></ul></li><li><p><strong>Individual_CRS_Flag</strong> (Value: 2)</p><ul><li><p><strong>Flagged as 1</strong> if the <strong>individual</strong> (controlling person) is a <strong>foreign tax resident</strong> (CRS applicable).</p></li></ul></li><li><p><strong>Individual_FATCA_Flag</strong> (Value: 1)</p><ul><li><p><strong>Flagged as 1</strong> if the <strong>individual</strong> is a <strong>US person</strong> for tax purposes (FATCA applicable).</p></li></ul></li></ol><p>The <code>ReportCode</code> is calculated by assigning weights to each flag and summing them up:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">ReportCode = (Entity_CRS_Flag * 8) + (Entity_FATCA_Flag * 4) + (Individual_CRS_Flag * 2) + (Individual_FATCA_Flag)</pre>
+</div></div><p>This results in a <code>ReportCode</code> ranging from <strong>0 to 15</strong>, representing all possible combinations of the four flags.</p><hr/><p><strong>Detailed Mapping and Analysis</strong></p><p>Below is a detailed explanation of each <code>ReportCode</code>, the corresponding <code>TaxRegime</code>, and the implications for CRS and FATCA reporting.</p><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode15"><strong>ReportCode 15</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 1 (8)</p></li><li><p>Entity_FATCA_Flag = 1 (4)</p></li><li><p>Individual_CRS_Flag = 1 (2)</p></li><li><p>Individual_FATCA_Flag = 1 (1)</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 8 + 4 + 2 + 1 = <strong>15</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;CRS &amp; FATCA (Entity &amp; Individual)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: The entity is a foreign tax resident and a US person for tax purposes. The controlling individual is also a foreign tax resident and a US person.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>CRS Reporting</strong>:</p><ul><li><p>Report the entity under CRS due to its foreign tax residency.</p></li><li><p>Report the controlling individual under CRS as they are a foreign tax resident.</p></li></ul></li><li><p><strong>FATCA Reporting</strong>:</p><ul><li><p>Report the entity under FATCA because it is a US person.</p></li><li><p>Report the controlling individual under FATCA as a US person.</p></li></ul></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A company incorporated in Country A (outside the reporting country) has US tax obligations and is owned by an individual who is both a resident of Country B and a US citizen.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode14"><strong>ReportCode 14</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 1 (8)</p></li><li><p>Entity_FATCA_Flag = 1 (4)</p></li><li><p>Individual_CRS_Flag = 1 (2)</p></li><li><p>Individual_FATCA_Flag = 0</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 8 + 4 + 2 + 0 = <strong>14</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;CRS (Entity &amp; Individual) &amp; FATCA (Entity)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: The entity is a foreign tax resident and a US person. The controlling individual is a foreign tax resident but not a US person.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>CRS Reporting</strong>:</p><ul><li><p>Report the entity under CRS.</p></li><li><p>Report the controlling individual under CRS.</p></li></ul></li><li><p><strong>FATCA Reporting</strong>:</p><ul><li><p>Report the entity under FATCA.</p></li><li><p>No FATCA reporting for the individual since they are not a US person.</p></li></ul></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>An entity with US tax obligations owned by a non-US individual who is a tax resident in another foreign country.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode13"><strong>ReportCode 13</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 1 (8)</p></li><li><p>Entity_FATCA_Flag = 1 (4)</p></li><li><p>Individual_CRS_Flag = 0</p></li><li><p>Individual_FATCA_Flag = 1 (1)</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 8 + 4 + 0 + 1 = <strong>13</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;CRS (Entity) &amp; FATCA (Entity &amp; Individual)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: The entity is a foreign tax resident and a US person. The controlling individual is a US person but not a foreign tax resident.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>CRS Reporting</strong>:</p><ul><li><p>Report the entity under CRS.</p></li><li><p>No CRS reporting for the individual since they are not a foreign tax resident.</p></li></ul></li><li><p><strong>FATCA Reporting</strong>:</p><ul><li><p>Report the entity under FATCA.</p></li><li><p>Report the controlling individual under FATCA.</p></li></ul></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A foreign entity with US tax obligations owned by a US citizen residing in the reporting country.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode12"><strong>ReportCode 12</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 1 (8)</p></li><li><p>Entity_FATCA_Flag = 1 (4)</p></li><li><p>Individual_CRS_Flag = 0</p></li><li><p>Individual_FATCA_Flag = 0</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 8 + 4 + 0 + 0 = <strong>12</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;CRS &amp; FATCA (Entity)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: The entity is a foreign tax resident and a US person. The controlling individual is neither a foreign tax resident nor a US person.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>CRS Reporting</strong>:</p><ul><li><p>Report the entity under CRS.</p></li></ul></li><li><p><strong>FATCA Reporting</strong>:</p><ul><li><p>Report the entity under FATCA.</p></li></ul></li><li><p><strong>No reporting</strong> for the individual under CRS or FATCA.</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>An entity with US tax obligations, controlled by an individual who is a resident of the reporting country and not a US person.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode11"><strong>ReportCode 11</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 1 (8)</p></li><li><p>Entity_FATCA_Flag = 0</p></li><li><p>Individual_CRS_Flag = 1 (2)</p></li><li><p>Individual_FATCA_Flag = 1 (1)</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 8 + 0 + 2 + 1 = <strong>11</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;CRS (Entity) &amp; FATCA (Individual)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: The entity is a foreign tax resident. The controlling individual is a foreign tax resident and a US person.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>CRS Reporting</strong>:</p><ul><li><p>Report the entity under CRS.</p></li><li><p>Report the controlling individual under CRS.</p></li></ul></li><li><p><strong>FATCA Reporting</strong>:</p><ul><li><p>Report the controlling individual under FATCA.</p></li></ul></li><li><p><strong>No FATCA reporting</strong> for the entity since it's not a US person.</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A foreign entity controlled by a US citizen who is also a foreign tax resident.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode10"><strong>ReportCode 10</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 1 (8)</p></li><li><p>Entity_FATCA_Flag = 0</p></li><li><p>Individual_CRS_Flag = 1 (2)</p></li><li><p>Individual_FATCA_Flag = 0</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 8 + 0 + 2 + 0 = <strong>10</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;CRS (Entity &amp; Individual)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: Both the entity and the controlling individual are foreign tax residents. Neither is a US person.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>CRS Reporting</strong>:</p><ul><li><p>Report the entity.</p></li><li><p>Report the controlling individual.</p></li></ul></li><li><p><strong>No FATCA reporting</strong> for either the entity or the individual.</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A foreign entity owned by a non-US individual, both subject to CRS reporting.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode9"><strong>ReportCode 9</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 1 (8)</p></li><li><p>Entity_FATCA_Flag = 0</p></li><li><p>Individual_CRS_Flag = 0</p></li><li><p>Individual_FATCA_Flag = 1 (1)</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 8 + 0 + 0 + 1 = <strong>9</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;CRS (Entity) &amp; FATCA (Individual)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: The entity is a foreign tax resident. The controlling individual is a US person but not a foreign tax resident.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>CRS Reporting</strong>:</p><ul><li><p>Report the entity.</p></li></ul></li><li><p><strong>FATCA Reporting</strong>:</p><ul><li><p>Report the controlling individual.</p></li></ul></li><li><p><strong>No CRS reporting</strong> for the individual.</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A foreign entity owned by a US citizen residing in the reporting country.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode8"><strong>ReportCode 8</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 1 (8)</p></li><li><p>Entity_FATCA_Flag = 0</p></li><li><p>Individual_CRS_Flag = 0</p></li><li><p>Individual_FATCA_Flag = 0</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 8 + 0 + 0 + 0 = <strong>8</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;CRS (Entity)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: The entity is a foreign tax resident. The controlling individual is neither a foreign tax resident nor a US person.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>CRS Reporting</strong>:</p><ul><li><p>Report the entity.</p></li></ul></li><li><p><strong>No reporting</strong> for the individual under CRS or FATCA.</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A foreign entity controlled by a local resident who is not a foreign tax resident or US person.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode7"><strong>ReportCode 7</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 0</p></li><li><p>Entity_FATCA_Flag = 1 (4)</p></li><li><p>Individual_CRS_Flag = 1 (2)</p></li><li><p>Individual_FATCA_Flag = 1 (1)</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 0 + 4 + 2 + 1 = <strong>7</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;CRS (Individual) &amp; FATCA (Entity &amp; Individual)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: The entity is a US person. The controlling individual is a foreign tax resident and a US person.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>CRS Reporting</strong>:</p><ul><li><p>Report the controlling individual.</p></li></ul></li><li><p><strong>FATCA Reporting</strong>:</p><ul><li><p>Report the entity.</p></li><li><p>Report the controlling individual.</p></li></ul></li><li><p><strong>No CRS reporting</strong> for the entity since it's not a foreign tax resident.</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A US entity owned by an individual who is a US citizen and a foreign tax resident.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode6"><strong>ReportCode 6</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 0</p></li><li><p>Entity_FATCA_Flag = 1 (4)</p></li><li><p>Individual_CRS_Flag = 1 (2)</p></li><li><p>Individual_FATCA_Flag = 0</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 0 + 4 + 2 + 0 = <strong>6</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;CRS (Individual) &amp; FATCA (Entity)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: The entity is a US person. The controlling individual is a foreign tax resident but not a US person.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>CRS Reporting</strong>:</p><ul><li><p>Report the controlling individual.</p></li></ul></li><li><p><strong>FATCA Reporting</strong>:</p><ul><li><p>Report the entity.</p></li></ul></li><li><p><strong>No CRS reporting</strong> for the entity.</p></li><li><p><strong>No FATCA reporting</strong> for the individual.</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A US entity owned by a foreign individual.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode5"><strong>ReportCode 5</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 0</p></li><li><p>Entity_FATCA_Flag = 1 (4)</p></li><li><p>Individual_CRS_Flag = 0</p></li><li><p>Individual_FATCA_Flag = 1 (1)</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 0 + 4 + 0 + 1 = <strong>5</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;FATCA (Entity &amp; Individual)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: The entity is a US person. The controlling individual is a US person but not a foreign tax resident.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>FATCA Reporting</strong>:</p><ul><li><p>Report the entity.</p></li><li><p>Report the controlling individual.</p></li></ul></li><li><p><strong>No CRS reporting</strong> for either the entity or the individual.</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A US company owned by a US citizen residing in the reporting country.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode4"><strong>ReportCode 4</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 0</p></li><li><p>Entity_FATCA_Flag = 1 (4)</p></li><li><p>Individual_CRS_Flag = 0</p></li><li><p>Individual_FATCA_Flag = 0</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 0 + 4 + 0 + 0 = <strong>4</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;FATCA (Entity)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: The entity is a US person. The controlling individual is neither a foreign tax resident nor a US person.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>FATCA Reporting</strong>:</p><ul><li><p>Report the entity.</p></li></ul></li><li><p><strong>No reporting</strong> for the individual under CRS or FATCA.</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A US entity controlled by a local resident who is not a US person.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode3"><strong>ReportCode 3</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 0</p></li><li><p>Entity_FATCA_Flag = 0</p></li><li><p>Individual_CRS_Flag = 1 (2)</p></li><li><p>Individual_FATCA_Flag = 1 (1)</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 0 + 0 + 2 + 1 = <strong>3</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;CRS &amp; FATCA (Individual)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: The entity is neither a foreign tax resident nor a US person. The controlling individual is both a foreign tax resident and a US person.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>CRS Reporting</strong>:</p><ul><li><p>Report the controlling individual.</p></li></ul></li><li><p><strong>FATCA Reporting</strong>:</p><ul><li><p>Report the controlling individual.</p></li></ul></li><li><p><strong>No reporting</strong> for the entity under CRS or FATCA.</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A local entity controlled by an individual who is a US citizen and a foreign tax resident.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode2"><strong>ReportCode 2</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 0</p></li><li><p>Entity_FATCA_Flag = 0</p></li><li><p>Individual_CRS_Flag = 1 (2)</p></li><li><p>Individual_FATCA_Flag = 0</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 0 + 0 + 2 + 0 = <strong>2</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;CRS (Individual)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: The entity is neither a foreign tax resident nor a US person. The controlling individual is a foreign tax resident but not a US person.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>CRS Reporting</strong>:</p><ul><li><p>Report the controlling individual.</p></li></ul></li><li><p><strong>No FATCA reporting</strong> for either the entity or the individual.</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A local entity controlled by a foreign individual who is not a US person.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode1"><strong>ReportCode 1</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 0</p></li><li><p>Entity_FATCA_Flag = 0</p></li><li><p>Individual_CRS_Flag = 0</p></li><li><p>Individual_FATCA_Flag = 1 (1)</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 0 + 0 + 0 + 1 = <strong>1</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;FATCA (Individual)&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: The entity is neither a foreign tax resident nor a US person. The controlling individual is a US person but not a foreign tax resident.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>FATCA Reporting</strong>:</p><ul><li><p>Report the controlling individual.</p></li></ul></li><li><p><strong>No CRS reporting</strong> for either the entity or the individual.</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A local entity controlled by a US citizen residing in the reporting country.</p></li></ul></li></ul><hr/><h3 id="id-17.StepstoFATCAandCRSEntity-ReportCode0"><strong>ReportCode 0</strong></h3><ul><li><p><strong>Flags</strong>:</p><ul><li><p>Entity_CRS_Flag = 0</p></li><li><p>Entity_FATCA_Flag = 0</p></li><li><p>Individual_CRS_Flag = 0</p></li><li><p>Individual_FATCA_Flag = 0</p></li></ul></li><li><p><strong>Total ReportCode</strong>: 0 + 0 + 0 + 0 = <strong>0</strong></p></li><li><p><strong>TaxRegime</strong>: <strong>&quot;Other&quot;</strong></p></li></ul><p><strong>Analysis:</strong></p><ul><li><p><strong>Situation</strong>: Neither the entity nor the controlling individual is a foreign tax resident or a US person.</p></li><li><p><strong>Reporting Obligations</strong>:</p><ul><li><p><strong>No reporting</strong> under CRS or FATCA.</p></li></ul></li><li><p><strong>Use Case</strong>:</p><ul><li><p>A local entity controlled by a local resident, with no foreign tax obligations.</p></li></ul></li></ul><hr/><p><strong>Techniques Used in Analysis</strong></p><ul><li><p><strong>Binary Flagging</strong>: Assigning binary flags to represent the presence (1) or absence (0) of certain attributes simplifies the mapping of complex scenarios.</p></li><li><p><strong>Weighted Sum for Code Generation</strong>: By assigning different weights (8, 4, 2, 1) to each flag, we create a unique <code>ReportCode</code> for each combination. This allows for easy mapping and retrieval of the corresponding <code>TaxRegime</code>.</p></li><li><p><strong>Systematic Mapping</strong>: The use of a mapping table (<code>TaxRegimeMapping</code>) provides a clear and maintainable way to associate <code>ReportCode</code>s with descriptive <code>TaxRegime</code>s.</p></li><li><p><strong>Error Handling</strong>: This approach helps in identifying inconsistencies or data errors in the CRM system by highlighting unexpected combinations or missing flags.</p></li></ul><hr/><p><strong>Use Cases and Practical Implications</strong></p><ul><li><p><strong>Data Quality Assurance</strong>: By analyzing the <code>ReportCode</code>s, auditors can identify records that may have incorrect or missing information, prompting further investigation.</p></li><li><p><strong>Regulatory Compliance</strong>: Ensures that all entities and individuals are correctly reported under the applicable tax regimes, avoiding penalties for non-compliance.</p></li><li><p><strong>Efficient Reporting</strong>: Automates the classification of reporting obligations, reducing manual effort and the potential for human error.</p></li></ul><hr/><p><strong>Conclusion</strong></p><p>The <code>TaxRegimeMapping</code> step is crucial for accurately determining the tax reporting obligations under CRS and FATCA for entities and their controlling individuals. By systematically assigning and analyzing the <code>ReportCode</code>, organizations can ensure compliance with international tax laws, identify potential data errors, and streamline their reporting processes.</p><p>This mapping technique is a practical example of how complex regulatory requirements can be translated into logical, programmable steps, facilitating efficient data management and compliance in financial institutions.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

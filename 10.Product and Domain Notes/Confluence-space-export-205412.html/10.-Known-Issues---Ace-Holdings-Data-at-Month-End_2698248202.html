@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 10. Known Issues - Ace Holdings Data at Month End</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 10. Known Issues - Ace Holdings Data at Month End
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 18-09-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p /><p /><h2 id="id-10.KnownIssues-AceHoldingsDataatMonthEnd-Overview">Overview</h2><p>on 2024.09.05 jackson raised questions regarding the IXARB account from SQL code didn’t mateched with uers given excel data. jackson researched into this issues.</p><p>Root cause is the Store procedure SQL scritps (Run at 2024.09.05) and User Holdings extracted (Run at 2024.09.02)in a differrenet time. even though they have the same AsAtDate the Ace have differne Qty of the data becasue there <strong><span style="background-color: rgb(211,241,167);">migth be something chanegd during that time</span></strong>.</p><h3 id="id-10.KnownIssues-AceHoldingsDataatMonthEnd-NotetoFutureUsers">Note to Future Users</h3><p>I could confirm the EXEC [AACARPTSRV].[ace].dbo.geAcHold is getting the correct data, just not eactly matched what the users want.</p><p>if she ask questions , ask her (caroline)to pull the data again at the same date, that should fix the mismatch.</p><h3 id="id-10.KnownIssues-AceHoldingsDataatMonthEnd-Conclusion">Conclusion</h3><p>The discrepancies observed in the IXARB account holdings data highlight the importance of understanding the timing and source of data retrieval. Future users should be aware of these factors to avoid confusion and ensure accurate reporting.</p><p>the time that run EXEC [ace].dbo.geAcHold would affect hostorical hodling QTY .</p><p>user Ran the same account today , the data now fully matched with the store orcs that run today.</p><p>even the @pAsAtDate = '2024-08-31' somehow the current run date tieme affect the qty in the ace holdings. table .</p><p /><p>No actions required, but just becasreful whe nusers ask us to reconcile data , we need to make sure she give us the data at the same date.</p><h2 id="id-10.KnownIssues-AceHoldingsDataatMonthEnd-Background">Background</h2><p>The Ace Holdings system is used to retrieve and analyze holdings data for various accounts. A recent inquiry regarding the IXARB account revealed inconsistencies in the quantity of holdings reported for the as-at date of August 31, 2024. This article documents the findings and provides guidance for future reference.</p><h2 id="id-10.KnownIssues-AceHoldingsDataatMonthEnd-KeyPoints">Key Points</h2><h3 id="id-10.KnownIssues-AceHoldingsDataatMonthEnd-1.DataRetrievalProcess">1. Data Retrieval Process</h3><p>To retrieve holdings data for the IXARB account, the following stored procedure is executed:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">EXEC [ace].dbo.geAcHold  
+    @pParentID = NULL,
+    @pAccountID = &#39;IXARB&#39;,
+    @pCompany = NULL,
+    @pHoldType = NULL,
+    @pCommodity = NULL,
+    @pCurrency = NULL,
+    @pAsAtDate = &#39;2024-08-31&#39;, -- select convert(varchar, getdate(), 23) yyyy-mm-dd
+    @pKeyTypeID1 = NULL,
+    @pKeyTypeID2 = NULL,
+    @pKeyTypeID3 = NULL,
+    @pKeyValue1 = NULL,
+    @pKeyValue2 = NULL,
+    @pKeyValue3 = NULL,
+    @pExchangeID = NULL,
+    @pSecCode = NULL,
+    @pPopGNTable = &#39;N&#39;; -- not sure what this PopGNTable does</pre>
+</div></div><h3 id="id-10.KnownIssues-AceHoldingsDataatMonthEnd-2.DiscrepanciesinData(fromFinanceTeam)">2. Discrepancies in Data (from Finance Team)</h3><ul><li><p>A finance team member reported that the <strong><span style="background-color: rgb(254,222,200);">quantity of holdings</span></strong> retrieved did not match their records, despite the row count being consistent (40 rows).</p></li><li><p>The issue arose because trades were completed on September 2 but backdated to August 30, as it was an MSCI day.</p></li><li><p><strong><span style="background-color: rgb(211,241,167);">The execution timing of the stored procedure affects the historical holding quantities, leading to discrepancies.</span></strong></p></li></ul><h3 id="id-10.KnownIssues-AceHoldingsDataatMonthEnd-3.ImportanceofExecutionTiming">3. Importance of Execution Timing</h3><ul><li><p>The timing of when the <code>EXEC [ace].dbo.geAcHold</code> procedure is run can significantly impact the quantities reported in the Ace Holdings table.</p></li><li><p>Even when specifying an as-at date of August 31, 2024, the current run date and time can influence the data retrieved.</p></li></ul><h3 id="id-10.KnownIssues-AceHoldingsDataatMonthEnd-4.Recommendations">4. Recommendations</h3><ul><li><p>Ensure that the execution of the stored procedure is done at a consistent time, especially around month-end or significant trading days.</p></li><li><p>Communicate with the finance team to confirm the timing of trades and any backdating practices that may affect data accuracy.</p></li><li><p>Request screenshots or additional data from the finance team to verify the source and accuracy of the information being compared.</p></li></ul><h3 id="id-10.KnownIssues-AceHoldingsDataatMonthEnd-5.Conclusion">5. Conclusion</h3><p>The discrepancies observed in the IXARB account holdings data highlight the importance of understanding the timing and source of data retrieval. Future users should be aware of these factors to avoid confusion and ensure accurate reporting.</p><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240905-014532.png" width="283" loading="lazy" src="attachments/2698248202/2698346510.png?width=283" data-image-src="attachments/2698248202/2698346510.png" data-height="271" data-width="283" data-unresolved-comment-count="0" data-linked-resource-id="2698346510" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240905-014532.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2698248202" data-linked-resource-container-version="4" data-media-id="1189a063-15a1-412f-ab3e-58c91c1ebc4f" data-media-type="file"></span><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240905-014538.png" width="760" loading="lazy" src="attachments/2698248202/2698084360.png?width=760" data-image-src="attachments/2698248202/2698084360.png" data-height="657" data-width="1277" data-unresolved-comment-count="0" data-linked-resource-id="2698084360" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240905-014538.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2698248202" data-linked-resource-container-version="4" data-media-id="b0054c1e-117b-43d6-b966-50172cb18c40" data-media-type="file"></span><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240905-014554.png" width="760" loading="lazy" src="attachments/2698248202/2698608647.png?width=760" data-image-src="attachments/2698248202/2698608647.png" data-height="521" data-width="1118" data-unresolved-comment-count="0" data-linked-resource-id="2698608647" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240905-014554.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2698248202" data-linked-resource-container-version="4" data-media-id="f7d5d798-63fe-4a36-b4e4-d792ed719b67" data-media-type="file"></span><p /><hr/><p>18.09.2024 &gt;&gt;&gt; Caroline cotnext</p><p>Good morning.  I have made time this mornng to check the updated Aug House Posistions Raw Data report for 31st Aug.  Apologies for the delay.  I am happy with the quanities in the report.  Re; the prices, they agree oher than my prices are to 4dp, and yours are to 2dp.  Not a massive deal but is it possible to get the prices to four decimal places.  Other than that, I am happy to sign off the report.</p><p> </p><p>Just a process question - am I correct in thinking that when I need to run the report for 30th Sept, the date I input into the report is 1/10/2024?</p><p> </p><p>When this report goes into prod, can I arrange for a schedule also.  Shall I log a ticket for that?</p><p> </p><p /><p /><hr/><p>Hi Caroline it been too long I have to refreshed my Memory on this.</p><p> </p><p>Thank you for reviewing the updated August House Positions Raw Data report for 31st August.</p><p><strong>Regarding the Prices:</strong></p><p>You're absolutely correct; the prices were previously displayed to two decimal places. I would adjust the report to display prices to <strong>four decimal places</strong> as per your request. This should align with your data and provide the precision you need.</p><p> </p><p><strong>Regarding the Date Input:</strong></p><p><strong>Yes</strong>, to generate the report for <strong>30th September</strong>, you should input <strong>1/10/2024</strong> into the report. The report calculates the last day of the previous month based on the date you input, so using <strong>1st October 2024</strong> will correctly set the report to <strong>30th September 2024</strong>.</p><p> </p><p><strong>Important Note on Data Consistency:</strong></p><p>Please be aware that when comparing quantities between the Ace application and the SSRS report, it's essential to generate both sets of data on the <strong>same date</strong>. This ensures consistency, especially around month-end when backdated trades may be processed. Discrepancies can occur if trades are entered into the system after the initial report generation but backdated to a date before the <code>AsAtDate</code>. </p><p> </p><p>Running the report and extracting data from Ace on the same day will help avoid these issues.</p><p> </p><p>RE: Going to Prod it is ready to go to prod now, please raise a ticket copy this response in.</p><p> </p><p>cheers</p><hr/><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" width="250" loading="lazy" src="attachments/2698248202/2718531618.png?width=250" data-image-src="attachments/2698248202/2718531618.png" data-height="20" data-width="20" data-unresolved-comment-count="0" data-linked-resource-id="2718531618" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="20_f.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2698248202" data-linked-resource-container-version="4" data-media-id="86eb26d9-15aa-4763-afd9-90c206486543" data-media-type="file"></span><p>could you send me the ticket number please if you rasied one</p><p> </p><p /><blockquote><p><strong>Caroline Grimmer</strong></p><p>When this report goes into prod, can I arrange for a schedule also. Shall I log a ticket for that?</p></blockquote><p><a class="external-link" href="https://kapsqlrpt-prd01.craigsip.com/Reports/report/ACE%20Reports/ACE%20Portfolio%20Accounts%20Holdings" rel="nofollow">https://kapsqlrpt-prd01.craigsip.com/Reports/report/ACE%20Reports/ACE%20Portfolio%20Accounts%20Holdings</a></p><p>i had moved the reports to Normal folder (Average run time about 2.5 mins)</p><p> </p><p>Wahoo.  Thanks</p><p /><blockquote><p><strong>Caroline Grimmer</strong></p><p>4dp - thanks heaps.</p></blockquote><p> Changed to 4 Decimal palces for prices </p><p /><p> </p><p /><p /><h2 id="id-10.KnownIssues-AceHoldingsDataatMonthEnd-Instructions"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4d8" data-emoji-shortname=":blue_book:" data-emoji-fallback="\uD83D\uDCD8" src="images/icons/emoticons/72/1f4d8.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Instructions</h2><p></p><ol start="1"><li><p></p></li><li><p></p></li><li><p></p></li></ol><div class="confluence-information-macro confluence-information-macro-information"><span class="aui-icon aui-icon-small aui-iconfont-info confluence-information-macro-icon"></span><div class="confluence-information-macro-body"><p>Highlight important information in a panel like this one. To edit this panel's color or style, select one of the options in the menu.</p></div></div><h2 id="id-10.KnownIssues-AceHoldingsDataatMonthEnd-Relatedarticles"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4cb" data-emoji-shortname=":clipboard:" data-emoji-fallback="\uD83D\uDCCB" src="images/icons/emoticons/72/1f4cb.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Related articles</h2><p></p>
+
+
+
+
+
+
+
+
+
+
+
+    
+    <ul class="content-by-label">
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="3021504564" data-linked-resource-type="page" data-linked-resource-version="3" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/3021504564/Power+BI+Dynamic+Subscriptions+Set+Up+Guide">Power BI Dynamic Subscriptions Set Up Guide</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2698248202" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2698248202/10.+Known+Issues+-+Ace+Holdings+Data+at+Month+End">10. Known Issues - Ace Holdings Data at Month End</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2703098031" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2703098031/12.+Minors+turning+18">12. Minors turning 18</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2702376988" data-linked-resource-type="page" data-linked-resource-version="5" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2702376988/11.+CRM+advisers+and+PWAs+complex+relationships">11. CRM advisers and PWAs complex relationships</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2688352258" data-linked-resource-type="page" data-linked-resource-version="7" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2688352258/09.+CIP+0209441Cashman+accounts+balance+report+By+Brenden">09. CIP:0209441Cashman accounts balance report By Brenden</a>
+                        
+                        
+                    </div>
+    </li>
+    </ul>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2698248202/2698346510.png">image-20240905-014532.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2698248202/2698084360.png">image-20240905-014538.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2698248202/2698608647.png">image-20240905-014554.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2698248202/2718531618.png">20_f.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

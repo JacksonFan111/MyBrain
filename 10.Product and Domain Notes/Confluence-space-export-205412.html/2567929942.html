@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 08. learning CRM Data Integrations (SQL)</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="1.-Internal_2555216013.html">1. Internal</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 08. learning CRM Data Integrations (SQL)
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 20-06-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h2 id="id-08.learningCRMDataIntegrations(SQL)-Overview"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4d8" data-emoji-shortname=":blue_book:" data-emoji-fallback="\uD83D\uDCD8" src="images/icons/emoticons/72/1f4d8.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Overview</h2><p>CIP’s DBA has put across logging to track down any outbound connections from CRM’s primary SQL DB, CRM_MSCRM</p><p /><h2 id="id-08.learningCRMDataIntegrations(SQL)-High-LevelIntegration">High-Level Integration</h2><p>CRM integrates at a high-level with the following reporting solutions, systems and data processes:</p><p><strong>Inbound</strong> = Other system &gt;&gt; CRM</p><p><strong>Outbound</strong> = CRM &gt;&gt; Other System</p><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="0f2b7f4f-02dd-4015-b18b-e50934ad5609" class="confluenceTable"><tbody><tr><th data-highlight-colour="var(--ds-background-accent-gray-subtlest, #F4F5F7)" class="confluenceTh"><p><strong><span class="legacy-color-text-inverse">Integration</span></strong></p></th><th data-highlight-colour="var(--ds-background-accent-gray-subtlest, #F4F5F7)" class="confluenceTh"><p><strong><span class="legacy-color-text-inverse">Desc</span></strong></p></th><th data-highlight-colour="var(--ds-background-accent-gray-subtlest, #F4F5F7)" class="confluenceTh"><p><strong><span class="legacy-color-text-inverse">Data used</span></strong></p></th><th data-highlight-colour="var(--ds-background-accent-gray-subtlest, #F4F5F7)" class="confluenceTh"><p><strong><span class="legacy-color-text-inverse">Inbound/Outbound</span></strong></p></th></tr><tr><td class="confluenceTd"><p>CIP Data Platform</p><p>(Azure Synpase Pipeline Meta data Approach)</p></td><td class="confluenceTd"><p>Used in the ETL to bring on Client and Portfolio Data. This ultimately ends up in the Data Warehouse and then CIP Tabular model.</p></td><td class="confluenceTd"><p>Vast majority of sql objects.</p></td><td class="confluenceTd"><p>Outbound</p></td></tr><tr><td class="confluenceTd"><p>CIP Tabular Model</p></td><td class="confluenceTd"><p>Brings in holdings data for use in the Breach Service and the CRM front end.</p></td><td class="confluenceTd"><p>Holdings and Asset data, pertaining to client portfolios.</p></td><td class="confluenceTd"><p>Inbound</p></td></tr><tr><td class="confluenceTd"><p>SSRS (Insights)</p></td><td class="confluenceTd"><p>Dozens of SSRS Reports</p></td><td class="confluenceTd"><p>Dozens of sql objects.</p></td><td class="confluenceTd"><p>Outbound</p></td></tr></tbody></table></div><p /><p /><h2 id="id-08.learningCRMDataIntegrations(SQL)-Relatedarticles"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4cb" data-emoji-shortname=":clipboard:" data-emoji-fallback="\uD83D\uDCCB" src="images/icons/emoticons/72/1f4cb.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Related articles</h2><p></p>
+
+
+
+
+
+
+
+
+
+
+
+    
+    <ul class="content-by-label">
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="3021504564" data-linked-resource-type="page" data-linked-resource-version="3" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/3021504564/Power+BI+Dynamic+Subscriptions+Set+Up+Guide">Power BI Dynamic Subscriptions Set Up Guide</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2698248202" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2698248202/10.+Known+Issues+-+Ace+Holdings+Data+at+Month+End">10. Known Issues - Ace Holdings Data at Month End</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2703098031" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2703098031/12.+Minors+turning+18">12. Minors turning 18</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2702376988" data-linked-resource-type="page" data-linked-resource-version="5" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2702376988/11.+CRM+advisers+and+PWAs+complex+relationships">11. CRM advisers and PWAs complex relationships</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2688352258" data-linked-resource-type="page" data-linked-resource-version="7" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2688352258/09.+CIP+0209441Cashman+accounts+balance+report+By+Brenden">09. CIP:0209441Cashman accounts balance report By Brenden</a>
+                        
+                        
+                    </div>
+    </li>
+    </ul>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:52</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

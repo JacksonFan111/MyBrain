@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Summary: Schema Ace Diff Report (UAT vs. Prod)</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Summary: Schema Ace Diff Report (UAT vs. Prod)
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 18-03-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <style type='text/css'>/*<![CDATA[*/
+div.rbtoc1755550425118 {padding: 0px;}
+div.rbtoc1755550425118 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1755550425118 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style><div class='toc-macro rbtoc1755550425118'>
+<ul class='toc-indentation'>
+<li><a href='#Summary:SchemaAceDiffReport(UATvs.Prod)-1.Tables'>1. Tables</a></li>
+<li><a href='#Summary:SchemaAceDiffReport(UATvs.Prod)-2.Views'>2. Views</a></li>
+<li><a href='#Summary:SchemaAceDiffReport(UATvs.Prod)-3.StoredProcedures'>3. Stored Procedures</a></li>
+<li><a href='#Summary:SchemaAceDiffReport(UATvs.Prod)-4.Basedonthediffreport,thereferencetablesintheACEschemathatinclude&quot;IOS&quot;intheirnamesare:'>4. Based on the diff report, the reference tables in the ACE schema that include &quot;IOS&quot; in their names are:</a></li>
+</ul>
+<li><a href='#Summary:SchemaAceDiffReport(UATvs.Prod)-DetailedDiffCodeBlock'>Detailed Diff Code Block</a></li>
+<li><a href='#Summary:SchemaAceDiffReport(UATvs.Prod)-1.ReconciliationScriptfor[ACE].[IOSLastProcess]'>1. Reconciliation Script for [ACE].[IOSLastProcess]</a></li>
+<li><a href='#Summary:SchemaAceDiffReport(UATvs.Prod)-2.ReconciliationScriptfor[ACE].[IOSMutualFundSecs]'>2. Reconciliation Script for [ACE].[IOSMutualFundSecs]</a></li>
+<li><a href='#Summary:SchemaAceDiffReport(UATvs.Prod)-3.ReconciliationScriptfor[ACE].[IOSSchedulerOrders]'>3. Reconciliation Script for [ACE].[IOSSchedulerOrders]</a></li>
+<li><a href='#Summary:SchemaAceDiffReport(UATvs.Prod)-4.ReconciliationScriptfor[ACE].[IOSSchedulerW8TaxPool]'>4. Reconciliation Script for [ACE].[IOSSchedulerW8TaxPool]</a></li>
+<li><a href='#Summary:SchemaAceDiffReport(UATvs.Prod)-5.ReconciliationScriptfor[ACE].[IOSSchedulerW8TaxPoolAccSec]'>5. Reconciliation Script for [ACE].[IOSSchedulerW8TaxPoolAccSec]</a></li>
+</ul>
+</div><h4 id="Summary:SchemaAceDiffReport(UATvs.Prod)-1.Tables"><strong>1. Tables</strong></h4><ul><li><p><strong>BulkDailySent</strong></p><ul><li><p><em>UAT:</em> Present</p></li><li><p><em>Prod:</em> Not deployed</p></li><li><p><strong>Action:</strong> Determine if production needs to track “BulkDailySent” or if it should be removed from UAT.</p></li></ul></li><li><p><strong>BulkTrades, IOSLastProcess, IOSMutualFundSecs, IOSSchedulerOrders, IOSSchedulerW8TaxPool</strong></p><ul><li><p><em>UAT vs. Prod:</em> Definitions match</p></li><li><p><strong>Action:</strong> No changes needed unless hidden constraints differ.</p></li></ul></li><li><p><strong>BulkTrades_bak</strong></p><ul><li><p><em>UAT:</em> Exists as a backup table</p></li><li><p><em>Prod:</em> Absent</p></li><li><p><strong>Action:</strong> Likely a development artifact; decide on its retention.</p></li></ul></li><li><p><strong>IOSSchedulerW8TaxPoolAccSec</strong></p><ul><li><p><em>UAT:</em> Present</p></li><li><p><em>Prod:</em> Not deployed</p></li><li><p><strong>Action:</strong> If required for tax pool security processing, consider deploying it to production; otherwise, remove from UAT.</p></li></ul></li></ul><hr/><h4 id="Summary:SchemaAceDiffReport(UATvs.Prod)-2.Views"><strong>2. Views</strong></h4><ul><li><p><strong>Currency &amp; Currency_20170821</strong></p><ul><li><p><em>UAT:</em> Defined views for managing currency data</p></li><li><p><em>Prod:</em> Both are missing</p></li><li><p><strong>Action:</strong> Deploy these if production queries depend on them, or remove them from UAT if not needed.</p></li></ul></li><li><p><strong>Exchange &amp; vwRetailIOSOrders</strong></p><ul><li><p><em>UAT vs. Prod:</em> Essentially identical</p></li><li><p><strong>Action:</strong> No further action required.</p></li></ul></li><li><p><strong>Security</strong></p><ul><li><p><em>UAT:</em> Exists</p></li><li><p><em>Prod:</em> Not present</p></li><li><p><strong>Action:</strong> Confirm if the “Security” view is needed for reporting; deploy if required.</p></li></ul></li></ul><hr/><h4 id="Summary:SchemaAceDiffReport(UATvs.Prod)-3.StoredProcedures"><strong>3. Stored Procedures</strong></h4><ul><li><p><strong>sp_GetACEOrders</strong></p><ul><li><p><em>Differences:</em></p><ul><li><p><strong>Market Filter:</strong> UAT uses ('OCTUS','NYSE') while production uses ('NZSE').</p></li><li><p><strong>Collation:</strong> Production explicitly applies <code>COLLATE DATABASE_DEFAULT</code> on certain comparisons.</p></li></ul></li><li><p><strong>Action:</strong> Verify which market criteria and collation settings align with the business rules and adjust accordingly.</p></li></ul></li><li><p><strong>sp_MutualEqFundsRefresh</strong></p><ul><li><p><em>Differences:</em></p><ul><li><p>Production includes an extra join condition (<code>and i.assetCode=a.code</code>) that UAT omits (or comments out).</p></li></ul></li><li><p><strong>Action:</strong> Confirm the correct join logic for refreshing mutual fund data and unify the code if needed.</p></li></ul></li><li><p><strong>sp_W8TaxPoolRefresh</strong></p><ul><li><p><em>Differences:</em></p><ul><li><p><strong>Connection References:</strong> UAT uses <code>[DynamicsProd]</code> while production uses <code>[Dynamics]</code>.</p></li><li><p><strong>Final SELECT:</strong> Minor differences in the concluding query (one version has the final select commented out).</p></li></ul></li><li><p><strong>Action:</strong> Since both linker servers access the same underlying CRM production data, standardize the naming for consistency.</p></li></ul></li><li><p><strong>Additional Procedures:</strong></p><ul><li><p><strong>sp_UpsertBulkDailySent</strong> and <strong>sp_W8TaxPoolAccSecRefresh</strong> exist only in UAT.</p></li><li><p><strong>usp_GetBulksAlreadySent, usp_GetBulkTrades, usp_InsertBulkTrade, usp_UpdateBulkTradeFileSent, sp_UpdateACEOrder:</strong> Appear in both with minimal or no differences.</p></li><li><p><strong>Action:</strong> Evaluate the need for UAT-only procedures in production and standardize where business logic should be identical.</p></li></ul></li></ul><hr/><h4 id="Summary:SchemaAceDiffReport(UATvs.Prod)-4.Basedonthediffreport,thereferencetablesintheACEschemathatinclude&quot;IOS&quot;intheirnamesare:">4. Based on the diff report, the reference tables in the ACE schema that include &quot;IOS&quot; in their names are:</h4><ul><li><p><strong>[ACE].[IOSLastProcess]</strong><br/><em>Purpose:</em> Tracks processing details (e.g., process types and run times).</p></li><li><p><strong>[ACE].[IOSMutualFundSecs]</strong><br/><em>Purpose:</em> Stores details about mutual fund securities.</p></li><li><p><strong>[ACE].[IOSSchedulerOrders]</strong><br/><em>Purpose:</em> Contains scheduled order data.</p></li><li><p><strong>[ACE].[IOSSchedulerW8TaxPool]</strong><br/><em>Purpose:</em> Holds W8 tax pool information.</p></li><li><p><strong>[ACE].[IOSSchedulerW8TaxPoolAccSec]</strong><br/><em>Purpose:</em> Maintains tax pool account security details (present only in UAT).</p></li></ul><p>These tables are typically used as reference tables for reconciliation and integration processes. It’s recommended to write reconciliation scripts that compare data across source systems, UAT, and production for these tables to ensure data consistency and integrity.</p><hr/><h3 id="Summary:SchemaAceDiffReport(UATvs.Prod)-DetailedDiffCodeBlock"><strong>Detailed Diff Code Block</strong></h3><p>Below is the comprehensive diff code block detailing the differences between the UAT and Production (CIP) Ace schema. You can review this code to see the exact changes in object definitions, connection references, and procedural logic:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: diff; gutter: false; theme: Confluence" data-theme="Confluence">{code:language=diff|title=UAT vs CIP Ace Schema Diff}
+--- UAT_FullSchemaAce.sql	2025-03-18 14:57:01.521682600 +1300
++++ SQLCIP_FullSchemaAce.sql	2025-03-18 14:58:43.114375900 +1300
+@@ -1,133 +1,61 @@
+ OutputLine
+ ---------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 1
+--- Object Name: BulkDailySent | Object Type: USER_TABLE
+----------------------------------------------------
+-CREATE TABLE [ACE].[BulkDailySent] (      RootParentOrderNumber nvarchar(40) NULL,     BulkAmtAlreadySent int NULL,     BulkValueSent decimal(10,2) NULL,     Exchange nvarchar(20) NULL,     OrderVolume int NULL );
+-
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 2
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 1
+ -- Object Name: BulkTrades | Object Type: USER_TABLE
+----------------------------------------------------
+ CREATE TABLE [ACE].[BulkTrades] (      TradeReference bigint NOT NULL,     IOSOrderNumber bigint NULL,     TradeType varchar(20) NULL,     Exchange varchar(20) NULL,     TradeNumber bigint NULL,     TradeDate varchar(20) NULL,     Buyer varchar(20) NULL,     Seller varchar(20) NULL,     Security varchar(20) NULL,     Quantity int NULL,     Price float NULL,     Value float NULL,     Yield varchar(20) NULL,     AccruedIntTotal varchar(20) NULL,     AccruedIntp100 varchar(20) NULL,     SettleDate varchar(20) NULL,     AsAtDate varchar(20) NULL,     BuyerReference varchar(20) NULL,     SellerReference varchar(20) NULL,     SaleConditions varchar(20) NULL,     QuotationBasis varchar(20) NULL,     StampDuty varchar(20) NULL,     Brokerage varchar(20) NULL,     MessageFunction varchar(20) NULL,     Source varchar(20) NULL,     NettingIndicator varchar(20) NULL,     PreviousMessageRef varchar(20) NULL,     BuyInIndicator varchar(20) NULL,     StandIndicator varchar(20) NULL,     dteCreated datetime2 NULL,     dteProcessed datetime2 NULL,     dteFileSent datetime2 NULL,     fileName varchar(200) NULL );
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 3
+--- Object Name: BulkTrades_bak | Object Type: USER_TABLE
+----------------------------------------------------
+-CREATE TABLE [ACE].[BulkTrades_bak] (      TradeReference bigint NOT NULL,     IOSOrderNumber bigint NULL,     TradeType varchar(20) NULL,     Exchange varchar(20) NULL,     TradeNumber bigint NULL,     TradeDate varchar(20) NULL,     Buyer varchar(20) NULL,     Seller varchar(20) NULL,     Security varchar(20) NULL,     Quantity int NULL,     Price float NULL,     Value float NULL,     Yield varchar(20) NULL,     AccruedIntTotal varchar(20) NULL,     AccruedIntp100 varchar(20) NULL,     SettleDate varchar(20) NULL,     AsAtDate varchar(20) NULL,     BuyerReference varchar(20) NULL,     SellerReference varchar(20) NULL,     SaleConditions varchar(20) NULL,     QuotationBasis varchar(20) NULL,     StampDuty varchar(20) NULL,     Brokerage varchar(20) NULL,     MessageFunction varchar(20) NULL,     Source varchar(20) NULL,     NettingIndicator varchar(20) NULL,     PreviousMessageRef varchar(20) NULL,     BuyInIndicator varchar(20) NULL,     StandIndicator varchar(20) NULL,     dteCreated datetime2 NULL,     dteProcessed datetime2 NULL,     dteFileSent datetime2 NULL,     fileName varchar(200) NULL );
+-
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 4
+--- Object Name: Currency | Object Type: VIEW
+----------------------------------------------------
+-  
+-  
+-  
+-  
+-CREATE VIEW [ACE].[Currency] AS  
+-SELECT [ShortName] as CurrencyCode  
+-      ,[Name] as Currency  
+-  FROM [StCurrencies]  
+-  where Status=&#39;A&#39;  
+-  
+-  
+-  
+-
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 5
+--- Object Name: Currency_20170821 | Object Type: VIEW
+----------------------------------------------------
+-  
+-  
+-  
+-  
+-CREATE VIEW [ACE].[Currency_20170821] AS  
+-SELECT [ShortName] as CurrencyCode  
+-      ,[Name] as Currency  
+-  FROM [StCurrencies]  
+-  where Status=&#39;A&#39;  
+-  
+-  
+-  
+-
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 6
+--- Object Name: DF__BulkTrade__dteCr__6EAC2DFA | Object Type: DEFAULT_CONSTRAINT
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 2
++-- Object Name: DF__BulkTrade__dteCr__41A3B202 | Object Type: DEFAULT_CONSTRAINT
+----------------------------------------------------
+ (getdate())
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 7
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 3
+ -- Object Name: Exchange | Object Type: VIEW
+----------------------------------------------------
+-  
+-  
+ CREATE VIEW [ACE].[Exchange] AS  
+  SELECT *  
+   FROM EqExchanges AS e  
+-  WHERE [Status]=&#39;A&#39;   
+-  
++  WHERE [Status]=&#39;A&#39;
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 8
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 4
+ -- Object Name: IOSLastProcess | Object Type: USER_TABLE
+----------------------------------------------------
+ CREATE TABLE [ACE].[IOSLastProcess] (      ProcessType varchar(20) NULL,     RunDateTime datetime NULL,     SubProcess varchar(20) NULL,     SubDateTime datetime NULL );
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 9
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 5
+ -- Object Name: IOSMutualFundSecs | Object Type: USER_TABLE
+----------------------------------------------------
+ CREATE TABLE [ACE].[IOSMutualFundSecs] (      SecCode varchar(12) NULL,     Exchange varchar(20) NOT NULL,     ArmAssetType varchar(80) NULL );
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 10
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 6
+ -- Object Name: IOSSchedulerOrders | Object Type: USER_TABLE
+----------------------------------------------------
+ CREATE TABLE [ACE].[IOSSchedulerOrders] (      [Order No] numeric(8,0) NOT NULL,     Client Code char(12) NULL,     Market Listing varchar(12) NULL,     Market varchar(8000) NULL,     Custody varchar(3) NOT NULL,     CSNFlag char(1) NOT NULL,     Price float NULL,     Qty/FV int NOT NULL,     Order Taker varchar(20) NOT NULL,     B/S char(1) NOT NULL,     Status varchar(1) NOT NULL,     SRN char(12) NULL,     SafeCustody char(1) NOT NULL,     W8CurrentTaxPool nvarchar(8000) NULL,     ClientTypeID char(2) NULL,     StaffType char(1) NULL,     AdvisorID char(12) NOT NULL,     OperatorNotes varchar(250) NULL,     ProcessedStatus varchar(11) NOT NULL,     dteCreated datetime NOT NULL,     dteUpdated datetime NOT NULL,     ExpiryDate datetime NULL );
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 11
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 7
+ -- Object Name: IOSSchedulerW8TaxPool | Object Type: USER_TABLE
+----------------------------------------------------
+ CREATE TABLE [ACE].[IOSSchedulerW8TaxPool] (      ClientID nvarchar(40) NULL,     w8currenttaxpool nvarchar(8000) NULL );
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 12
+--- Object Name: IOSSchedulerW8TaxPoolAccSec | Object Type: USER_TABLE
+----------------------------------------------------
+-CREATE TABLE [ACE].[IOSSchedulerW8TaxPoolAccSec] (      ISIN varchar(20) NULL,     name varchar(80) NULL,     SecCode varchar(12) NOT NULL,     ExchangeCode varchar(20) NOT NULL,     Currency varchar(4) NULL,     RegName varchar(150) NOT NULL,     IssuerCountry varchar(3) NULL );
+-
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 13
+--- Object Name: PK__BulkTrad__AB02D26C6CC3E588 | Object Type: PRIMARY_KEY_CONSTRAINT
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 8
++-- Object Name: PK__BulkTrad__AB02D26C3FBB6990 | Object Type: PRIMARY_KEY_CONSTRAINT
+----------------------------------------------------
+ -- No definition available (this object may be a table or constraint)
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 14
+--- Object Name: Security | Object Type: VIEW
+----------------------------------------------------
+-  
+-  
+-  
+-create VIEW [ACE].[Security] AS  
+-  
+-SELECT [ExchangeID] as ExchangeCode  
+-      ,[SecCode] as SecurityCode  
+-   ,IssuerAName as Security, *  
+-  FROM [EqExchSec]  
+-  where Status=&#39;A&#39;  
+-  
+-  
+-
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 15
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 9
+ -- Object Name: sp_GetACEOrders | Object Type: SQL_STORED_PROCEDURE
+----------------------------------------------------
+   
+---exec [ACE].[sp_GetACEOrders] 0,&#39;OCTUS,NYSE&#39;  
++--  
+   
+  CREATE PROCEDURE [ACE].[sp_GetACEOrders]  
+  (  
+@@ -141,7 +69,7 @@
+ SET NOCOUNT ON  
+   
+ --declare @FullRefresh as bit=1  
+---declare @Markets as varchar(1000) =(&#39;OCTUS&#39;,&#39;NYSE&#39;)  
++--declare @Markets as varchar(1000) =(&#39;NZSE&#39;)  
+   
+   
+ if @FullRefresh=0  
+@@ -190,11 +118,11 @@
+    USING cteOrders as SOURCE  
+    ON SOURCE.[Order No] = TARGET.[Order No]  
+  WHEN MATCHED and (isnull(SOURCE.Price,0)&lt;&gt;isnull(TARGET.Price,0) or isnull(SOURCE.[Qty/FV],0)&lt;&gt;isnull(TARGET.[Qty/FV],0) or isnull(SOURCE.OperatorNotes COLLATE DATABASE_DEFAULT,&#39;&#39;)&lt;&gt;isnull(TARGET.OperatorNotes COLLATE DATABASE_DEFAULT,&#39;&#39;) or (TARGET.Stat
+-us COLLATE DATABASE_DEFAULT &lt;&gt;SOURCE.Status COLLATE DATABASE_DEFAULT  and SOURCE.Status COLLATE DATABASE_DEFAULT =&#39;D&#39;) or isnull(SOURCE.ExpiryDate,&#39;&#39;)&lt;&gt;isnull(TARGET.ExpiryDate,&#39;&#39;) )  
++us COLLATE DATABASE_DEFAULT &lt;&gt;SOURCE.Status COLLATE DATABASE_DEFAULT  and SOURCE.Status COLLATE DATABASE_DEFAULT =&#39;D&#39;))  
+   THEN UPDATE  
+   SET TARGET.Price=SOURCE.Price , TARGET.[Qty/FV]=SOURCE.[Qty/FV],TARGET.Status=SOURCE.Status , TARGET.OperatorNotes=SOURCE.OperatorNotes  
+   ,TARGET.ProcessedStatus=case when isnull(SOURCE.Price,0)&lt;&gt;isnull(TARGET.Price,0) or isnull(SOURCE.[Qty/FV],0)&lt;&gt;isnull(TARGET.[Qty/FV],0)   
+-    or isnull(SOURCE.OperatorNotes,&#39;&#39;)&lt;&gt;isnull(TARGET.OperatorNotes,&#39;&#39;) or isnull(SOURCE.ExpiryDate,&#39;&#39;)&lt;&gt;isnull(TARGET.ExpiryDate,&#39;&#39;) then  &#39;Amend&#39;   
++    or isnull(SOURCE.OperatorNotes COLLATE DATABASE_DEFAULT,&#39;&#39;)&lt;&gt;isnull(TARGET.OperatorNotes,&#39;&#39;) or isnull(SOURCE.ExpiryDate,&#39;&#39;)&lt;&gt;isnull(TARGET.ExpiryDate,&#39;&#39;) then  &#39;Amend&#39;   
+  when SOURCE.Status COLLATE DATABASE_DEFAULT &lt;&gt;TARGET.Status COLLATE DATABASE_DEFAULT  and SOURCE.Status=&#39;D&#39; then &#39;Cancel&#39; end  
+  WHEN NOT MATCHED BY TARGET  
+   THEN INSERT ( [Order No]  
+@@ -365,7 +293,7 @@
+   ,[Status]  
+   ,[SRN]  
+   ,[SafeCustody]  
+-  ,case when w.SecCode is null then &#39;&#39; else [W8CurrentTaxPool] end as W8CurrentTaxPool  
++  ,[W8CurrentTaxPool]  
+   ,[ClientTypeID]  
+   ,[StaffType]  
+   ,case when isnull(t.ArmAssetType,&#39;&#39;)=&#39;MutualEqFund&#39; then &#39;Fund &#39; else &#39;&#39; end + isnull(OperatorNotes,&#39;&#39;) as OperatorNotes  
+@@ -375,18 +303,17 @@
+ left join ACE.IOSMutualFundSecs t  
+   on o.[Market Listing]=t.SecCode  
+   and t.Exchange=o.Market  
+-left join ACE.IOSSchedulerW8TaxPoolAccSec w  
+-  on o.[Market Listing]=w.SecCode  
+-  and o.[Market]=w.ExchangeCode  
+ where ProcessedStatus&lt;&gt;&#39;Processed&#39;  
+ --and t.SecCode is not null  
+ and Market COLLATE DATABASE_DEFAULT   in (select splitdata COLLATE DATABASE_DEFAULT  from [dbo].[fnSplitString](@Markets,&#39;,&#39;))  
+ and AdvisorID not in(&#39;HEADOFFICE&#39;)  
+   
+-end;
++  
++end;  
++  
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 16
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 10
+ -- Object Name: sp_MutualEqFundsRefresh | Object Type: SQL_STORED_PROCEDURE
+----------------------------------------------------
+ --Proc to load trade data  
+@@ -406,15 +333,25 @@
+ truncate table ACE.IOSMutualFundSecs  
+   
+ insert into ACE.IOSMutualFundSecs  
+-select a.code as SecCode, e.code as Exchange, asst.name as ArmAssetType  
+-from AACARPTSRV.fusion.dbo.Asset a  
+-inner join AACARPTSRV.fusion.dbo.Issue i on i.issueID = a.issueID  
++select a.code as SecCode, e.code as Exchange, asst.name as ArmAssetType  
++--into ACE.IOSMutualFundSecs  
++from AACARPTSRV.fusion.dbo.Asset a  
++inner join AACARPTSRV.fusion.dbo.Issue i  
++ on i.issueID = a.issueID  
++ and i.assetCode=a.code  
++inner join AACARPTSRV.fusion.dbo.Exchange e  
++ on e.exchangeID=a.exchangeID  
++left join AACARPTSRV.fusion.dbo.AssetType asst  
++ on asst.assetTypeID = i.assetTypeID  
++where asst.name =&#39;MutualEqFund&#39;  
+   
+ end;
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 17
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 11
+ -- Object Name: sp_UpdateACEOrder | Object Type: SQL_STORED_PROCEDURE
+----------------------------------------------------
++  
+ --Query to retrieve the Account Detail Re quired for FATCA and CRS Tax Regimes &#39;250285&#39;  
+  -- exec [FATCA].[sp_UpdateACEOrder] 9101511,&#39;Unprocessed&#39;  
+  --Parameterize  
+@@ -441,105 +378,7 @@
+ end;  
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 18
+--- Object Name: sp_UpsertBulkDailySent | Object Type: SQL_STORED_PROCEDURE
+----------------------------------------------------
+---Query to retrieve the Account Detail Re quired for FATCA and CRS Tax Regimes &#39;250285&#39;  
+- -- exec [FATCA].[sp_UpdateACEOrder] 9101511,&#39;Unprocessed&#39;  
+- --Parameterize  
+-  
+- /*  
+-  
+-  
+-  
+- */                        
+-  
+-  
+- CREATE PROCEDURE [ACE].[sp_UpsertBulkDailySent]  
+- ( @RootParentOrderNumber nvarchar(20),   
+-  @BulkAmtAlreadySent int,   
+-  @BulkValueSent decimal(10,2),   
+-  @Exchange nvarchar(10),  
+-  @OrderVolume int  
+- )  
+- as  
+- begin  
+-  
+- if exists(select 1 from ACE.BulkDailySent where RootParentOrderNumber=@RootParentOrderNumber)  
+-  
+- update b   
+- set BulkAmtAlreadySent=@BulkAmtAlreadySent,  
+- BulkValueSent=@BulkValueSent,  
+- Exchange=@Exchange,  
+- OrderVolume =@OrderVolume  
+-from ACE.BulkDailySent b  
+-where RootParentOrderNumber=@RootParentOrderNumber  
+-  
+-else  
+- insert into  ACE.BulkDailySent  
+- ( RootParentOrderNumber,  
+-   BulkAmtAlreadySent,  
+- BulkValueSent,  
+- Exchange,  
+- OrderVolume)  
+- values  
+- ( @RootParentOrderNumber,  
+-  @BulkAmtAlreadySent,  
+- @BulkValueSent,  
+- @Exchange,  
+- @OrderVolume  
+- )  
+-  
+-end;  
+-
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 19
+--- Object Name: sp_W8TaxPoolAccSecRefresh | Object Type: SQL_STORED_PROCEDURE
+----------------------------------------------------
+---Proc to load trade data  
+-   
+- --exec [ACE].[sp_W8TaxPoolAccSecRefresh]   
+-  
+- /*  
+-  
+-  
+-  
+- */              
+-CREATE proc [ACE].[sp_W8TaxPoolAccSecRefresh]  
+-as  
+-  
+-begin  
+-  
+-truncate table ACE.IOSSchedulerW8TaxPoolAccSec  
+-  
+-insert into   ACE.IOSSchedulerW8TaxPoolAccSec  
+-select  i.isin ISIN,  
+-i.name, ae. SecCode,  
+-e.code ExchangeCode,  
+-c.isoCode Currency, reg.name RegName,  
+-cor.isocode IssuerCountry  
+---into ACE.IOSSchedulerW8TaxPoolAccSec  
+-from AACARPTSRV.[fusion].dbo. Asset a   
+-JOIN AACARPTSRV.[fusion].dbo. Exchange e ON e.exchangeID = a.exchangeID  
+-JOIN AACARPTSRV.[fusion].dbo.Issue i ON i.issueID = a.issueID  
+-JOIN AACARPTSRV.[ace].dbo. EqExchSec ae ON ae. Seccode= a.code AND ae.ExchangeID = e.code  
+-JOIN AACARPTSRV.[ace].dbo. EqSecurities s ON ae.SecurityID = s.ID  
+-JOIN AACARPTSRV.[fusion].dbo.Currency c ON c.currencyID = a.currencyID  
+-JOIN AACARPTSRV.[fusion].dbo. Drum reg ON reg.drumID= a.registrarID AND reg.statusID=&#39;3296&#39;  
+-JOIN AACARPTSRV.[fusion].dbo. Drum isur ON isur.drumID=i.issuerID AND isur.statusID=&#39;3296&#39;  
+-JOIN AACARPTSRV.[fusion].dbo.Country co ON i.countryID = co.countryID  
+-JOIN AACARPTSRV.[fusion].dbo.Country cor ON isur.countryID=cor.countryID  
+-WHERE 1 = 1  
+---AND ht.code IN (&#39;SC&#39;, &#39;NO&#39;)  
+---AND ts.code IN(&#39;T&#39;, &#39;S&#39;)    
+-AND reg.name=&#39;CitiGroup&#39;   
+-ANd cor.isoCode=&#39;US&#39;    
+-  
+-  
+-end;
+-
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 20
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 12
+ -- Object Name: sp_W8TaxPoolRefresh | Object Type: SQL_STORED_PROCEDURE
+----------------------------------------------------
+ --Proc to load trade data  
+@@ -551,7 +390,7 @@
+   
+   
+  */              
+-CREATE proc ACE.sp_W8TaxPoolRefresh  
++create proc ACE.sp_W8TaxPoolRefresh  
+ as  
+   
+ begin  
+@@ -561,20 +400,20 @@
+ insert into  ACE.IOSSchedulerW8TaxPool  
+ select distinct ps.dsl_PortfolioServiceNo as ClientID  
+ , sm.value as w8currenttaxpool  
+-from [DynamicsProd].[CRM_MSCRM].[dbo].Account a  
+-left join [DynamicsProd].[CRM_MSCRM].dbo.dsl_portfolioservice ps   
++from [Dynamics].[CRM_MSCRM].[dbo].Account a  
++left join [Dynamics].[CRM_MSCRM].dbo.dsl_portfolioservice ps   
+  on ps.dsl_TradingEntityId = a.AccountId  
+-join [DynamicsProd].[CRM_MSCRM].[dbo].stringmap sm  
++join [Dynamics].[CRM_MSCRM].[dbo].stringmap sm  
+  on sm.AttributeName=&#39;cip_w8currenttaxpoolnew&#39;  
+  and sm.AttributeValue=a.cip_w8currenttaxpoolnew  
+ where a.cip_w8currenttaxpoolnew is not null and ps.dsl_PortfolioServiceNo is not null  
+   
+-select * from ACE.IOSSchedulerW8TaxPool  
++--select * from ACE.IOSSchedulerW8TaxPool  
+   
+-end;
++end;  
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 21
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 13
+ -- Object Name: usp_GetBulksAlreadySent | Object Type: SQL_STORED_PROCEDURE
+----------------------------------------------------
+ --Query to retrieve the PIE Tax details  
+@@ -598,7 +437,7 @@
+ end;
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 22
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 14
+ -- Object Name: usp_GetBulkTrades | Object Type: SQL_STORED_PROCEDURE
+----------------------------------------------------
+ --Query to retrieve the PIE Tax details  
+@@ -692,7 +531,7 @@
+ end;
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 23
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 15
+ -- Object Name: usp_InsertBulkTrade | Object Type: SQL_STORED_PROCEDURE
+----------------------------------------------------
+ --Query to retrieve the PIE Tax details  
+@@ -800,7 +639,7 @@
+   
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 24
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 16
+ -- Object Name: usp_UpdateBulkTradeFileSent | Object Type: SQL_STORED_PROCEDURE
+----------------------------------------------------
+ --Query to retrieve the PIE Tax details  
+@@ -825,10 +664,10 @@
+ set dteFileSent=GetDate(), fileName=@filename   
+ where dteProcessed=@dteProcessed  
+   
+-end;
++end;  
+----------------------------------------------------
+--- Connection: SVSQLTST001\SQLUAT | Object Index: 25
++-- Connection: KAPSQLPR-PRD01\SQLCIP | Object Index: 17
+ -- Object Name: vwRetailIOSOrders | Object Type: VIEW
+----------------------------------------------------
+   
+{code}
+</pre>
+</div></div><p>Below are sample SQL reconciliation scripts for each reference table that include &quot;IOS&quot; in their names. These scripts compare UAT versus Production (Prod) by checking row counts and identifying any data differences.</p><blockquote><p><strong>Note:</strong><br/>Replace the database names (<code>[UAT]</code> and <code>[PROD]</code>) with your actual database names or linked server references as needed.</p></blockquote><hr/><h3 id="Summary:SchemaAceDiffReport(UATvs.Prod)-1.ReconciliationScriptfor[ACE].[IOSLastProcess]">1. Reconciliation Script for [ACE].[IOSLastProcess]</h3><p><strong>Compare Row Counts:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT &#39;IOSLastProcess&#39; AS TableName, 
+       &#39;UAT&#39; AS Environment, 
+       COUNT(*) AS RowCount
+FROM [UAT].[ACE].[IOSLastProcess]
+UNION ALL
+SELECT &#39;IOSLastProcess&#39; AS TableName, 
+       &#39;PROD&#39; AS Environment, 
+       COUNT(*) AS RowCount
+FROM [PROD].[ACE].[IOSLastProcess];
+</pre>
+</div></div><p><strong>Identify Data Differences:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- Rows in UAT but not in Prod:
+SELECT *
+FROM [UAT].[ACE].[IOSLastProcess]
+EXCEPT
+SELECT *
+FROM [PROD].[ACE].[IOSLastProcess];
+
+-- Rows in Prod but not in UAT:
+SELECT *
+FROM [PROD].[ACE].[IOSLastProcess]
+EXCEPT
+SELECT *
+FROM [UAT].[ACE].[IOSLastProcess];
+</pre>
+</div></div><hr/><h3 id="Summary:SchemaAceDiffReport(UATvs.Prod)-2.ReconciliationScriptfor[ACE].[IOSMutualFundSecs]">2. Reconciliation Script for [ACE].[IOSMutualFundSecs]</h3><p><strong>Compare Row Counts:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT &#39;IOSMutualFundSecs&#39; AS TableName, 
+       &#39;UAT&#39; AS Environment, 
+       COUNT(*) AS RowCount
+FROM [UAT].[ACE].[IOSMutualFundSecs]
+UNION ALL
+SELECT &#39;IOSMutualFundSecs&#39; AS TableName, 
+       &#39;PROD&#39; AS Environment, 
+       COUNT(*) AS RowCount
+FROM [PROD].[ACE].[IOSMutualFundSecs];
+</pre>
+</div></div><p><strong>Identify Data Differences:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- Rows in UAT but not in Prod:
+SELECT *
+FROM [UAT].[ACE].[IOSMutualFundSecs]
+EXCEPT
+SELECT *
+FROM [PROD].[ACE].[IOSMutualFundSecs];
+
+-- Rows in Prod but not in UAT:
+SELECT *
+FROM [PROD].[ACE].[IOSMutualFundSecs]
+EXCEPT
+SELECT *
+FROM [UAT].[ACE].[IOSMutualFundSecs];
+</pre>
+</div></div><hr/><h3 id="Summary:SchemaAceDiffReport(UATvs.Prod)-3.ReconciliationScriptfor[ACE].[IOSSchedulerOrders]">3. Reconciliation Script for [ACE].[IOSSchedulerOrders]</h3><p><strong>Compare Row Counts:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT &#39;IOSSchedulerOrders&#39; AS TableName, 
+       &#39;UAT&#39; AS Environment, 
+       COUNT(*) AS RowCount
+FROM [UAT].[ACE].[IOSSchedulerOrders]
+UNION ALL
+SELECT &#39;IOSSchedulerOrders&#39; AS TableName, 
+       &#39;PROD&#39; AS Environment, 
+       COUNT(*) AS RowCount
+FROM [PROD].[ACE].[IOSSchedulerOrders];
+</pre>
+</div></div><p><strong>Identify Data Differences:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- Rows in UAT but not in Prod:
+SELECT *
+FROM [UAT].[ACE].[IOSSchedulerOrders]
+EXCEPT
+SELECT *
+FROM [PROD].[ACE].[IOSSchedulerOrders];
+
+-- Rows in Prod but not in UAT:
+SELECT *
+FROM [PROD].[ACE].[IOSSchedulerOrders]
+EXCEPT
+SELECT *
+FROM [UAT].[ACE].[IOSSchedulerOrders];
+</pre>
+</div></div><hr/><h3 id="Summary:SchemaAceDiffReport(UATvs.Prod)-4.ReconciliationScriptfor[ACE].[IOSSchedulerW8TaxPool]">4. Reconciliation Script for [ACE].[IOSSchedulerW8TaxPool]</h3><p><strong>Compare Row Counts:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT &#39;IOSSchedulerW8TaxPool&#39; AS TableName, 
+       &#39;UAT&#39; AS Environment, 
+       COUNT(*) AS RowCount
+FROM [UAT].[ACE].[IOSSchedulerW8TaxPool]
+UNION ALL
+SELECT &#39;IOSSchedulerW8TaxPool&#39; AS TableName, 
+       &#39;PROD&#39; AS Environment, 
+       COUNT(*) AS RowCount
+FROM [PROD].[ACE].[IOSSchedulerW8TaxPool];
+</pre>
+</div></div><p><strong>Identify Data Differences:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- Rows in UAT but not in Prod:
+SELECT *
+FROM [UAT].[ACE].[IOSSchedulerW8TaxPool]
+EXCEPT
+SELECT *
+FROM [PROD].[ACE].[IOSSchedulerW8TaxPool];
+
+-- Rows in Prod but not in UAT:
+SELECT *
+FROM [PROD].[ACE].[IOSSchedulerW8TaxPool]
+EXCEPT
+SELECT *
+FROM [UAT].[ACE].[IOSSchedulerW8TaxPool];
+</pre>
+</div></div><hr/><h3 id="Summary:SchemaAceDiffReport(UATvs.Prod)-5.ReconciliationScriptfor[ACE].[IOSSchedulerW8TaxPoolAccSec]">5. Reconciliation Script for [ACE].[IOSSchedulerW8TaxPoolAccSec]</h3><p><strong>Check Table Existence in Production:</strong></p><p>Since this table is present only in UAT per the diff report, first verify its existence in production.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">IF EXISTS (SELECT * 
+           FROM [PROD].INFORMATION_SCHEMA.TABLES 
+           WHERE TABLE_SCHEMA = &#39;ACE&#39; AND TABLE_NAME = &#39;IOSSchedulerW8TaxPoolAccSec&#39;)
+BEGIN
+    SELECT &#39;IOSSchedulerW8TaxPoolAccSec exists in PROD&#39; AS Message;
+END
+ELSE
+BEGIN
+    SELECT &#39;IOSSchedulerW8TaxPoolAccSec does NOT exist in PROD&#39; AS Message;
+END;
+</pre>
+</div></div><p><strong>If the table exists in both environments, compare row counts and data differences:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- Compare Row Counts:
+SELECT &#39;IOSSchedulerW8TaxPoolAccSec&#39; AS TableName, 
+       &#39;UAT&#39; AS Environment, 
+       COUNT(*) AS RowCount
+FROM [UAT].[ACE].[IOSSchedulerW8TaxPoolAccSec]
+UNION ALL
+SELECT &#39;IOSSchedulerW8TaxPoolAccSec&#39; AS TableName, 
+       &#39;PROD&#39; AS Environment, 
+       COUNT(*) AS RowCount
+FROM [PROD].[ACE].[IOSSchedulerW8TaxPoolAccSec];
+
+-- Identify Data Differences:
+SELECT *
+FROM [UAT].[ACE].[IOSSchedulerW8TaxPoolAccSec]
+EXCEPT
+SELECT *
+FROM [PROD].[ACE].[IOSSchedulerW8TaxPoolAccSec];
+
+SELECT *
+FROM [PROD].[ACE].[IOSSchedulerW8TaxPoolAccSec]
+EXCEPT
+SELECT *
+FROM [UAT].[ACE].[IOSSchedulerW8TaxPoolAccSec];
+</pre>
+</div></div><hr/><p>These scripts should serve as a starting point. You may need to adjust them further based on:</p><ul><li><p>The available primary keys or unique columns (to join on, if necessary).</p></li><li><p>Additional filtering or aggregation if the tables are large.</p></li><li><p>Differences in data types that might affect the <code>EXCEPT</code> operator.</p></li></ul><p>Running these scripts will help you verify that reference data is consistent between UAT and Production, and any discrepancies can then be investigated and corrected.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

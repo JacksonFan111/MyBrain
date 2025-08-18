@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : NO/SC Offshore Verification Process from Katrina Gibbs</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : NO/SC Offshore Verification Process from Katrina Gibbs
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 29-11-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h2 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-Overview"><strong>Overview</strong></h2><p>The <strong>NO/SC Offshore Verification Report</strong> serves as an initial checkpoint for identifying new accounts that require setup in the <strong>Offshore RVP/DVP Report</strong>.</p><ul><li><p><strong>Purpose:</strong> Ensure all new offshore accounts are correctly flagged and added to the relevant reports for processing.</p></li><li><p><strong>Frequency:</strong> This process typically occurs every 1–2 months when new accounts are created.</p></li><li><p><strong>Key Terms:</strong></p><ul><li><p><strong>NO (Nominee):</strong> Indicates nominee accounts, marked as 'Y' or 'N'.</p></li><li><p><strong>SC (Safe Custody):</strong> Indicates safe custody accounts, marked as 'Y' or 'N'.</p></li><li><p><strong>DVP (Delivery Versus Payment):</strong> Ensures securities are delivered only when payment is made.</p></li><li><p><strong>RVP (Receive Versus Payment):</strong> Ensures securities are received upon payment confirmation.</p></li></ul></li></ul><hr/><h2 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-Step-by-StepGuide"><strong>Step-by-Step Guide</strong></h2><h3 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-1.PurposeoftheReport"><strong>1. Purpose of the Report</strong></h3><ul><li><p>The <strong>NO/SC Offshore Verification Report</strong> identifies new accounts flagged as <strong>Nominee (NO)</strong> or <strong>Safe Custody (SC)</strong> that need to be added to the <strong>Offshore RVP/DVP Report</strong>.</p></li><li><p>Once a new account is processed in the <strong>Offshore RVP/DVP Report</strong>, it should be <strong>excluded</strong> from the <strong>NO/SC Offshore Verification Report</strong> to prevent duplicate notifications.</p></li></ul><hr/><h3 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-2.InitialTrigger"><strong>2. Initial Trigger</strong></h3><ul><li><p>A user (e.g., Katrina) receives an account from the <strong>NO/SC Offshore Verification Report</strong> (typically every 1–2 months).</p></li><li><p>The user submits a request to the <strong>Data Team</strong> to:</p><ol start="1"><li><p>Notify that the new account needs to be added to the <strong>Offshore RVP/DVP Report</strong>.</p></li><li><p>Request removal (not really remove only adding the Ledger into the Where NOT IN clasue to filter it out)of the account from the <strong>NO/SC Offshore Verification Report</strong> after it has been added to the <strong>Offshore RVP/DVP Report</strong>.</p></li></ol></li><li><p>adding the Ledger into the Where NOT IN clasue to filter it out the account ensures that the verification report does not repeatedly notify users about the same account.</p></li></ul><hr/><h3 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-3.AccountAdditionProcess"><strong>3. Account Addition Process</strong></h3><h4 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-Step1:CheckRequestDetails"><strong>Step 1: Check Request Details</strong></h4><ul><li><p>Verify the <strong>account number</strong> and <strong>ledger</strong> provided in the request.</p></li><li><p>Example: <strong>Contract 12359877 - A/C 276202</strong>.</p></li></ul><h4 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-Step2:VerifytheBusinessRequirement"><strong>Step 2: Verify the Business Requirement</strong></h4><ul><li><p>Confirm with the requester (e.g., Katrina) why the account needs to be removed from the report.</p></li><li><p>Ensure the account has been added to the <strong>Offshore RVP/DVP Report</strong> by the designated person (e.g., Sriyantha).</p></li></ul><h4 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-Step3:UnderstandtheReportFlow"><strong>Step 3: Understand the Report Flow</strong></h4><ul><li><p>The <strong>NO/SC Offshore Verification Report</strong> acts as a <strong>temporary holding place</strong> for new accounts.</p></li><li><p>Once an account is processed in the <strong>Offshore RVP/DVP Report</strong>, it must be excluded (adding the Ledger into the Where NOT IN clasue) from the <strong>Verification Report</strong> using a <strong>NOT IN clause</strong> in the SQL script.</p></li></ul><hr/><h3 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-4.SQLScriptAdjustments"><strong>4. SQL Script Adjustments</strong></h3><h4 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-Step1:LocatetheCurrentScript"><strong>Step 1: Locate the Current Script</strong></h4><ul><li><p>Extract the script for the <strong>NO/SC Offshore Verification Report</strong> from the SSRS server.</p></li><li><p>Example SQL logic:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    tr.Nominee AS &#39;Nominee&#39;,
+    tr.SafeCustody AS &#39;SafeCustody&#39;,
+    tr.AccountNumber,
+    tr.Ledger
+FROM ace.dbo.EqSettleTrans tr
+WHERE tr.Ledger NOT IN (&lt;list of processed accounts&gt;)
+</pre>
+</div></div></li></ul><h4 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-Step2:AddtheAccounttotheNOTINClause"><strong>Step 2: Add the Account to the </strong><code>NOT IN</code><strong> Clause</strong></h4><ul><li><p>Add the specified <strong>Ledger (e.g., 276202)</strong> to the <strong>NOT IN</strong> clause.</p></li><li><p>Updated SQL:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">WHERE tr.Ledger NOT IN (&#39;276202&#39;, &lt;other accounts&gt;)
+</pre>
+</div></div></li></ul><h4 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-Step3:TesttheChanges"><strong>Step 3: Test the Changes</strong></h4><ul><li><p>Run the updated SQL script and confirm the account no longer appears in the report.</p></li></ul><h4 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-Step4:DeploytheChanges"><strong>Step 4: Deploy the Changes</strong></h4><ul><li><p>Save the updated script and deploy it back to SSRS.</p></li><li><p>Notify the user that the account has been successfully removed.</p></li></ul><hr/><h3 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-5.BusinessContextforEachReport"><strong>5. Business Context for Each Report</strong></h3><h4 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-NO/SCOffshoreVerificationReport"><strong>NO/SC Offshore Verification Report</strong></h4><ul><li><p><strong>Purpose:</strong> Acts as a checkpoint to identify new offshore accounts flagged as <strong>Nominee</strong> or <strong>Safe Custody</strong>.</p></li><li><p><strong>Outcome:</strong> New accounts are flagged and processed in the next report.</p></li></ul><h4 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-OffshoreRVP/DVPReport"><strong>Offshore RVP/DVP Report</strong></h4><ul><li><p><strong>Purpose:</strong> Tracks delivery and payment transactions (<strong>DVP/RVP</strong>) for offshore accounts to ensure accurate settlement and risk management.</p></li></ul><hr/><h3 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-6.CommunicationwithUsers"><strong>6. Communication with Users</strong></h3><ul><li><p>Maintain proper documentation of why an account was removed for future reference.</p></li><li><p>Example Communication:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Hi Katrina,  
+
+Your request to remove Contract 12359877 - A/C 276202 from the NO/SC Offshore Verification Report has been actioned.  
+This report serves as a checkpoint for adding accounts to the Offshore RVP/DVP Report. Once added, the accounts are excluded from the Verification Report.  
+
+Let us know if you have further queries.  
+
+Cheers,  
+[Your Name]  
+</pre>
+</div></div></li></ul><hr/><h3 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-7.RecurringProcess"><strong>7. Recurring Process</strong></h3><ul><li><p>Repeat this process whenever a new ledger appears in the <strong>NO/SC Offshore Verification Report</strong>.</p></li><li><p><strong>Frequency:</strong> Typically every 1–2 months.</p></li></ul><hr/><h3 id="NO/SCOffshoreVerificationProcessfromKatrinaGibbs-ReferenceLinks"><strong>Reference Links</strong></h3><ul><li><p><a href="https://craigsip.atlassian.net/wiki/spaces/CHEL/pages/1783824456/Offshore+DVP+RVP+-+New+Accounts+Set+Up" data-linked-resource-id="1783824456" data-linked-resource-version="4" data-linked-resource-type="page">Offshore DVP/RVP - New Accounts Setup</a></p></li></ul>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

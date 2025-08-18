@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : FATCA USP_01 Redeisgn</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : FATCA USP_01 Redeisgn
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 03-06-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Okay, redesigning this for a corrupted CRM, strictly adhering to IDES 2.0, and aiming for clarity, is a great exercise. The core challenge in a corrupted CRM is <strong>distrusting the data</strong> and building in layers of validation, correction, and clear &quot;assumption logging.&quot;</p><p>Here’s a conceptual redesign approach, followed by how the SQL steps might look.</p><p><strong>Core Redesign Principles for Corrupted CRM &amp; IDES 2.0:</strong></p><ol start="1"><li><p><strong>Explicit Data Staging with Quality Flags:</strong> Instead of one monolithic flow, break it into more distinct staging tables. Each stage would not only transform data but also add data quality flags (e.g., <code>IsUSCitizen_CRM</code>, <code>IsUSCitizen_Derived</code>, <code>TIN_IsValidFormat</code>, <code>Address_IsComplete</code>, <code>ControllingPersonRuleApplied</code>).</p></li><li><p><strong>Prioritize Indicia, then Flags:</strong> Don't trust CRM's &quot;Is US Person&quot; checkbox alone. Re-evaluate based on raw indicia (US citizenship, US address, US birthplace, US phone, standing instructions to US, PoA to US person).</p></li><li><p><strong>Configuration Tables for Rules:</strong> Abstract complex business rules (like what constitutes a &quot;Controlling Person&quot; or which products are &quot;Excluded Accounts&quot;) into separate, easily updatable configuration tables, not hardcoded in the main logic.</p></li><li><p><strong>Defaulting and Fallbacks for Missing/Corrupt Data:</strong> Where IDES 2.0 allows (e.g., missing TIN for US person if DOB present), implement logic to use available fallbacks. Log these instances.</p></li><li><p><strong>Clear Separation of Concerns:</strong></p><ul><li><p><strong>Identification:</strong> Who are the entities and individuals?</p></li><li><p><strong>Classification:</strong> Are they US Persons? Account Holders? Controlling Persons? What type of NFFE/FI?</p></li><li><p><strong>Financials:</strong> What are the account balances?</p></li><li><p><strong>Exclusions:</strong> Are they explicitly excluded?</p></li></ul></li><li><p><strong>Auditable Logging:</strong> Log decisions, especially when overriding CRM data or applying complex rules. For example, &quot;Entity X flagged non-US in CRM, reclassified as US-Reportable due to US Controlling Person Y with US TIN.&quot;</p></li><li><p><strong>Iterative Refinement:</strong> Start with the most reliable data points and build out, rather than trying to fix everything at once.</p></li></ol><hr/><p><strong>Conceptual Staged Redesign (Illustrative SQL Snippets)</strong></p><p>We'll assume the goal is to populate a final staging table per <code>AccountReport</code> and one per <code>ControllingPerson</code> that directly maps to the XML structure.</p><hr/><p><strong>Phase 1: Raw Data Extraction and Initial Cleansing</strong></p><ul><li><p><strong>Objective:</strong> Get necessary fields from CRM, perform basic data type validation/cleansing, and create foundational staging tables.</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- STAGE 1.1: Extract Raw Account (Entity/Individual) Data
+IF OBJECT_ID(&#39;tempdb..#S1_RawAccounts&#39;) IS NOT NULL DROP TABLE #S1_RawAccounts;
+SELECT
+    A.AccountId,
+    A.Name AS AccountName_CRM,
+    A.dsl_TradingEntityType AS TradingEntityType_Code_CRM,
+    SM_EntityType.Value AS TradingEntityType_Desc_CRM,
+    A.dsl_USCitizensforTaxPurposes AS IsUSPerson_Flag_Entity_CRM, -- This is the CRM &quot;US Person&quot; flag for the entity account
+    A.ots_foreigntaxresident AS IsForeignTaxResident_Flag_Entity_CRM,
+    A.dsl_finffe AS FFI_NFFE_Code_CRM,
+    SM_FINFFE.Value AS FFI_NFFE_Desc_CRM,
+    A.dsl_PassiveorActive AS PassiveActive_Code_CRM,
+    SM_PassiveActive.Value AS PassiveActive_Desc_CRM,
+    A.cip_CharityNumber,
+    -- Address components (raw)
+    A.dsl_Address1CountryLookupIdName AS Addr1Country_CRM, A.dsl_PrimaryTaxDomicileName AS PrimaryTaxDomicile_CRM,
+    -- Portfolio Linkage (will be joined later)
+    A.dsl_PortfolioSearchingIDs
+INTO #S1_RawAccounts
+FROM [DynamicsPROD].[CRM_MSCRM].dbo.Account A
+LEFT JOIN [DynamicsPROD].[CRM_MSCRM].dbo.StringMap SM_EntityType 
+    ON SM_EntityType.AttributeValue = A.dsl_TradingEntityType AND SM_EntityType.AttributeName = &#39;dsl_tradingentitytype&#39; AND SM_EntityType.ObjectTypeCode = 1
+LEFT JOIN [DynamicsPROD].[CRM_MSCRM].dbo.StringMap SM_FINFFE 
+    ON SM_FINFFE.AttributeValue = A.dsl_finffe AND SM_FINFFE.AttributeName = &#39;dsl_finffe&#39; AND SM_FINFFE.ObjectTypeCode = 1
+LEFT JOIN [DynamicsPROD].[CRM_MSCRM].dbo.StringMap SM_PassiveActive 
+    ON SM_PassiveActive.AttributeValue = A.dsl_PassiveorActive AND SM_PassiveActive.AttributeName = &#39;dsl_passiveoractive&#39; AND SM_PassiveActive.ObjectTypeCode = 1
+WHERE A.statuscode = 1; -- Active accounts
+
+
+-- STAGE 1.2: Extract Raw Contact (Individual) Data
+IF OBJECT_ID(&#39;tempdb..#S1_RawContacts&#39;) IS NOT NULL DROP TABLE #S1_RawContacts;
+SELECT
+    C.ContactId,
+    C.FullName AS FullName_CRM,
+    C.FirstName AS FirstName_CRM, C.MiddleName AS MiddleName_CRM, C.LastName AS LastName_CRM,
+    -- Indicia of US Status (raw)
+    C.dsl_USCitizensforTaxPurposes AS IsUSPerson_Flag_Individual_CRM, -- This is the CRM &quot;US Person&quot; flag for the individual
+    C.ots_foreigntaxresident AS IsForeignTaxResident_Flag_Individual_CRM,
+    C.dsl_CountryofCitizenshipIdName AS CitizenshipCountry_CRM,
+    C.dsl_CountryOfBirthIdName AS BirthCountry_CRM,
+    C.BirthDate AS BirthDate_CRM, -- Keep raw, handle timezone/format later
+    C.cip_TownCityofBirth AS BirthCity_CRM,
+    C.dsl_Address1CountryLookupIdName AS Addr1Country_CRM, C.dsl_Address2CountryLookupIdName AS Addr2Country_CRM,
+    C.Telephone1 AS Phone1_CRM, -- Check for US country codes
+    C.dsl_CountryofTaxResidencyName AS TaxResidencyCountry_CRM
+    -- Other address components
+INTO #S1_RawContacts
+FROM [DynamicsPROD].[CRM_MSCRM].dbo.Contact C
+WHERE C.statecode = 0; -- Active contacts
+
+
+-- STAGE 1.3: Extract Raw TIN Data (can be for Entity or Individual)
+IF OBJECT_ID(&#39;tempdb..#S1_RawTINs&#39;) IS NOT NULL DROP TABLE #S1_RawTINs;
+SELECT
+    FT.cip_foreigntaxrecordId,
+    FT.cip_Entity AS AccountId_Link, -- Link to Account if Entity TIN
+    FT.cip_Individual AS ContactId_Link, -- Link to Contact if Individual TIN
+    FT.cip_identification AS TIN_CRM,
+    FT.cip_CountryJurisdictionName AS TINJurisdiction_CRM,
+    CC.cip_ISOcode AS TINJurisdiction_ISO3_CRM, -- Store 3-letter for now, convert to 2-letter later
+    FT.statecode AS TIN_StateCode_CRM
+INTO #S1_RawTINs
+FROM [DynamicsPROD].[CRM_MSCRM].[dbo].[cip_foreigntaxrecord] FT
+LEFT JOIN [DynamicsPROD].[CRM_MSCRM].[dbo].[dsl_countryBase] CC 
+    ON CC.dsl_countryid = FT.cip_CountryJurisdiction AND CC.statuscode = 1;
+
+
+-- STAGE 1.4: Extract Raw Role Data (links Contacts to Accounts, and Accounts to Accounts)
+IF OBJECT_ID(&#39;tempdb..#S1_RawRoles&#39;) IS NOT NULL DROP TABLE #S1_RawRoles;
+SELECT
+    R.dsl_rolesId,
+    R.dsl_TradingEntityID AS ParentAccountId_InRole, -- The Account this role belongs to
+    R.dsl_IndividualId AS ChildContactId_InRole,    -- The Individual in the role
+    R.dsl_Organisation AS ChildAccountId_InRole,    -- The Org in the role (for entity hierarchies)
+    R.dsl_RoleTypeIdName AS RoleTypeName_CRM,
+    R.dsl_BeneficialOwner AS IsBeneficialOwner_Flag_CRM,
+    R.dsl_BeneficiaryOwnership AS OwnershipPercentage_CRM,
+    R.statuscode AS Role_StatusCode_CRM
+INTO #S1_RawRoles
+FROM [DynamicsPROD].[CRM_MSCRM].dbo.dsl_roles R;
+
+
+-- STAGE 1.5: Extract Raw Portfolio Data
+IF OBJECT_ID(&#39;tempdb..#S1_RawPortfolios&#39;) IS NOT NULL DROP TABLE #S1_RawPortfolios;
+SELECT
+    P.dsl_PortfolioId,
+    P.dsl_TradingEntityId AS AccountId_Link, -- Link to Account
+    P.dsl_PortfolioIdName AS PortfolioNumber_CRM,
+    P.dsl_PortfolioServiceLevelName AS ProductType_CRM,
+    P.dsl_TotalHoldingsValue AS HoldingsValue_CRM, -- This is AccountBalance
+    P.dsl_HoldingsUpdatedOn AS HoldingsDate_CRM,
+    P.dsl_portfolioservicestatus AS PortfolioStatus_Code_CRM,
+    SM_PStatus.Value AS PortfolioStatus_Desc_CRM,
+    P.dsl_inceptiondate AS InceptionDate_CRM,
+    P.dsl_CloseDate AS CloseDate_CRM
+INTO #S1_RawPortfolios
+FROM [DynamicsPROD].[CRM_MSCRM].dbo.dsl_portfolioservice P
+LEFT JOIN [DynamicsPROD].[CRM_MSCRM].dbo.StringMap SM_PStatus 
+    ON SM_PStatus.AttributeValue = P.dsl_portfolioservicestatus AND SM_PStatus.AttributeName = &#39;dsl_PortfolioServiceStatus&#39; AND SM_PStatus.ObjectTypeCode = 10042;
+
+-- STAGE 1.6: Configuration Tables (External or Temp for this example)
+-- These would ideally be permanent, maintained tables.
+IF OBJECT_ID(&#39;tempdb..#Config_ExcludedProductsFATCA&#39;) IS NOT NULL DROP TABLE #Config_ExcludedProductsFATCA;
+CREATE TABLE #Config_ExcludedProductsFATCA (ProductType_CRM VARCHAR(255) PRIMARY KEY);
+INSERT INTO #Config_ExcludedProductsFATCA (ProductType_CRM) VALUES
+(&#39;Craigs KiwiSaver&#39;), (&#39;superSTART&#39;), (&#39;QuayStreet KiwiSaver Scheme&#39;); -- etc.
+
+IF OBJECT_ID(&#39;tempdb..#Config_ControllingPersonRoles&#39;) IS NOT NULL DROP TABLE #Config_ControllingPersonRoles;
+CREATE TABLE #Config_ControllingPersonRoles (RoleTypeName_CRM VARCHAR(255) PRIMARY KEY, OECD_CP_Type VARCHAR(10));
+INSERT INTO #Config_ControllingPersonRoles (RoleTypeName_CRM, OECD_CP_Type) VALUES
+(&#39;Director&#39;, &#39;CPTY01&#39;), (&#39;Trustee&#39;, &#39;CPTY04&#39;), (&#39;Settlor (Trust)&#39;, &#39;CPTY05&#39;), (&#39;Beneficiary&#39;,&#39;CPTY06&#39;), (&#39;Partner&#39;,&#39;CPTY02&#39;), (&#39;Officer&#39;,&#39;CPTY03&#39;), (&#39;Authorised Person&#39;,&#39;CPTY99&#39;), (&#39;Appointer&#39;,&#39;CPTY99&#39;); -- CPTY99 for Other
+
+IF OBJECT_ID(&#39;tempdb..#Config_CountryCodeMapping&#39;) IS NOT NULL DROP TABLE #Config_CountryCodeMapping;
+CREATE TABLE #Config_CountryCodeMapping (CountryName_CRM VARCHAR(255) PRIMARY KEY, ISO2Code CHAR(2), IsUSIndicia BIT DEFAULT 0);
+-- Populate with mappings from your FATCA.CountryReference, add IsUSIndicia for US, United States, USA etc.
+INSERT INTO #Config_CountryCodeMapping (CountryName_CRM, ISO2Code, IsUSIndicia)
+SELECT Country, ISOCode, CASE WHEN ISOCode = &#39;US&#39; THEN 1 ELSE 0 END FROM [SQLUAT].[DataServices].FATCA.CountryReference; -- Simplified, needs robust matching
+</pre>
+</div></div><hr/><p><strong>Phase 2: Individual Classification and Indicia Resolution</strong></p><ul><li><p><strong>Objective:</strong> Determine US Person status for individuals more reliably than CRM flags.</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- STAGE 2.1: Resolve Individual US Status based on Indicia
+IF OBJECT_ID(&#39;tempdb..#S2_Contacts_Classified&#39;) IS NOT NULL DROP TABLE #S2_Contacts_Classified;
+SELECT
+    C.ContactId, C.FullName_CRM, C.FirstName_CRM, C.MiddleName_CRM, C.LastName_CRM,
+    C.BirthDate_CRM, C.BirthCity_CRM,
+    ISNULL(MapBirthCountry.ISO2Code, &#39;XX&#39;) AS BirthCountry_ISO2,
+    ISNULL(MapCitCountry.ISO2Code, &#39;XX&#39;) AS CitizenshipCountry_ISO2,
+    ISNULL(MapAddr1Country.ISO2Code, &#39;XX&#39;) AS Addr1Country_ISO2,
+    ISNULL(MapTaxResCountry.ISO2Code, &#39;XX&#39;) AS TaxResCountry_ISO2,
+    
+    -- Derive US Person Status (example logic, needs to be robust)
+    CASE
+        WHEN C.IsUSPerson_Flag_Individual_CRM = 1 THEN 1 -- CRM Flag says YES
+        WHEN MapCitCountry.IsUSIndicia = 1 THEN 1      -- US Citizenship
+        WHEN MapBirthCountry.IsUSIndicia = 1 THEN 1     -- US Birthplace (unless contradictory evidence)
+        WHEN MapAddr1Country.IsUSIndicia = 1 THEN 1     -- US Residence Address (unless contradictory evidence)
+        -- WHEN CheckUSPhoneNumber(C.Phone1_CRM) = 1 THEN 1 -- US Phone (needs function)
+        -- WHEN HasStandingInstructionsToUS_CRM = 1 THEN 1 -- Standing Instructions (needs data source)
+        -- WHEN HasUSPoA_CRM = 1 THEN 1                     -- Power of Attorney to US person (needs data source)
+        ELSE 0
+    END AS Derived_IsUSPerson,
+    C.IsUSPerson_Flag_Individual_CRM, -- Keep original for audit
+    
+    -- Data Quality Flags
+    CASE WHEN C.BirthDate_CRM IS NULL THEN 1 ELSE 0 END AS DQ_BirthDateMissing,
+    CASE WHEN ISNULL(MapBirthCountry.ISO2Code, &#39;XX&#39;) = &#39;XX&#39; AND C.BirthCountry_CRM IS NOT NULL THEN 1 ELSE 0 END AS DQ_BirthCountryUnmapped
+    -- Add more DQ flags for address completeness, TIN format etc.
+INTO #S2_Contacts_Classified
+FROM #S1_RawContacts C
+LEFT JOIN #Config_CountryCodeMapping MapBirthCountry ON UPPER(MapBirthCountry.CountryName_CRM) = UPPER(LTRIM(RTRIM(C.BirthCountry_CRM)))
+LEFT JOIN #Config_CountryCodeMapping MapCitCountry ON UPPER(MapCitCountry.CountryName_CRM) = UPPER(LTRIM(RTRIM(C.CitizenshipCountry_CRM)))
+LEFT JOIN #Config_CountryCodeMapping MapAddr1Country ON UPPER(MapAddr1Country.CountryName_CRM) = UPPER(LTRIM(RTRIM(C.Addr1Country_CRM)))
+LEFT JOIN #Config_CountryCodeMapping MapTaxResCountry ON UPPER(MapTaxResCountry.CountryName_CRM) = UPPER(LTRIM(RTRIM(C.TaxResidencyCountry_CRM)));</pre>
+</div></div><hr/><p><strong>Phase 3: Entity Classification and Hierarchy Building</strong></p><ul><li><p><strong>Objective:</strong> Determine Entity Type (FI, Active NFFE, Passive NFFE), build hierarchies, and identify potential controlling persons.</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- STAGE 3.1: Classify Entities
+IF OBJECT_ID(&#39;tempdb..#S3_Accounts_Classified&#39;) IS NOT NULL DROP TABLE #S3_Accounts_Classified;
+SELECT
+    A.AccountId, A.AccountName_CRM, A.TradingEntityType_Desc_CRM,
+    A.cip_CharityNumber,
+    ISNULL(MapDomicile.ISO2Code, &#39;XX&#39;) AS PrimaryTaxDomicile_ISO2,
+    
+    -- Derive FATCA Entity Type (example logic)
+    CASE
+        WHEN A.FFI_NFFE_Desc_CRM = &#39;FI&#39; THEN &#39;FinancialInstitution&#39; -- Could be ReportingFI, PFFI, RDCFFI etc. Needs GIIN.
+        WHEN A.FFI_NFFE_Desc_CRM = &#39;NFFE&#39; AND A.PassiveActive_Desc_CRM = &#39;Active&#39; THEN &#39;ActiveNFFE&#39;
+        WHEN A.FFI_NFFE_Desc_CRM = &#39;NFFE&#39; AND A.PassiveActive_Desc_CRM = &#39;Passive&#39; THEN &#39;PassiveNFFE&#39;
+        WHEN A.IsUSPerson_Flag_Entity_CRM = 1 THEN &#39;USPersonEntity&#39; -- If CRM flags it as US entity
+        ELSE &#39;UnknownEntityClassification&#39; -- Requires review
+    END AS Derived_FATCAEntityType,
+    A.FFI_NFFE_Desc_CRM, A.PassiveActive_Desc_CRM, A.IsUSPerson_Flag_Entity_CRM, -- For audit
+    
+    A.Addr1Country_CRM -- For address later
+INTO #S3_Accounts_Classified
+FROM #S1_RawAccounts A
+LEFT JOIN #Config_CountryCodeMapping MapDomicile ON UPPER(MapDomicile.CountryName_CRM) = UPPER(LTRIM(RTRIM(A.PrimaryTaxDomicile_CRM)));
+
+
+-- STAGE 3.2: Build Entity Hierarchy (Simplified from original, focus on direct links first)
+-- Recursive CTE similar to original Step 2, but using classified entities.
+-- The key is to identify if a PassiveNFFE has US Controlling Persons.
+IF OBJECT_ID(&#39;tempdb..#S3_EntityHierarchy&#39;) IS NOT NULL DROP TABLE #S3_EntityHierarchy;
+;WITH EntityHierarchyRecursive AS (
+    SELECT
+        AC.AccountId AS EntityId,
+        AC.AccountName_CRM AS EntityName,
+        0 AS Level,
+        AC.AccountId AS RootEntityId,
+        AC.Derived_FATCAEntityType AS RootEntityType, -- Type of the root
+        CAST(AC.AccountName_CRM AS NVARCHAR(MAX)) AS Path
+    FROM #S3_Accounts_Classified AC
+    -- Anchor: Start with entities that are themselves potentially reportable or roots of structures
+    -- This could be all entities, or ones flagged as reportable based on some initial assessment
+
+    UNION ALL
+
+    SELECT
+        ChildAcct.AccountId AS EntityId,
+        ChildAcct.AccountName_CRM AS EntityName,
+        EHR.Level + 1 AS Level,
+        EHR.RootEntityId,
+        EHR.RootEntityType,
+        CAST(EHR.Path + N&#39; -&gt; &#39; + ChildAcct.AccountName_CRM AS NVARCHAR(MAX))
+    FROM EntityHierarchyRecursive EHR
+    INNER JOIN #S1_RawRoles R ON EHR.EntityId = R.ParentAccountId_InRole AND R.Role_StatusCode_CRM = 1 AND R.ChildAccountId_InRole IS NOT NULL
+    INNER JOIN #S3_Accounts_Classified ChildAcct ON R.ChildAccountId_InRole = ChildAcct.AccountId
+    WHERE EHR.Level &lt; 3 -- Max depth
+)
+SELECT * INTO #S3_EntityHierarchy FROM EntityHierarchyRecursive;</pre>
+</div></div><hr/><p><strong>Phase 4: Identify Account Holders and Controlling Persons</strong></p><ul><li><p><strong>Objective:</strong> Link classified individuals and entities to portfolios, determine AccountHolder/ControllingPerson status.</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- STAGE 4.1: Link Portfolios and Initial Account Holder Identification
+IF OBJECT_ID(&#39;tempdb..#S4_PortfolioLinks&#39;) IS NOT NULL DROP TABLE #S4_PortfolioLinks;
+SELECT
+    P.PortfolioNumber_CRM, P.ProductType_CRM, P.HoldingsValue_CRM, P.HoldingsDate_CRM,
+    P.PortfolioStatus_Desc_CRM, P.InceptionDate_CRM, P.CloseDate_CRM,
+    P.AccountId_Link, -- This is the direct account holder of the portfolio
+    ACC.AccountName_CRM AS DirectHolderAccountName,
+    ACC.TradingEntityType_Desc_CRM AS DirectHolderTradingEntityType,
+    ACC.Derived_FATCAEntityType AS DirectHolderFATCAEntityType,
+    -- Flags for later filtering
+    CASE WHEN CP.ProductType_CRM IS NOT NULL THEN 1 ELSE 0 END AS IsExcludedProduct_FATCA
+INTO #S4_PortfolioLinks
+FROM #S1_RawPortfolios P
+INNER JOIN #S3_Accounts_Classified ACC ON P.AccountId_Link = ACC.AccountId
+LEFT JOIN #Config_ExcludedProductsFATCA CP ON P.ProductType_CRM = CP.ProductType_CRM
+WHERE
+    -- Basic Portfolio Filtering (active during period)
+    NOT (P.PortfolioStatus_Desc_CRM = &#39;Closed&#39; AND P.CloseDate_CRM IS NOT NULL AND P.CloseDate_CRM &lt; @PeriodStartDate)
+    AND NOT (P.PortfolioStatus_Desc_CRM IN (&#39;Closed&#39;, &#39;Pending Closure&#39;) AND (P.HoldingsValue_CRM = 0 OR P.HoldingsValue_CRM IS NULL));
+
+
+-- STAGE 4.2: Generate AccountReport Staging Records (highly simplified)
+-- This is where the logic becomes very complex depending on DirectHolderType
+IF OBJECT_ID(&#39;tempdb..#S4_AccountReport_Candidates&#39;) IS NOT NULL DROP TABLE #S4_AccountReport_Candidates;
+SELECT
+    PL.PortfolioNumber_CRM, -- Part of AcctNumber
+    PL.ProductType_CRM,     -- Part of AcctNumber
+    PL.HoldingsValue_CRM AS AccountBalance, -- Need currency
+    PL.HoldingsDate_CRM AS AccountBalanceDate,
+    CAST(NULL AS VARCHAR(10)) AS AccountBalanceCurrency, -- Placeholder for currency
+    PL.AccountId_Link AS DirectHolder_AccountId,
+    PL.DirectHolderAccountName,
+    PL.DirectHolderTradingEntityType,
+    PL.DirectHolderFATCAEntityType,
+    
+    -- If DirectHolder is Individual (TradingEntityType = &#39;Individual&#39;, &#39;Joint&#39;)
+    IndClass.ContactId AS AccountHolder_Individual_ContactId,
+    IndClass.FullName_CRM AS AccountHolder_Individual_Name,
+    IndClass.Derived_IsUSPerson AS AccountHolder_Individual_IsUSPerson,
+    IndClass.BirthDate_CRM AS AccountHolder_Individual_BirthDate, -- Needs formatting for XML
+    IndClass.BirthCity_CRM AS AccountHolder_Individual_BirthCity,
+    IndClass.BirthCountry_ISO2 AS AccountHolder_Individual_BirthCountryISO2,
+    IndTIN.TIN_CRM AS AccountHolder_Individual_TIN,
+    IndTIN_MapCountry.ISO2Code AS AccountHolder_Individual_TIN_IssuedByISO2,
+
+    -- If DirectHolder is Entity (these are then for the &lt;Organisation&gt; element)
+    EntTIN.TIN_CRM AS AccountHolder_Organisation_TIN,
+    EntTIN_MapCountry.ISO2Code AS AccountHolder_Organisation_TIN_IssuedByISO2,
+    PL.IsExcludedProduct_FATCA,
+    
+    -- Is this account reportable under FATCA?
+    CASE
+        -- Individual Account Holder is US Person
+        WHEN PL.DirectHolderTradingEntityType IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;) AND IndClass.Derived_IsUSPerson = 1 THEN 1
+        -- Entity Account Holder is Passive NFFE AND has US Controlling Persons (complex subquery/join needed here)
+        WHEN PL.DirectHolderFATCAEntityType = &#39;PassiveNFFE&#39; AND EXISTS (
+            SELECT 1 FROM #S3_EntityHierarchy EH
+            INNER JOIN #S1_RawRoles R ON EH.EntityId = R.ParentAccountId_InRole AND R.Role_StatusCode_CRM = 1 AND R.ChildContactId_InRole IS NOT NULL
+            INNER JOIN #Config_ControllingPersonRoles CPR ON R.RoleTypeName_CRM = CPR.RoleTypeName_CRM
+            INNER JOIN #S2_Contacts_Classified CPInd ON R.ChildContactId_InRole = CPInd.ContactId
+            WHERE EH.RootEntityId = PL.AccountId_Link AND CPInd.Derived_IsUSPerson = 1
+        ) THEN 1
+        -- Entity Account Holder is a US Entity itself
+        WHEN PL.DirectHolderFATCAEntityType = &#39;USPersonEntity&#39; THEN 1
+        -- Entity Account Holder is an FI with a US TIN (e.g. US branch of FFI)
+        WHEN PL.DirectHolderFATCAEntityType = &#39;FinancialInstitution&#39; AND EntTIN_MapCountry.ISO2Code = &#39;US&#39; AND EntTIN.TIN_CRM IS NOT NULL THEN 1
+        ELSE 0
+    END AS IsFATCAReportable_Calculated
+
+INTO #S4_AccountReport_Candidates
+FROM #S4_PortfolioLinks PL
+-- Join to get Individual Account Holder details
+LEFT JOIN #S1_RawRoles IndRole_AH ON PL.AccountId_Link = IndRole_AH.ParentAccountId_InRole
+    AND IndRole_AH.Role_StatusCode_CRM = 1
+    AND IndRole_AH.IsBeneficialOwner_Flag_CRM = 1 -- Assuming main AH has this role/flag
+    AND PL.DirectHolderTradingEntityType IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;)
+LEFT JOIN #S2_Contacts_Classified IndClass ON IndRole_AH.ChildContactId_InRole = IndClass.ContactId
+LEFT JOIN #S1_RawTINs IndTIN ON IndClass.ContactId = IndTIN.ContactId_Link AND IndTIN.TIN_StateCode_CRM = 0
+LEFT JOIN #Config_CountryCodeMapping IndTIN_MapCountry ON UPPER(IndTIN_MapCountry.CountryName_CRM) = UPPER(LTRIM(RTRIM(IndTIN.TINJurisdiction_CRM)))
+
+-- Join to get Entity Account Holder TIN
+LEFT JOIN #S1_RawTINs EntTIN ON PL.AccountId_Link = EntTIN.AccountId_Link AND EntTIN.TIN_StateCode_CRM = 0 AND PL.DirectHolderTradingEntityType NOT IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;)
+LEFT JOIN #Config_CountryCodeMapping EntTIN_MapCountry ON UPPER(EntTIN_MapCountry.CountryName_CRM) = UPPER(LTRIM(RTRIM(EntTIN.TINJurisdiction_CRM)))
+WHERE PL.IsExcludedProduct_FATCA = 0;</pre>
+</div></div><hr/><p><strong>Phase 5: Generate Controlling Person Staging Records</strong></p><ul><li><p><strong>Objective:</strong> For Passive NFFEs identified as reportable, create records for their US Controlling Persons.</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- STAGE 5.1: Controlling Persons for Reportable Passive NFFEs
+IF OBJECT_ID(&#39;tempdb..#S5_ControllingPersons_Final&#39;) IS NOT NULL DROP TABLE #S5_ControllingPersons_Final;
+SELECT
+    ARC.PortfolioNumber_CRM, -- Link back to the AccountReport
+    ARC.ProductType_CRM,     -- Link back
+    ARC.DirectHolder_AccountId, -- The Passive NFFE AccountHolder
+    CPInd.ContactId AS CP_Individual_ContactId,
+    CPInd.FullName_CRM AS CP_Name,
+    CPR_Config.OECD_CP_Type AS CP_RoleType_OECD, -- From config table
+    CPInd.Derived_IsUSPerson AS CP_IsUSPerson, -- Should be 1 for this table
+    CPInd.BirthDate_CRM AS CP_BirthDate, -- Needs formatting
+    CPInd.BirthCity_CRM AS CP_BirthCity,
+    CPInd.BirthCountry_ISO2 AS CP_BirthCountryISO2,
+    CPTIN.TIN_CRM AS CP_TIN,
+    CPTIN_MapCountry.ISO2Code AS CP_TIN_IssuedByISO2,
+    -- CP Address details...
+    EH.Level AS CP_LevelInHierarchy -- Informational
+INTO #S5_ControllingPersons_Final
+FROM #S4_AccountReport_Candidates ARC
+INNER JOIN #S3_EntityHierarchy EH ON ARC.DirectHolder_AccountId = EH.RootEntityId -- Link to all entities in the NFFE&#39;s structure
+INNER JOIN #S1_RawRoles R ON EH.EntityId = R.ParentAccountId_InRole -- Role within that structure
+    AND R.Role_StatusCode_CRM = 1 AND R.ChildContactId_InRole IS NOT NULL
+INNER JOIN #Config_ControllingPersonRoles CPR_Config ON R.RoleTypeName_CRM = CPR_Config.RoleTypeName_CRM
+INNER JOIN #S2_Contacts_Classified CPInd ON R.ChildContactId_InRole = CPInd.ContactId
+LEFT JOIN #S1_RawTINs CPTIN ON CPInd.ContactId = CPTIN.ContactId_Link AND CPTIN.TIN_StateCode_CRM = 0
+LEFT JOIN #Config_CountryCodeMapping CPTIN_MapCountry ON UPPER(CPTIN_MapCountry.CountryName_CRM) = UPPER(LTRIM(RTRIM(CPTIN.TINJurisdiction_CRM)))
+WHERE ARC.IsFATCAReportable_Calculated = 1
+  AND ARC.DirectHolderFATCAEntityType = &#39;PassiveNFFE&#39;
+  AND CPInd.Derived_IsUSPerson = 1 -- Only US Controlling Persons
+  -- AND (CPTIN.TIN_CRM IS NOT NULL OR CPInd.BirthDate_CRM IS NOT NULL) -- FATCA Rule: US CP needs TIN or (if no TIN) DOB
+  -- The above TIN/DOB rule for CPs is crucial.</pre>
+</div></div><hr/><p><strong>Phase 6: Final Output to </strong><code>FATCA.Stage_...</code></p><ul><li><p>Create two main staging tables: <code>FATCA.Stage_AccountReports_JF</code> and <code>FATCA.Stage_ControllingPersons_JF</code>.</p></li><li><p>These tables would have columns that map <em>very directly</em> to the IDES 2.0 XML schema elements and attributes.</p></li><li><p>For example, <code>Stage_AccountReports</code> would have <code>AcctNumber</code>, <code>AccountClosed</code>, <code>AccountDormant</code>, <code>AccountBalance</code>, <code>AccountBalanceCurrency</code>, <code>AH_Type</code> (Indiv/Org), <code>AH_Ind_FirstName</code>, <code>AH_Ind_LastName</code>, <code>AH_Ind_BirthDate</code>, <code>AH_Ind_TIN_Value</code>, <code>AH_Ind_TIN_IssuedBy</code>, <code>AH_Org_Name</code>, <code>AH_Org_TIN_Value</code>, etc.</p></li><li><p>All data formatting (dates to YYYY-MM-DD, currency codes, country codes to ISO2) should be finalized here.</p></li><li><p>Crucially, apply the TIN or DOB logic:</p><ul><li><p>For US Individual AccountHolders: If TIN is missing, DOB must be present.</p></li><li><p>For US ControllingPersons: If TIN is missing, DOB must be present.</p></li></ul></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Example Final Staging (Conceptual - columns need to match XML structure closely)
+IF OBJECT_ID(&#39;FATCA.Stage_AccountReports_JF_New&#39;) IS NOT NULL DROP TABLE FATCA.Stage_AccountReports_JF_New;
+SELECT
+    @rptYear AS ReportYear,
+    ARC.PortfolioNumber_CRM + &#39;-&#39; + ARC.ProductType_CRM AS AcctNumber, -- Example AcctNumber
+    CASE WHEN ARC.PortfolioStatus_Desc_CRM = &#39;Closed&#39; AND ARC.CloseDate_CRM &lt;= @PeriodEndDate THEN &#39;true&#39; ELSE &#39;false&#39; END AS AccountClosed,
+    -- AccountDormant logic ...
+    ARC.AccountBalance,
+    ISNULL(ARC.AccountBalanceCurrency, &#39;NZD&#39;) AS AccountBalanceCurrency, -- Default if not found
+    
+    -- Account Holder Type
+    CASE WHEN ARC.DirectHolderTradingEntityType IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;) THEN &#39;Individual&#39; ELSE &#39;Organisation&#39; END AS AH_Type,
+    
+    -- Individual Account Holder Details
+    ARC.AccountHolder_Individual_Name AS AH_Ind_FullName,
+    -- Split FullName into FirstName, MiddleName, LastName using a robust function or assume CRM fields are good
+    CONVERT(VARCHAR(10), ARC.AccountHolder_Individual_BirthDate, 120) AS AH_Ind_BirthDate, -- YYYY-MM-DD
+    ARC.AccountHolder_Individual_BirthCity, ARC.AccountHolder_Individual_BirthCountryISO2,
+    ARC.AccountHolder_Individual_TIN AS AH_Ind_TIN_Value,
+    ARC.AccountHolder_Individual_TIN_IssuedByISO2 AS AH_Ind_TIN_IssuedBy,
+    -- Individual Address ... 
+    
+    -- Organisation Account Holder Details
+    ARC.DirectHolderAccountName AS AH_Org_Name,
+    ARC.AccountHolder_Organisation_TIN AS AH_Org_TIN_Value,
+    ARC.AccountHolder_Organisation_TIN_IssuedByISO2 AS AH_Org_TIN_IssuedBy,
+    ARC.DirectHolderFATCAEntityType AS AH_Org_FATCAEntityType, -- e.g., PassiveNFFE, ActiveNFFE
+    -- Organisation Address ...
+
+    -- Pool Information (if applicable)
+    
+    -- Unique DocSpec ID for this AccountReport
+    NEWID() AS DocSpec_ID -- Or generate a more stable sequence
+
+INTO FATCA.Stage_AccountReports_JF_New
+FROM #S4_AccountReport_Candidates ARC
+WHERE ARC.IsFATCAReportable_Calculated = 1
+  AND NOT ( -- Final FATCA Rules for missing TINs for US Persons
+            (ARC.DirectHolderTradingEntityType IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;) AND ARC.AccountHolder_Individual_IsUSPerson = 1 AND ARC.AccountHolder_Individual_TIN IS NULL AND ARC.AccountHolder_Individual_BirthDate IS NULL)
+          );
+-- This final NOT condition means: exclude if it&#39;s a US Individual AH AND their TIN is missing AND their DOB is also missing.
+
+-- Similarly for Stage_ControllingPersons_JF</pre>
+</div></div><hr/><p><strong>Key Advantages of this Redesigned Approach:</strong></p><ol start="1"><li><p><strong>Clarity:</strong> Each phase has a clear objective.</p></li><li><p><strong>Debuggability:</strong> Easier to check intermediate results in <code>#S1_...</code>, <code>#S2_...</code> tables.</p></li><li><p><strong>Flexibility:</strong> Configuration tables allow rule changes without altering main SP logic.</p></li><li><p><strong>Auditing:</strong> Staging raw CRM flags alongside derived values allows for auditing and understanding why a decision was made. DQ flags highlight problem areas.</p></li><li><p><strong>Resilience to Corrupt Data:</strong></p><ul><li><p>Indicia-based classification is more robust than trusting flags.</p></li><li><p>Explicit handling of missing TINs (with DOB fallback for US persons) aligns better with FATCA rules.</p></li><li><p>Country code mapping with 'XX' default isolates bad country data.</p></li></ul></li><li><p><strong>IDES 2.0 Alignment:</strong> The final staging tables can be designed to mirror the XML structure very closely, simplifying the XML generation step.</p></li></ol><p><strong>Challenges:</strong></p><ul><li><p><strong>Increased Complexity (Code Length):</strong> More steps, more temp tables.</p></li><li><p><strong>Performance:</strong> More intermediate writes. Careful indexing of temp tables is vital.</p></li><li><p><strong>Initial Setup:</strong> Populating and maintaining config tables requires effort.</p></li><li><p><strong>Defining &quot;Corrupt&quot;:</strong> The exact nature of CRM corruption dictates how robust each cleansing/derivation step needs to be (e.g., complex name parsing, address validation).</p></li></ul><p>This redesign is significantly more involved but provides a much stronger foundation for reliable FATCA reporting from a problematic CRM system. The original SP was a valiant effort to do much of this in a more compact form, but the staged approach offers greater control and transparency when data quality is low.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

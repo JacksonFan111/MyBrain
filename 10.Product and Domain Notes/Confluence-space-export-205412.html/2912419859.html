@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 16.12.2024 FATCA/CRS bug fix</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 16.12.2024 FATCA/CRS bug fix
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 16-12-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is a summarized overview of the discussions and logic clarifications around the 16.12.2024 FATCA/CRS bug fix, suitable for a Confluence knowledge base entry.</p><hr/><p><strong>Date:</strong> 16 December 2024<br/><strong>Topic:</strong> FATCA/CRS Reporting Bug Fix &amp; Data Quality Issues</p><p><strong>Key Issues Identified:</strong></p><ol start="1"><li><p><strong>Individual Accounts with Multiple Persons/Controlling Roles</strong></p><ul><li><p>Certain individual accounts are found to have multiple associated individuals (e.g., authorized persons, controlling persons) who may be US or CRS reportable, even when the account holder is not a US person.</p></li><li><p>Example:<br/><em>Mrs. Zeta Eleanor Robertson</em> (Individual) has multiple controlling persons, including one with US indicia. This scenario complicates FATCA reporting as it appears to be an “Individual” account but behaves more like a structure with multiple controlling individuals.</p></li></ul></li><li><p><strong>Data Quality vs. System Logic</strong></p><ul><li><p>Discrepancies arise due to data classification issues in CRM (e.g., accounts originally joint but converted to individual after one party’s death, yet roles and tax indicators remain inconsistent).</p></li><li><p>Example:<br/><em>Frances Anne Stone (602680)</em> was previously in a joint account that became an individual account after the co-owner’s death. However, an authorized person with US/UK tax indicia remains on the account, causing confusion in the reporting logic.</p></li></ul></li><li><p><strong>FATCA/CRS Reporting Logic Challenges</strong></p><ul><li><p>For an individual account, standard logic assumes a single account holder with no controlling persons. Yet, exceptions are found where authorized or controlling persons have foreign tax indicia.</p></li><li><p>If a US (or CRS-reportable) person has control or authority over the account, this triggers reporting obligations, even if the primary account holder is not US/CRS-reportable.</p></li><li><p>The system must handle cases where:</p><ul><li><p>Non-US individual accounts have US controlling persons (FATCA).</p></li><li><p>Non-CRS individual accounts have CRS-reportable controlling persons (CRS).</p></li></ul></li></ul></li><li><p><strong>FATCA Reporting Specifics</strong></p><ul><li><p>If the primary individual account holder is not a US person and has no US TIN, use the code &quot;999999999&quot; as per guidance.</p></li><li><p>The presence of a US controlling person requires reporting the account under FATCA category:<br/><strong>1 - Owner-Documented FFI with Substantial U.S. Owners / Controlling Persons (FATCA101)</strong>.</p></li><li><p>Even though the account is “individual,” if there is a substantial US controlling person, that person must appear on the FATCA report.</p></li></ul></li><li><p><strong>CRS Reporting Specifics</strong></p><ul><li><p>Similar logic applies to CRS. If an authorized person or controlling person has CRS indicia (e.g., UK resident with a NIN), the account becomes CRS-reportable.</p></li><li><p>Poor data quality (incorrect entity types, roles, or missing foreign tax flags) can cause under- or over-reporting.</p></li></ul></li></ol><p><strong>Resolutions and Recommendations:</strong></p><ul><li><p><strong>Data Quality Improvements:</strong></p><ul><li><p>Ensure CRM data is accurate and consistent:</p><ul><li><p>Correctly classify the entity type (Individual vs. Joint vs. Trust).</p></li><li><p>Update roles (e.g., remove “Other” role if now “Authorised Person”).</p></li><li><p>Maintain correct ownership percentages and foreign tax flags.</p></li></ul></li><li><p>Data corrections must be completed before the reporting deadlines to avoid incorrect FATCA/CRS submissions.</p></li></ul></li><li><p><strong>System Logic Adjustments:</strong></p><ul><li><p>Update logic to handle scenarios where individual accounts have controlling persons with reportable tax indicia.</p></li><li><p>When encountering unusual data scenarios (e.g., multiple controlling persons for an individual account), treat them as reportable if any controlling person meets US/CRS criteria.</p></li><li><p>Avoid creating exceptions or “hard-coding” around poor data. Instead, ensure the data is rectified so that the logic can remain straightforward and rule-based.</p></li></ul></li><li><p><strong>Validation and Exception Reporting:</strong></p><ul><li><p>Implement exception reports to flag questionable data (e.g., individual accounts with multiple controllers, missing TINs, or incorrect entity classifications).</p></li><li><p>Provide these reports to data stewards to correct records before final FATCA/CRS runs.</p></li></ul></li></ul><p><strong>Key Takeaways:</strong></p><ul><li><p>Individual accounts can still trigger FATCA/CRS reporting if non-account-holder individuals (controlling, authorized) have US or CRS indicia.</p></li><li><p>The code should not attempt to solve data quality issues. Instead, CRM data must be corrected to reflect true account structures and tax statuses.</p></li><li><p>Accurate, black-and-white logic is only possible when underlying data is consistent and correct.</p></li><li><p>The “999999999” code should be used for FATCA TIN fields for non-US account holders without a US TIN.</p></li></ul><hr/><p>This summary highlights the importance of data integrity and the need for clear, consistent rules to ensure correct and compliant FATCA/CRS reporting.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

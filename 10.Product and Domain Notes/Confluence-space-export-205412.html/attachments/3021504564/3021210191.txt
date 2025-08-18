@@ -1,0 +1,17 @@
+let
+    Source = Web.BrowserContents("https://craigsip.onlearn.co.nz/onlearnLMS/ext/4"),
+    #"Extracted Table From Html" = Html.Table(Source, {{"Column1", "BODY"}}),
+    Column1 = #"Extracted Table From Html"[Column1]{0},
+    #"Parsed JSON" = Json.Document(Column1),
+    #"Converted to Table" = Table.FromList(#"Parsed JSON", Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+    #"Expanded Column1" = Table.ExpandRecordColumn(#"Converted to Table", "Column1", {"staffid", "staffLastname", "staffFirstname", "staffOccupation", "staffManagername", "staffJoindate", "Completion"}, {"Column1.staffid", "Column1.staffLastname", "Column1.staffFirstname", "Column1.staffOccupation", "Column1.staffManagername", "Column1.staffJoindate", "Column1.Completion"}),
+    #"Split Column by Delimiter" = Table.SplitColumn(#"Expanded Column1", "Column1.Completion", Splitter.SplitTextByDelimiter(" out of ", QuoteStyle.Csv), {"Column1.Completion.1", "Column1.Completion.2"}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Split Column by Delimiter",{{"Column1.Completion.1", Int64.Type}, {"Column1.Completion.2", Int64.Type}}),
+    #"Added Custom" = Table.AddColumn(#"Changed Type", "Completion %", each [Column1.Completion.1]/[Column1.Completion.2]),
+    #"Renamed Columns" = Table.RenameColumns(#"Added Custom",{{"Column1.staffid", "StaffID"}, {"Column1.staffLastname", "LastName"}, {"Column1.staffFirstname", "FirstName"}, {"Column1.staffOccupation", "Occupation"}, {"Column1.staffManagername", "Manager Name"}, {"Column1.staffJoindate", "Join Date"}, {"Column1.Completion.1", "Completed Compulsary Modules"}, {"Column1.Completion.2", "Total Compulsary Modules"}}),
+    #"Changed Type1" = Table.TransformColumnTypes(#"Renamed Columns",{{"Join Date", type date}, {"Completion %", Percentage.Type}}),
+    #"Cleaned Text" = Table.TransformColumns(#"Changed Type1",{{"StaffID", Text.Clean, type text}}),
+    #"Added Custom1" = Table.AddColumn(#"Cleaned Text", "displayName", each [FirstName]&" "&[LastName]),
+    #"Changed Type2" = Table.TransformColumnTypes(#"Added Custom1",{{"displayName", type text}})
+in
+    #"Changed Type2"

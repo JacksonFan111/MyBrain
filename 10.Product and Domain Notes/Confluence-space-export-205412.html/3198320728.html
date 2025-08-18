@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 3.3 Daily Movements — One-Page Table Brief</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="Circuit-Breaker-notes_3198779447.html">Circuit Breaker notes</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 3.3 Daily Movements — One-Page Table Brief
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 08-06-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h2 id="id-3.3DailyMovements—One-PageTableBrief-1Businessreason">1 Business reason</h2><p>The <strong>Daily Movements</strong> calculated table is a<span style="background-color: rgb(211,241,167);"> </span><em><span style="background-color: rgb(211,241,167);">reconciliation layer</span></em> (Which mean sometimes thinsg don’t matched) that pinpoints any break between the <strong><span style="background-color: rgb(211,241,167);">authoritative holdings in Synapse</span></strong> and the<span style="background-color: rgb(254,222,200);"> </span><strong><span style="background-color: rgb(254,222,200);">figures loaded into the Power BI tabular model</span></strong>.</p><p><br/>Operations, Finance Control, and the Data Engineering team use it every morning to:</p><ul><li><p>spot <span style="background-color: rgb(211,241,167);">accounts or securities whose value/quantity failed to load (Human erro could occurs at Prices and at Quantity)</span>,</p></li><li><p>quantify the dollar impact of each variance,</p></li><li><p>decide whether to re-run the ETL or raise an exception ticket.</p></li></ul><hr/><h2 id="id-3.3DailyMovements—One-PageTableBrief-2Sourcelineage">2 Source lineage</h2><div class="table-wrap"><table data-table-width="1252" data-layout="center" data-local-id="4535c1d7-693b-49fa-9cca-4149b71900cf" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Step</p></th><th class="confluenceTh"><p>Object</p></th><th class="confluenceTh"><p>Comment</p></th></tr><tr><td class="confluenceTd"><p>① <strong>Holdings Synapse</strong></p></td><td class="confluenceTd"><p>Daily fact table in the warehouse; aggregates <code>Quantity</code>, <code>Value NZD</code> per <em>(Account, Asset)</em>.</p></td><td class="confluenceTd"><p>Synapse SQL Pool DB had different layers.</p></td></tr><tr><td class="confluenceTd"><p>② <strong>Holdings Tabular</strong></p></td><td class="confluenceTd"><p>Same positions after they’ve travelled through the tabular refresh pipeline.</p></td><td class="confluenceTd"><p>SSAS Model is the one that  realod daily from 5 am</p></td></tr><tr><td class="confluenceTd"><p>③ <strong>Account</strong> dim</p></td><td class="confluenceTd"><p>Brings <code>AccountKey</code>, <code>AccountNumber</code>, <code>ServiceLevel</code>, <code>portfolioServiceID</code>.</p></td><td class="confluenceTd"><p>Who is our clients and what is the lowest level of <code>portfolioServiceID</code>.</p><p>Mr JF - 123456 - DIMS</p></td></tr><tr><td class="confluenceTd"><p>④ <strong>Assets</strong> dim</p></td><td class="confluenceTd"><p>Adds <code>AssetKey</code>, <code>AssetID</code>, <code>SecurityCode</code>, <code>MarketCode</code>, <code>Is Cashman</code>.</p></td><td class="confluenceTd"><p>what is the Asset, and the Security code and Exchange name, is it Cash asset or not?</p></td></tr><tr><td class="confluenceTd"><p>⑤ <strong>DAX calculated table</strong></p></td><td class="confluenceTd"><p>A UNION of two <em>outer-join</em> datasets:</p></td><td class="confluenceTd"><p /></td></tr><tr><td class="confluenceTd"><ul><li><p><strong>full join Synapse ⇆ Tabular (all common rows)</strong></p></li></ul></td><td class="confluenceTd"><p>NATURALLEFTOUTERJOIN ()</p></td><td class="confluenceTd"><p>A Checkeking B</p><p>And the nusing B Checking A , to see mismatch from A/ B sides</p></td></tr><tr><td class="confluenceTd"><ul><li><p>“<strong>missing-in-Tabular</strong>” filter where <code>Tabular Quantity = 0</code></p></li></ul></td><td class="confluenceTd"><p /></td><td class="confluenceTd"><p /></td></tr></tbody></table></div><p>The final <code>SUMMARIZE</code> creates one de-duplicated set, adds difference columns, and stores it in <strong>Daily Movements</strong>.</p><hr/><h2 id="id-3.3DailyMovements—One-PageTableBrief-3Rowgrain">3 Row grain</h2><p><strong>One row per unique </strong><code>(AccountKey, AssetKey)</code><strong> that exists in either source on the snapshot date.</strong><br/><em>All numeric fields are already summed for that account–asset; there is no date column because the upstream views are “current-day only”.</em></p><hr/><h2 id="id-3.3DailyMovements—One-PageTableBrief-4Keycolumns">4 Key columns</h2><div class="table-wrap"><table data-table-width="1236" data-layout="center" data-local-id="08d363de-52ed-44fe-a1bf-65ab9d0bb225" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Group</p></th><th class="confluenceTh"><p>Columns</p></th><th class="confluenceTh"><p>Purpose</p></th></tr><tr><td class="confluenceTd"><p><strong>Hidden identifiers</strong></p></td><td class="confluenceTd"><p><code>AccountKey</code>, <code>AssetKey</code>, <code>portfolioServiceID</code>, <code>AssetID</code></p></td><td class="confluenceTd"><p>Joins back to conformed dims.</p></td></tr><tr><td class="confluenceTd"><p><strong>Business slice</strong></p></td><td class="confluenceTd"><p><code>AccountNumber</code>, <code>ServiceLevel</code>, <code>SecurityCode</code>, <code>Is Cashman</code></p></td><td class="confluenceTd"><p>Filter &amp; drill-down in reports.</p></td></tr><tr><td class="confluenceTd"><p><strong>Synapse figures</strong></p></td><td class="confluenceTd"><p><code>Synapse Quantity</code>, <code>Synapse Value</code></p></td><td class="confluenceTd"><p>Golden-source positions.</p></td></tr><tr><td class="confluenceTd"><p><strong>Tabular figures</strong></p></td><td class="confluenceTd"><p><code>Tabular Quantity</code>, <code>Tabular Value</code></p></td><td class="confluenceTd"><p>Numbers that landed in the model.</p></td></tr><tr><td class="confluenceTd"><p><strong>Variance metrics</strong></p></td><td class="confluenceTd"><p><code>Value Difference</code>, </p><p><code>Absolute Value Difference</code>,</p><p> <code>Quantity Difference</code>, </p><p><code>Absolute Quantity Difference</code></p></td><td class="confluenceTd"><p>Signed and absolute gaps.</p></td></tr></tbody></table></div><hr/><h2 id="id-3.3DailyMovements—One-PageTableBrief-5Pre-builtmeasures">5 Pre-built measures</h2><ul><li><p><strong>Total Synapse Value</strong> — sum of warehouse values</p></li><li><p><strong>Total Tabular Value</strong> — sum of model values</p></li><li><p><strong>Total Movement</strong> — Σ(Value Difference)</p></li><li><p><strong>Total Movement %</strong> — |Movement| ÷ average of Synapse + Tabular totals</p></li></ul><blockquote><p>Dashboards flag the day as “green” when <strong>Total Movement % ≤ 0.05 %</strong>, otherwise “red”.</p></blockquote><hr/><h2 id="id-3.3DailyMovements—One-PageTableBrief-6Designnotes&amp;risks">6 Design notes &amp; risks</h2><div class="table-wrap"><table data-table-width="760" data-layout="center" data-local-id="765d412e-0551-4eac-b798-d1f5b5b2097e" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Observation</p></th><th class="confluenceTh"><p>Impact</p></th><th class="confluenceTh"><p>Best practice</p></th></tr><tr><td class="confluenceTd"><p>Keys &amp; heavy columns are <strong>hidden</strong></p></td><td class="confluenceTd"><p>Keeps reports tidy while preserving joins.</p></td><td class="confluenceTd"><p>Expose only variances to business users.</p></td></tr><tr><td class="confluenceTd"><p>Calculated-table logic is <em>large</em></p></td><td class="confluenceTd"><p>Long parse time in the model.</p></td><td class="confluenceTd"><p>Pre-stage the joins in SQL if it ever slows.</p></td></tr><tr><td class="confluenceTd"><p>No explicit date field</p></td><td class="confluenceTd"><p>Table always shows <strong>latest</strong> snapshot.</p></td><td class="confluenceTd"><p>If history is required, add <code>SnapshotDate</code> to both source views and the summarise keys.</p></td></tr><tr><td class="confluenceTd"><p>Variance columns are <code>double</code></p></td><td class="confluenceTd"><p>Tiny rounding error possible.</p></td><td class="confluenceTd"><p>Switch to <code>decimal</code> if cents-level accuracy is critical.</p></td></tr></tbody></table></div><hr/><h2 id="id-3.3DailyMovements—One-PageTableBrief-7TL;DR">7 TL;DR</h2><p><strong>Daily Movements</strong> compares yesterday’s Synapse holdings to what actually landed in the tabular model, emits one row per account-asset, and computes signed/absolute gaps so the control team can clear data-load breaks before the trading day starts.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

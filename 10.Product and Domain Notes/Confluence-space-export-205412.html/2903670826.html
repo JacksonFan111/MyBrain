@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 11.12.2024 - FATCA/CRS Bugs log</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 11.12.2024 - FATCA/CRS Bugs log
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 11-12-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p><strong>Summary of Issues Identified and Corresponding Solutions</strong></p><p>Below is a summary of the key issues identified from the provided notes and their respective resolutions or proposed approaches:</p><h3 id="id-11.12.2024-FATCA/CRSBugslog-Issue1:RemovalofQuayStreetFundsfromReporting(DONEatUSP_01Step6)">Issue 1: Removal of QuayStreet Funds from Reporting <span style="background-color: rgb(211,241,167);">(DONE at USP_01 Step 6)</span></h3><p><strong>Problem:</strong></p><ul><li><p>QuayStreet Funds were originally included in the reporting process.</p></li><li><p>It was determined that Smartshares are responsible for the reporting of these funds, not the current reporting entity.</p></li></ul><p><strong>Solution:</strong></p><ul><li><p>Implement a filter at Step 6 in the USP_01 (or the relevant stored procedure) to exclude QuayStreet Funds from the reporting output.</p></li><li><p>Adjust the code to ensure QuayStreet Funds no longer appear in the final report.</p></li></ul><h3 id="id-11.12.2024-FATCA/CRSBugslog-Issue2:FilteringOutForeignInstitutions(FI)attheEntityLevel(DONEatUSP_01Step4,5Step6)">Issue 2: Filtering Out Foreign Institutions (FI) at the Entity Level <span style="background-color: rgb(198,237,251);">(DONE at USP_01 Step 4 , 5 Step 6)</span></h3><p><strong>Problem:</strong></p><ul><li><p>Foreign Institution (FI) flags at the entity level were causing incorrect entities to appear in the final FATCA/CRS output.</p></li></ul><p><strong>Solution:</strong></p><ul><li><p>Modify USP_01 at Step 6 to check for and exclude entities marked as “FI” from the final extract where required.</p></li><li><p>If a flag or condition already exists, utilize it to filter out these entities. If not, add a condition to bypass entities identified as FIs.</p></li><li><p><span style="background-color: rgb(211,241,167);">Use fitler a.dsl_finffe and its string maps smfi.Value as a.dsl_finffe to filter out unwanted 'FI' Entity, checked there are no FI in the individuasl data points.</span></p></li></ul><h3 id="id-11.12.2024-FATCA/CRSBugslog-Issue3:HandlingFATCAAccountHolderDetailsforEntitiesvs.IndividualsDONE">Issue 3: Handling FATCA Account Holder Details for Entities vs. Individuals<span style="background-color: rgb(211,241,167);"> DONE </span></h3><p><strong>Problem:</strong></p><ul><li><p>For accounts held by organizations (entities), the code previously attempted to populate individual-specific fields (e.g., first name, last name, DOB, TIN) incorrectly.</p></li><li><p>For Non-U.S. entity account holders without a known TIN, the required placeholder values needed clarification (e.g., use “NA” if the tax residence is not the U.S.).</p></li></ul><p><strong>Solution:</strong></p><ul><li><p>In USP_04 (or related procedures), introduce logic to distinguish between entity and individual account holders:</p><ul><li><p><strong>Entities (AccountType = 'Layered Entity' or 'Normal Entity')</strong>:</p><ul><li><p>Leave individual name fields (first, middle, last names) blank.</p></li><li><p>For the Account Holder TIN:</p><ul><li><p>If no TIN is available and the entity’s tax residence is not 'US', use &quot;NA&quot;.</p></li><li><p>If the entity’s tax residence is 'US' and no TIN is available, appropriate placeholder codes (e.g., “NA” or “999999999” depending on the scenario) should be used, but typically “NA” if TIN truly not available.</p></li></ul></li></ul></li><li><p><strong>Individuals</strong>:</p><ul><li><p>Populate personal fields (name, DOB) as required.</p></li><li><p>If no U.S. TIN is available, use the appropriate IRS codes (e.g., 999999999 or other recommended codes) or “NA” for non-U.S. residents.</p></li></ul></li></ul></li></ul><p>This ensures that entity account holders do not appear with incorrect individual data, and TIN placeholders are used correctly based on tax residence.</p><h3 id="id-11.12.2024-FATCA/CRSBugslog-Issue4:CRS-SpecificCountryCodeandINTypeHandlingforEntities(DONEinUSP_03)">Issue 4: CRS-Specific Country Code and IN Type Handling for Entities (DONE in USP_03)</h3><p><strong>Problem:</strong></p><ul><li><p>For CRS reporting, an entity’s Account Holder Tax Jurisdiction Code might be missing or represented with a placeholder (like 'XX').</p></li><li><p>The 'IN Type' (Identification Number Type) field needed refinement for entities when a TIN is present or missing.</p></li></ul><p><strong>Solution:</strong></p><ul><li><p>Adjust the logic for deriving the Account Holder Tax Jurisdiction Code:</p><ul><li><p>If the entity’s tax code country is 'XX', fall back to the 'Res Country Code' if available.</p></li><li><p>If the entity has a valid EntityTaxCodeCountryISOShort code different from 'XX', use it directly.</p></li><li><p>For individual account holders, continue using TaxCountry1.</p></li></ul></li><li><p>For the 'Account Holder IN Type' field:</p><ul><li><p>If the account holder is an entity and a valid TIN is present, set 'IN Type' to “TIN”.</p></li><li><p>If no TIN is present for the entity, leave 'IN Type' blank.</p></li></ul></li></ul><p>By doing this, the reporting aligns with CRS requirements for correct country code sourcing and proper handling of TIN types for entity account holders.</p><hr/><p><strong>In summary:</strong></p><ul><li><p><strong>Issue 1:</strong> Removed QuayStreet Funds from the final report.</p></li><li><p><strong>Issue 2:</strong> Filtered out FIs at entity level using a condition at Step 6.</p></li><li><p><strong>Issue 3:</strong> Differentiated between entity and individual account holders for name, DOB, and TIN fields, using “NA” or appropriate IRS codes as needed.</p></li><li><p><strong>Issue 4:</strong> For CRS, introduced fallback logic for entity tax country codes and properly set the 'IN Type' only if the entity has a TIN.</p></li></ul><hr/><h2 id="id-11.12.2024-FATCA/CRSBugslog-RunthroughStep6FitlersConditions">Run through Step 6 Fitlers Conditions</h2><p>Below is a detailed walkthrough of the filtering logic, highlighting potential gaps and considerations from a FATCA/CRS reporting standpoint. The goal is to ensure that all account types, entity/individual distinctions, and jurisdiction-specific conditions are appropriately handled.</p><h3 id="id-11.12.2024-FATCA/CRSBugslog-OverallStructure">Overall Structure</h3><p>The query selects data from <code>CombinedData</code> into <code>##crmdatafatcacrs</code> and applies a series of filters that account for portfolio status, reporting regimes (FATCA, CRS, FATCA_CRS), non-reportable service levels, and account classifications (entity vs. individual, beneficial owner checks, etc.).</p><h3 id="id-11.12.2024-FATCA/CRSBugslog-KeyConditionsReviewed">Key Conditions Reviewed</h3><ol start="1"><li><p><strong>Portfolio Status and Date Filters:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">AND (
+    (PortfolioServiceStatus NOT IN (&#39;Closed&#39;)
+     OR (PortfolioServiceStatus = &#39;Closed&#39; AND dsl_CloseDate BETWEEN @PeriodStartDate AND @PeriodEndDate))
+    AND dsl_inceptiondate &lt;= @PeriodEndDate
+)
+</pre>
+</div></div><ul><li><p><strong>Check:</strong> This ensures that only active or recently closed accounts (closed within the reporting period) are included.</p></li><li><p><strong>Potential Gap:</strong> Consider whether accounts closed before the reporting period but discovered later should be excluded. Currently, they are. This is typically correct for FATCA/CRS since you report on accounts active during the year or closed during the reporting year.</p></li></ul></li><li><p><strong>Regime Must Not Be NULL:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">AND Regime IS NOT NULL
+</pre>
+</div></div><ul><li><p><strong>Check:</strong> Ensures we only process records that have a defined regime (FATCA, CRS, or FATCA_CRS).</p></li><li><p><strong>Potential Gap:</strong> None obvious. If other regimes (not FATCA/CRS) exist, they won't be included. This seems intentional.</p></li></ul></li><li><p><strong>Non-Reportable Portfolio Exclusions:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">AND (
+    (Regime = &#39;FATCA&#39; AND ISNULL(PortfolioServiceLevelName, &#39;&#39;) NOT IN (&#39;&#39;, &#39;Craigs KiwiSaver&#39;, &#39;superSTART&#39;, &#39;Craigs Super&#39;,&#39;QuayStreet Funds&#39;,&#39;QuayStreet KiwiSaver Scheme&#39;))
+    OR
+    (Regime IN (&#39;CRS&#39;, &#39;FATCA_CRS&#39;) AND ISNULL(PortfolioServiceLevelName, &#39;&#39;) NOT IN (&#39;&#39;, &#39;QuayStreet KiwiSaver Scheme&#39;, &#39;Craigs KiwiSaver&#39;,&#39;QuayStreet Funds&#39;))
+)
+</pre>
+</div></div><ul><li><p><strong>Check:</strong> Excludes known non-reportable service levels or those handled by other reporting entities (like QuayStreet).</p></li><li><p><strong>Potential Gap:</strong> Are all non-reportable portfolios covered? Are there any new or updated exclusions needed over time? The logic seems aligned with current instructions.</p></li></ul></li><li><p><strong>Exclude 'Estate Winding-Up' Entities:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">AND TradingEntityType &lt;&gt; &#39;Estate Winding-Up&#39;
+</pre>
+</div></div><ul><li><p><strong>Check:</strong> Estate Winding-Up accounts are not reportable. This is standard.</p></li><li><p><strong>Potential Gap:</strong> None obvious. Other known non-reportable entity types should be excluded similarly if required.</p></li></ul></li><li><p><strong>Exclude Financial Institutions at the Account Level:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">AND dsl_FINFFE &lt;&gt; &#39;FI&#39;
+</pre>
+</div></div><ul><li><p><strong>Check:</strong> FATCA and CRS generally exclude reporting on other FFIs or local Financial Institutions since they report separately.</p></li><li><p><strong>Potential Gap:</strong> If <code>dsl_FINFFE</code> can have other values (e.g., null, 'FIs', or different classification codes), consider handling them. As is, it only excludes exact 'FI'.</p></li></ul></li><li><p><strong>Complex Entity &amp; Individual Filtering:</strong> This section is the most intricate. It differentiates between entity accounts and individual accounts, applying criteria involving CIP (Customer Identification Program) data, beneficial ownership, and active/passive status.</p><p><strong>For Entities (Layered or Normal):</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">AND (
+    AccountType IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;)
+    AND Regime IN (&#39;FATCA&#39;, &#39;CRS&#39;, &#39;FATCA_CRS&#39;)
+    AND (
+        ISNULL(cip_Identification, &#39;&#39;) &lt;&gt; &#39;&#39;
+        OR (PassiveActive IS NULL OR PassiveActive != &#39;Active&#39;)
+    )
+    AND (
+        (TradingEntityType IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;)
+             AND dsl_RoleTypeIdName IN (&#39;Individual&#39;, &#39;&#39;, &#39;Minor&#39;, &#39;Guardian&#39;)
+             AND (dsl_BeneficialOwner = 1 OR dsl_applicant = 1 OR dsl_Authorised = 1))
+        OR (TradingEntityType = &#39;Company&#39; AND dsl_BeneficialOwner = 1)
+        OR (TradingEntityType NOT IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;, &#39;Company&#39;) AND dsl_BeneficialOwner = 1)
+    )
+    AND (
+        (ISNULL(cip_Identification, &#39;&#39;) &lt;&gt; &#39;&#39; AND ISNULL(USCitizensforTaxPurposes_acc, 1) &lt;&gt; 2)
+        OR ISNULL(cip_Identification, &#39;&#39;) = &#39;&#39;
+    )
+)
+</pre>
+</div></div><ul><li><p><strong>Checks:</strong></p><ul><li><p>Entity accounts must have CIP identification or be non-active.</p></li><li><p>The entity must have a beneficial owner or applicant flag indicating a controlling person.</p></li><li><p>Special conditions apply to US Citizenship indicators.</p></li></ul></li><li><p><strong>Potential Gaps:</strong></p><ul><li><p>Handling of <code>USCitizensforTaxPurposes_acc</code>: We only check <code>&lt;&gt; 2</code>. Are other values possible that need special handling (0,1,3)? Usually, <code>2</code> might mean “Confirmed US Person,” but logic may need clarity.</p></li><li><p>The conditions assume beneficial owners/controlling persons are correctly identified. If new entity types (e.g., trusts, partnerships) appear, are they correctly filtered or included?</p></li></ul></li></ul><p><strong>For Individuals (Multiple or Single TIN):</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">OR (
+    AccountType IN (&#39;Multiple TINs Individual&#39;, &#39;Single TIN Individual&#39;)
+    AND (
+        ISNULL(cip_Identification, &#39;&#39;) &lt;&gt; &#39;&#39;
+        OR (PassiveActive IS NULL OR PassiveActive != &#39;Active&#39;)
+    )
+    AND (
+        (Regime IN (&#39;FATCA&#39;, &#39;FATCA_CRS&#39;)
+            AND ((ISNULL(cip_Identification, &#39;&#39;) &lt;&gt; &#39;&#39; AND ISNULL(USCitizensforTaxPurposes_ind, 1) &lt;&gt; 2)
+                 OR ISNULL(cip_Identification, &#39;&#39;) = &#39;&#39;))
+        OR Regime = &#39;CRS&#39;
+    )
+)
+</pre>
+</div></div><ul><li><p><strong>Checks:</strong></p><ul><li><p>Individuals must have CIP data or be non-active.</p></li><li><p>For FATCA-related regimes, must also check US citizenship indicators, similar logic to entities. If no CIP info, it still might be included based on regime conditions.</p></li></ul></li><li><p><strong>Potential Gaps:</strong></p><ul><li><p>Similar to entities, check if we handle all US citizenship indicator statuses adequately.</p></li><li><p>No explicit mention of TIN unavailability codes (e.g., NA, 999999999) here, but presumably handled downstream when generating the final report.</p></li></ul></li></ul></li><li><p><strong>Exclude 'Standard Broking Service' Without Holdings or Cash Management:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">AND NOT (
+    PortfolioServiceLevelName = &#39;Standard Broking Service&#39;
+    AND NOT EXISTS (/* Safe Custody Holdings Check */)
+    AND NOT EXISTS (/* Cash Management Account Check */)
+)
+</pre>
+</div></div><ul><li><p><strong>Check:</strong></p><ul><li><p>Ensures that a standard broking service portfolio is only included if there are safe custody holdings or a related cash management account.</p></li></ul></li><li><p><strong>Potential Gap:</strong></p><ul><li><p>If the portfolio type expands (e.g., new service categories), similar logic might be needed.</p></li></ul></li></ul></li></ol><h3 id="id-11.12.2024-FATCA/CRSBugslog-AdditionalConsiderations">Additional Considerations</h3><ul><li><p><strong>Account Types Not Explicitly Mentioned:</strong><br/>The code explicitly deals with <code>Layered Entity</code>, <code>Normal Entity</code>, <code>Multiple TINs Individual</code>, and <code>Single TIN Individual</code>.<br/><strong>Question:</strong> Are there any other account types (e.g., Trusts, Partnerships, Foundations) that may need special treatment under FATCA/CRS rules? If so, these should be included in the logic or excluded intentionally.</p></li><li><p><strong>TIN Code Handling:</strong><br/>The provided conditions focus on selecting the correct accounts. The actual TIN placeholders (NA, 999999999, etc.) and logic for missing TINs appear to be handled in later code stages (not shown here). Ensure that once filtered, the accounts can be correctly reported with appropriate TIN placeholders.</p></li><li><p><strong>USCitizensforTaxPurposes Fields:</strong><br/>The condition <code>ISNULL(USCitizensforTaxPurposes_acc, 1) &lt;&gt; 2</code> and similarly for individuals, might need revisiting if there are more possible values. Make sure this logic aligns with how these fields define U.S. citizenship or tax residency.</p></li><li><p><strong>Passive vs. Active Entities:</strong><br/>The code treats <code>(PassiveActive IS NULL OR PassiveActive != 'Active')</code> as a condition. For FATCA/CRS, we often need to specifically identify “Passive NFFEs” and report their controlling persons. If <code>PassiveActive</code> is intended to mark 'Passive' or 'Active' NFFEs, consider ensuring that the logic explicitly checks for 'Passive' where appropriate, rather than lumping <code>NULL</code> and <code>Not Active</code> together.</p></li><li><p><strong>Thresholds and Dormant Accounts:</strong><br/>Some reporting scenarios involve checking minimum balance thresholds or dormancy. The code provided does not explicitly filter by account balances or dormancy states. If these are relevant to your reporting obligations, ensure that they are addressed either here or in subsequent reporting logic.</p></li></ul><h3 id="id-11.12.2024-FATCA/CRSBugslog-Conclusion">Conclusion</h3><p><strong>What might be missing?</strong></p><ul><li><p>Explicit handling of certain edge account types (e.g., trusts, partnerships) if they should be reported differently.</p></li><li><p>More granular checks on <code>USCitizensforTaxPurposes_acc</code> and <code>USCitizensforTaxPurposes_ind</code>.</p></li><li><p>Explicit confirmation that <code>PassiveActive</code> aligns with FATCA/CRS definitions of Passive NFFEs vs. Active NFFEs.</p></li><li><p>No direct threshold or dormancy condition checks. These might be handled elsewhere, but worth reviewing if needed.</p></li></ul><p>Overall, the code appears comprehensive for commonly encountered scenarios. The main opportunities to refine are ensuring that all relevant account types and US citizenship flags are handled as intended, and confirming that any FATCA/CRS-specific conditions like dormancy or threshold checks are addressed either here or in later logic steps.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

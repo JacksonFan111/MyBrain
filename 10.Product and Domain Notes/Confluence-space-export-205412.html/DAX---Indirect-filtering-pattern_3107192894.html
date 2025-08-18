@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : DAX - Indirect filtering pattern</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : DAX - Indirect filtering pattern
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 01-04-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is an updated summary of the four use cases that leverage indirect filtering by bridging dimensions through a common fact table. In these examples, we use the following tables:</p><ul><li><p><strong>Account</strong> (e.g., Portfolio Service ID, Account Type, Service Level, Status)</p></li><li><p><strong>Asset</strong> (e.g., AssetKey, Asset Class, Asset Type, Market Code)</p></li><li><p><strong>Funds Under Management</strong> (fact table linked to Asset via AssetKey)</p></li><li><p><strong>Asset Transaction</strong> (fact table containing transaction details, linked by AssetKey and sometimes by Account ID)</p></li></ul><p>The updated measures use a refactored DAX pattern that employs functions such as <strong>FILTER</strong>, <strong>LOOKUPVALUE</strong>, and <strong>TREATAS</strong> to pass filter context between unrelated dimensions.</p><hr/><h3 id="DAX-Indirectfilteringpattern-UseCase1:Cross-DomainFiltering–CountUnlistedFundsClients">Use Case 1: Cross-Domain Filtering – Count Unlisted Funds Clients</h3><p><strong>Scenario:</strong><br/>Count the unique accounts holding unlisted funds. Although <strong>Account</strong> and <strong>Asset</strong> don’t have a direct relationship, they are connected via the <strong>Funds Under Management</strong> table.</p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250401-013512.png" width="705" loading="lazy" src="attachments/3107192894/3107422283.png?width=705" data-image-src="attachments/3107192894/3107422283.png" data-height="563" data-width="705" data-unresolved-comment-count="0" data-linked-resource-id="3107422283" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250401-013512.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3107192894" data-linked-resource-container-version="7" data-media-id="976e9395-5f6d-4071-929d-66edf0fbd263" data-media-type="file"></span><p /><p><strong>Refactored DAX Measure:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Count Unlisted Funds Clients = 
+// Count distinct Portfolio Service IDs from the Account table,
+// but only for those rows in Funds Under Management meeting the unlisted fund criteria.
+CALCULATE(
+    DISTINCTCOUNT(&#39;Account&#39;[Portfolio Service ID]),
+    FILTER(
+        &#39;Funds Under Management&#39;,
+        // Only include rows where the related asset is Equity, of type Fund, 
+        // and has a Market Code of either NZUT or NZUL.
+        LOOKUPVALUE(&#39;Asset&#39;[Asset Class], &#39;Asset&#39;[AssetKey], &#39;Funds Under Management&#39;[AssetKey]) = &quot;Equity&quot; &amp;&amp;
+        LOOKUPVALUE(&#39;Asset&#39;[Asset Type], &#39;Asset&#39;[AssetKey], &#39;Funds Under Management&#39;[AssetKey]) = &quot;Fund&quot; &amp;&amp;
+        LOOKUPVALUE(&#39;Asset&#39;[Market Code], &#39;Asset&#39;[AssetKey], &#39;Funds Under Management&#39;[AssetKey]) IN { &quot;NZUT&quot;, &quot;NZUL&quot; }
+    )
+)
+</pre>
+</div></div><hr/><h3 id="DAX-Indirectfilteringpattern-UseCase2:Multi-FactAggregation–SumUnlistedFundTransactions">Use Case 2: Multi-Fact Aggregation – Sum Unlisted Fund Transactions</h3><p><strong>Scenario:</strong><br/>Calculate the total transaction amount for unlisted funds by filtering the <strong>Asset Transaction</strong> table. First, we extract the relevant asset keys from <strong>Funds Under Management</strong> using criteria from the <strong>Asset</strong> table, then pass these keys to the transaction table.</p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250401-013608.png" width="647" loading="lazy" src="attachments/3107192894/3107160114.png?width=647" data-image-src="attachments/3107192894/3107160114.png" data-height="560" data-width="647" data-unresolved-comment-count="0" data-linked-resource-id="3107160114" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250401-013608.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3107192894" data-linked-resource-container-version="7" data-media-id="1c62aa25-7e4d-4a7b-82d4-5a5444e93f3f" data-media-type="file"></span><p /><p><strong>Refactored DAX Measure:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Sum Unlisted Fund Transactions = 
+// Step 1: Build a virtual table of AssetKeys from Funds Under Management that meet the criteria.
+VAR UnlistedAssetKeys =
+    CALCULATETABLE(
+        VALUES(&#39;Funds Under Management&#39;[AssetKey]),
+        FILTER(
+            &#39;Funds Under Management&#39;,
+            // Only include assets that are of type Fund and have the desired Market Codes.
+            LOOKUPVALUE(&#39;Asset&#39;[Asset Class], &#39;Asset&#39;[AssetKey], &#39;Funds Under Management&#39;[AssetKey]) = &quot;Equity&quot; &amp;&amp;
+            LOOKUPVALUE(&#39;Asset&#39;[Asset Type], &#39;Asset&#39;[AssetKey], &#39;Funds Under Management&#39;[AssetKey]) = &quot;Fund&quot; &amp;&amp;
+            LOOKUPVALUE(&#39;Asset&#39;[Market Code], &#39;Asset&#39;[AssetKey], &#39;Funds Under Management&#39;[AssetKey]) IN { &quot;NZUT&quot;, &quot;NZUL&quot; }
+        )
+    )
+RETURN
+// Step 2: Sum the absolute transaction amounts for transactions related to the filtered AssetKeys.
+CALCULATE(
+    SUM(&#39;Asset Transaction&#39;[AbsoluteAmount]),
+    TREATAS(UnlistedAssetKeys, &#39;Asset Transaction&#39;[AssetKey])
+)
+</pre>
+</div></div><hr/><h3 id="DAX-Indirectfilteringpattern-UseCase3:IndirectRelationshipBridging–TotalFUMforaSpecificServiceLevel">Use Case 3: Indirect Relationship Bridging – Total FUM for a Specific Service Level</h3><p><strong>Scenario:</strong><br/>Aggregate the fund under management (FUM) value for a given service level. Even though <strong>Account</strong> and <strong>Asset</strong> lack a direct relationship, the <strong>Funds Under Management</strong> table serves as a bridge.</p><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250401-013657.png" width="673" loading="lazy" src="attachments/3107192894/3106930771.png?width=673" data-image-src="attachments/3107192894/3106930771.png" data-height="563" data-width="673" data-unresolved-comment-count="0" data-linked-resource-id="3106930771" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250401-013657.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3107192894" data-linked-resource-container-version="7" data-media-id="ee4f672b-d13d-42a1-beb2-9a9e35afc8e8" data-media-type="file"></span><p /><p><strong>Refactored DAX Measure:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Total FUM for Specific Service Level = 
+// Step 1: Capture the current Service Level filter context as a table.
+// Using VALUES returns all Service Level values in the current context if no specific filter is applied.
+VAR SelectedAccountTypes = VALUES(&#39;Account&#39;[Service Level])
+// Step 2: Build a virtual table of AssetKeys from Funds Under Management that meet the unlisted fund criteria.
+VAR UnlistedAssetKeys =
+    CALCULATETABLE(
+        VALUES(&#39;Funds Under Management&#39;[AssetKey]),
+        FILTER(
+            &#39;Funds Under Management&#39;,
+            // Only include assets of type Fund with Market Codes NZUT or NZUL.
+            LOOKUPVALUE(&#39;Asset&#39;[Asset Type], &#39;Asset&#39;[AssetKey], &#39;Funds Under Management&#39;[AssetKey]) = &quot;Fund&quot; &amp;&amp;
+            LOOKUPVALUE(&#39;Asset&#39;[Market Code], &#39;Asset&#39;[AssetKey], &#39;Funds Under Management&#39;[AssetKey]) IN { &quot;NZUT&quot;, &quot;NZUL&quot; }
+        )
+    )
+RETURN
+// Step 3: Calculate the current FUM value for the filtered AssetKeys,
+// and filter the Account table to include only rows where the Service Level is in the selected context.
+CALCULATE(
+    [Current FUM Value],
+    TREATAS(UnlistedAssetKeys, &#39;Funds Under Management&#39;[AssetKey]),
+    FILTER(
+        &#39;Account&#39;,
+        &#39;Account&#39;[Service Level] IN SelectedAccountTypes
+    )
+)
+</pre>
+</div></div><hr/><h3 id="DAX-Indirectfilteringpattern-UseCase4:Scenario-BasedReporting–%ofMySTARTUnlistedFundTransactionsforEquityAssetClass">Use Case 4: Scenario-Based Reporting – % of MySTART Unlisted Fund Transactions for Equity Asset Class</h3><p><strong>Scenario:</strong><br/>Determine the percentage of total asset transactions (for assets in the Equity class that are unlisted funds) attributable to MySTART accounts. This requires filtering on both <strong>Account</strong> and <strong>Asset</strong> dimensions via the <strong>Asset Transaction</strong> fact table.</p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250401-013742.png" width="679" loading="lazy" src="attachments/3107192894/3107455073.png?width=679" data-image-src="attachments/3107192894/3107455073.png" data-height="572" data-width="679" data-unresolved-comment-count="0" data-linked-resource-id="3107455073" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250401-013742.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3107192894" data-linked-resource-container-version="7" data-media-id="d48626fc-a5aa-4661-9c02-c96aaad50d60" data-media-type="file"></span><p /><p><strong>Refactored DAX Measure:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">% of MySTART Unlisted Fund Transactions for Equity Asset Class = 
+// Step 1: Create a table of AccountKeys for accounts with Service Level &quot;MySTART&quot;.
+VAR ServiceLevel =
+    CALCULATETABLE(
+        VALUES(&#39;Account&#39;[AccountKey]),
+        &#39;Account&#39;[Service Level] = &quot;MySTART&quot;
+    )
+// Step 2: Build a virtual table of AssetKeys from the Asset Transaction table that meet both criteria:
+// a) The related asset (via the Asset table) has an Asset Class of &quot;Equity&quot;.
+// b) The asset is a Fund and has a Market Code of either &quot;NZUT&quot; or &quot;NZUL&quot;.
+VAR EquityAssetKeys =
+    CALCULATETABLE(
+        VALUES(&#39;Asset Transaction&#39;[AssetKey]),
+        FILTER(
+            &#39;Asset Transaction&#39;,
+            // Condition 1: Asset Class equals &quot;Equity&quot;.
+            LOOKUPVALUE(&#39;Asset&#39;[Asset Class], &#39;Asset&#39;[AssetKey], &#39;Asset Transaction&#39;[AssetKey]) = &quot;Equity&quot; &amp;&amp;
+            // Condition 2: Asset Type equals &quot;Fund&quot;.
+            LOOKUPVALUE(&#39;Asset&#39;[Asset Type], &#39;Asset&#39;[AssetKey], &#39;Asset Transaction&#39;[AssetKey]) = &quot;Fund&quot; &amp;&amp;
+            // Condition 3: Market Code is either NZUT or NZUL.
+            LOOKUPVALUE(&#39;Asset&#39;[Market Code], &#39;Asset&#39;[AssetKey], &#39;Asset Transaction&#39;[AssetKey]) IN { &quot;NZUT&quot;, &quot;NZUL&quot; }
+        )
+    )
+// Step 3: Calculate the total transaction amount for all transactions related to the filtered equity assets.
+VAR TotalTransactions =
+    CALCULATE(
+        [Absolute Transaction Amount NZD],
+        TREATAS(EquityAssetKeys, &#39;Asset Transaction&#39;[AssetKey])
+    )
+// Step 4: Calculate the transaction amount for MySTART accounts only by applying both the MySTART account filter
+// and the equity asset criteria.
+VAR MySTARTTransactions =
+    CALCULATE(
+        [Absolute Transaction Amount NZD],
+        TREATAS(ServiceLevel, &#39;Asset Transaction&#39;[AccountKey]),
+        TREATAS(EquityAssetKeys, &#39;Asset Transaction&#39;[AssetKey])
+    )
+RETURN
+// Step 5: Return the percentage of MySTART transactions relative to total transactions.
+DIVIDE(MySTARTTransactions, TotalTransactions, 0) * 100
+</pre>
+</div></div><hr/><h3 id="DAX-Indirectfilteringpattern-Summary">Summary</h3><p>These four updated use case examples demonstrate how to bridge dimensions that lack a direct relationship by using common fact tables. The key techniques include:</p><ul><li><p><strong>Indirect Filtering:</strong> Using <strong>LOOKUPVALUE</strong> and <strong>FILTER</strong> to pull attributes from one table (e.g., Asset) into another table’s context (e.g., Funds Under Management or Asset Transaction).</p></li><li><p><strong>Virtual Relationships:</strong> Creating temporary relationships with <strong>TREATAS</strong> to apply filters across tables.</p></li><li><p><strong>Flexible Context:</strong> Utilizing functions like <strong>VALUES</strong> to ensure that measures work whether a single selection, multiple selections, or all values are in context.</p></li></ul><p>This pattern provides a robust and flexible way to perform cross-domain filtering, multi-fact aggregation, and scenario-based reporting in Power BI Live Mode, even when your data model does not have direct relationships between all dimensions.</p><p /><hr/><p><strong>Short Answer:</strong><br/>Even if relationships exist, you can still use <code>CALCULATETABLE</code> and <code>TREATAS</code> for more advanced or specialized filtering. You don’t strictly <em>need</em> <code>TREATAS</code> if a direct relationship already covers your filtering scenario, but <code>TREATAS</code> remains useful when you want to explicitly pass or override filter context, especially in more complex reporting scenarios.</p><hr/><h2 id="DAX-Indirectfilteringpattern-WhyTREATASCanStillBeUsefulwithExistingRelationships">Why <code>TREATAS</code> Can Still Be Useful with Existing Relationships</h2><ol start="1"><li><p><strong>Explicit Filter Context Control</strong></p><ul><li><p>If your data model already has direct relationships (e.g., <strong>Account</strong> → <strong>Funds Under Management</strong>, <strong>Asset</strong> → <strong>Funds Under Management</strong>, etc.), standard filter propagation will usually take care of passing filters across those relationships.</p></li><li><p>However, <code>TREATAS</code> allows you to explicitly apply a filter from one table/column to another, effectively “overriding” or supplementing the existing relationship. This can be handy for:</p><ul><li><p>Overriding inactive or ambiguous relationships.</p></li><li><p>Applying a subset of rows from one table onto another without changing the overall model relationships.</p></li></ul></li></ul></li><li><p><strong>Combining Multiple Filter Criteria</strong></p><ul><li><p>Sometimes you need to filter on multiple conditions (e.g., <em>only</em> certain asset types and market codes) <em>and</em> you also need to restrict accounts to a particular service level.</p></li><li><p>With <code>TREATAS</code>, you can build a virtual table of <strong>AssetKeys</strong> or <strong>AccountKeys</strong> that meet specific conditions using <code>CALCULATETABLE</code> + <code>FILTER</code>, and then <em>apply</em> that exact subset to another table. This is more precise than simply relying on the default relationships and standard slicers.</p></li></ul></li><li><p><strong>Live Connections or Limited Modeling Scenarios</strong></p><ul><li><p>In scenarios where you have limited control over the data model (such as live connections to Analysis Services), you might not be able to create new relationships or modify existing ones.</p></li><li><p><code>TREATAS</code> becomes your best friend in these cases, letting you craft “virtual relationships” on the fly, regardless of how the actual model is set up.</p></li></ul></li><li><p><strong>Advanced or Ad Hoc Analysis</strong></p><ul><li><p>Even if the existing relationship covers 95% of your needs, certain edge cases might require specialized logic.</p></li><li><p>For instance, you might want to analyze transactions from <em>two different sets of asset keys</em> simultaneously, or merge filters from multiple dimension tables in ways the default model does not handle.</p></li><li><p><code>TREATAS</code> ensures you can combine or intersect filters exactly as you need, without altering the fundamental data model.</p></li></ul></li></ol><hr/><h2 id="DAX-Indirectfilteringpattern-WhenYouMightNotNeedTREATAS">When You <em>Might Not</em> Need <code>TREATAS</code></h2><ul><li><p>If you’re simply filtering a single table that already has a straightforward relationship to the fact table (e.g., <strong>Account</strong> is directly related to <strong>Funds Under Management</strong> and you only need basic slicing), you can often rely on built-in filter propagation.</p></li><li><p>If your scenario doesn’t involve bridging multiple conditions from multiple tables, standard measures with <code>CALCULATE</code> and normal slicers/filters may suffice.</p></li></ul><hr/><h3 id="DAX-Indirectfilteringpattern-KeyTakeaway">Key Takeaway</h3><ul><li><p><strong>Existing relationships</strong> provide the default path for filter propagation in your data model.</p></li><li><p><code>TREATAS</code> (often paired with <code>CALCULATETABLE</code> and <code>FILTER</code>) is an advanced DAX technique that lets you impose <em>custom</em> or <em>additional</em> filtering logic—even if there is already a direct relationship.</p></li></ul><p>In short, you can absolutely leverage the relationships that are in place, but <code>TREATAS</code> remains a powerful tool for refining or overriding how filters flow between tables—especially in complex or ad hoc analysis scenarios.</p>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3107192894/3107455024.png">image-20250401-004356.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3107192894/3107258425.png">image-20250401-005028.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3107192894/3107192928.png">image-20250401-005143.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3107192894/3107422283.png">image-20250401-013512.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3107192894/3107160114.png">image-20250401-013608.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3107192894/3106930771.png">image-20250401-013657.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3107192894/3107455073.png">image-20250401-013742.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 04. Learning KAPSQLDAT (New) - To carry on with Data services (Old Dumping ground)</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="1.-Internal_2555216013.html">1. Internal</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 04. Learning KAPSQLDAT (New) - To carry on with Data services (Old Dumping ground)
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 20-06-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Original confluence link <a data-card-appearance="inline" href="https://craigsip.atlassian.net/wiki/x/MQAicw" rel="nofollow">https://craigsip.atlassian.net/wiki/x/MQAicw</a> </p><h1 id="id-04.LearningKAPSQLDAT(New)-TocarryonwithDataservices(OldDumpingground)-Overview">Overview</h1><p> Chris Set up these new servers and DB in 2022 to accommodate the needs</p><p>KAPSQLDAT-XX is the new primary server for all the various data-related functions at CIP. It carries on in SQLCIP\DataServices (Old Dumping ground) footsteps as a workhorse for all non-application DBs, primarily used to assist with integrations and assist the Data Warehouse.</p><div class="table-wrap"><table data-table-width="960" data-layout="wide" data-local-id="e61dace1-6a45-47dd-9f4b-56edc64ab004" class="confluenceTable"><colgroup><col style="width: 204.0px;"/><col style="width: 756.0px;"/></colgroup><tbody><tr><th data-highlight-colour="VAR(--DS-BACKGROUND-ACCENT-GRAY-SUBTLEST,#F4F5F7)" class="confluenceTh"><p><strong>Database</strong></p></th><th data-highlight-colour="VAR(--DS-BACKGROUND-ACCENT-GRAY-SUBTLEST,#F4F5F7)" class="confluenceTh"><p><strong>Primary Purpose</strong></p></th></tr><tr><td class="confluenceTd"><p>Integration</p></td><td class="confluenceTd"><p>For all data in transit, i.e. staging data whilst it moves from one area to another or temporary data for a particular calculation or report/process.</p></td></tr><tr><td class="confluenceTd"><p>NZXWT</p></td><td class="confluenceTd"><p>Data dropped by NZXWT for use in the Data Warehouse (as we don't connect to them directly for BI)</p></td></tr><tr><td class="confluenceTd"><p>ReferenceBI</p></td><td class="confluenceTd"><p>A reference table to provide mappings for BI to marry up the two transactional systems as well as contains all the BI Security model information (used to build up the RLS in BI)</p></td></tr><tr><td class="confluenceTd"><p>SSISDB</p></td><td class="confluenceTd"><p>Used for SSIS Integrations</p></td></tr><tr><td class="confluenceTd"><p>StagingBI</p></td><td class="confluenceTd"><p>A staging environment for data destined for the Data Warehouse</p></td></tr><tr><td class="confluenceTd"><p>Vault</p></td><td class="confluenceTd"><p>A DB for storing data which is supposed to have history kept. Examples would be IRD reporting data, Funds Flow.</p></td></tr></tbody></table></div><h1 id="id-04.LearningKAPSQLDAT(New)-TocarryonwithDataservices(OldDumpingground)-ImportantPoints">Important Points</h1><p>Backgroud that I learnt from Karl</p><p>Actual Server name = SVSQLCIP\SQLCIP</p><p>Actual Databases name = DataService</p><p>SQLCIP\DataServices &gt;&gt; this is an Old Databases that contain a Lot of Old Databases with linked Servers, But after the Pinnacles project it will be replaced by the new KAPSQLDAT server.</p><p>I ran some simple scrtips on the DataServices DB just be careful when it comes to linked server it is case Sensitive and When inner joins between servers it would be need to add collate database_default at the end of it.</p><p>&gt;&gt; KAP is stands for a Data center location = kapua</p><p>&gt;&gt; SQL &gt; Highlight what kind of server</p><p>&gt;&gt;DAT &gt;&gt; meaning Data Team? or just DATA</p><hr/><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240618-205820.png" width="591" loading="lazy" src="attachments/2555838664/2563702940.png?width=591" data-image-src="attachments/2555838664/2563702940.png" data-height="749" data-width="591" data-unresolved-comment-count="0" data-linked-resource-id="2563702940" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240618-205820.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2555838664" data-linked-resource-container-version="3" data-media-id="aa74c149-03ec-44e2-86e3-bb1cb837e318" data-media-type="file"></span><p>Different Encoding might produce Issues&gt;&gt; </p><p><strong>** Collate database_default</strong></p><p /><p /><p>karl Mentioned two important Power Bi repots and One Excel spreadsheets.</p><p>** Karl Said he put all his important things on Sahrepoints to have a central location to look at.</p><p />
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2555838664/2563702940.png">image-20240618-205820.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2555838664/2563735711.png">image-20240618-210029.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:52</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

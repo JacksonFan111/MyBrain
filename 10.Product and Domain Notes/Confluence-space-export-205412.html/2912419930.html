@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Individuals Account that have multiple Individuals (Contacts) in various roles</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Individuals Account that have multiple Individuals (Contacts) in various roles
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 08-01-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is a high-level explanation of the problem scenario, why your code logic is the way it is, and some practical suggestions for finalizing or improving your approach. Think of it like an “executive summary” of the problem and solution pathway.</p><hr/><h2 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-1.WhatProblemAreWeTryingtoSolve?"><span style="background-color: rgb(211,241,167);">1. What Problem Are We Trying to Solve?</span></h2><p>You have a CRM system where each <em>Account</em> can have multiple <em>Individuals</em> (Contacts) in various roles. For FATCA/CRS reporting, you need to identify:</p><ol start="1"><li><p><strong>Individuals who are foreign for tax purposes</strong> (either US Citizens for Tax Purposes or other Foreign Tax Residents).</p><ul><li><p>Some of these individuals are <strong>Account Holders</strong> (the main contact for that trading entity)</p></li><li><p>Others are <strong>Controlling Persons</strong> (authorized persons, trustees, etc.) who have sufficient control or beneficial ownership in the account.</p></li></ul></li><li><p><strong>Non-foreign Account Holders</strong> that are associated with an account containing at least one foreign individual (i.e., if the account has <em>any</em> foreign controlling person, the <em>non-foreign</em> person who is the formal Account Holder also needs to be reported in the “account” section of the FATCA/CRS submission).</p></li></ol><p>Essentially you want to:</p><ul><li><p>Pull out all foreign individuals (“#IndividualData”) so they can be reported as controlling persons or beneficial owners, AND</p></li><li><p>Also pull out the “non-foreign” but <em>formally recognized</em> account holders for those same accounts (“#NonForeignAccHolderData”), so that the overall submission includes both:</p><ol start="1"><li><p>The entity (the trading entity or account) with its official account holders</p></li><li><p>The foreign controlling individuals related to that same entity</p></li></ol></li></ul><hr/><h2 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-2.WhytheTwoDataSets?">2. Why the Two Data Sets?</h2><ol start="1"><li><p><strong>#IndividualData</strong></p><ul><li><p>Focuses on <strong>foreign individuals</strong> (FATCA/CRS triggers)</p></li><li><p>Checks TIN, country of jurisdiction, roles, beneficial ownership, etc.</p></li><li><p>Ensures the individual is indeed flagged as USCitizensforTaxPurposes = 1 or ForeignTaxResident = 1.</p></li><li><p>Joins to <code>cip_foreigntaxrecord</code> to confirm TIN and CountryJurisdiction are not null.</p></li><li><p>Excludes New Zealand TINs and certain entity types (trusts, estates, etc.).</p></li></ul></li><li><p><strong>#NonForeignAccHolderData</strong></p><ul><li><p>Focuses on <strong>non-foreign</strong> individuals that still need to be part of the FATCA/CRS filing <strong>because</strong> they are an account holder on an account that <em>does</em> have at least one foreign controlling person.</p></li><li><p>Uses a distinct set of roles: <code>('Individual','Bank Account Holder','Minor','Power of Attorney','Beneficiary')</code> but with <code>dsl_Authorised = 1</code>.</p></li><li><p>Ensures they are <strong>not</strong> foreign themselves (<code>ft2.cip_identification IS NULL</code> or no foreign TIN), but they belong to an entity that is flagged in <code>#EntitiesWithFlaggedIndividuals</code>.</p></li></ul></li></ol><p>In plain English:</p><ul><li><p><em>#IndividualData</em> answers: <strong>“Which individuals are foreign and must be reported as controlling persons or beneficial owners?”</strong></p></li><li><p><em>#NonForeignAccHolderData</em> answers: <strong>“Among the accounts that do have a foreign person somewhere, which other main account holders (non-foreign) still need to appear in the final FATCA/CRS forms so that the account is properly identified?”</strong></p></li></ul><hr/><h2 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-3.KeyLogicConsiderations">3. Key Logic Considerations</h2><ol start="1"><li><p><strong>Beneficial Owner vs. Authorized Person</strong></p><ul><li><p>An individual can be a beneficial owner if <code>r.dsl_BeneficialOwner = 1</code>.</p></li><li><p>Or they can be an authorized person / controlling person if <code>r.dsl_RoleTypeIdName</code> is in <code>('Authorised Person','Corporate Trustee Agent','Executor','Guardian','Other')</code> AND <code>r.dsl_Authorised = 1</code>.</p></li></ul></li><li><p><strong>Multiple TIN vs. Single TIN</strong></p><ul><li><p>Handled in your subquery <code>#TIN_Counts</code>. Individuals can have more than one TIN if they have multiple jurisdictions.</p></li></ul></li><li><p><strong>Excluding “New Zealand TINs”</strong></p><ul><li><p>You only want foreign TINs, so you check <code>ISNULL(cc2.cip_ISOCode, '') &lt;&gt; 'NZL'</code>.</p></li></ul></li><li><p><strong>Minors, Guardians, PoA</strong></p><ul><li><p>Sometimes a minor has a guardian who is foreign. This triggers a need to report the guardian as a controlling person, even if the minor is the formal “account holder.”</p></li></ul></li><li><p><strong>Substantial Controlling Interest</strong></p><ul><li><p>In your final table, you do a case statement checking if <code>r.dsl_BeneficialOwner = 1 AND r.dsl_BeneficiaryOwnership &gt; 25 AND sm.Value = 'Company'</code>, or if the entity is not an individual/joint/minor.</p></li><li><p>You note that data entry can be messy here—this is typical in real-world CRM systems.</p></li></ul></li></ol><hr/><h2 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-4.PracticalSolution/Workflow">4. Practical Solution / Workflow</h2><p>Based on your current code, here is a recommended workflow so you can produce a final FATCA/CRS extract that marries everything together clearly:</p><h3 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-StepA:GeneratetheCoreTables"><strong>Step A: Generate the Core Tables</strong></h3><ol start="1"><li><p><strong>Flagged Entities</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT 
+    r.dsl_TradingEntityID AS EntityId
+INTO #EntitiesWithFlaggedIndividuals
+FROM dsl_roles AS r
+INNER JOIN Contact AS i ON r.dsl_IndividualId = i.ContactId
+WHERE r.statuscode = 1
+  AND (i.dsl_USCitizensforTaxPurposes = 1 OR i.ots_foreigntaxresident = 1);
+</pre>
+</div></div><ul><li><p>This table simply captures which <em>AccountId</em> has <em>at least one</em> foreign person.</p></li></ul></li><li><p><strong>Foreign Individuals (#IndividualData)</strong></p><ul><li><p>You’ve done a good job capturing <em>foreign controlling persons</em> vs. <em>normal foreign beneficial owners</em>, TIN logic, multiple TIN logic, etc.</p></li></ul></li><li><p><strong>Non-Foreign Account Holders (#NonForeignAccHolderData)</strong></p><ul><li><p>You filter only those accounts in <code>#EntitiesWithFlaggedIndividuals</code>, i.e., the <em>same accounts that have a foreign person</em>, but these individuals themselves do <em>not</em> have a foreign TIN.</p></li></ul></li></ol><h3 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-StepB:CombineorLinktheTwoResults"><strong>Step B: Combine or Link the Two Results</strong></h3><p>After you build both tables:</p><ul><li><p><strong>#IndividualData</strong> (the foreign folks)</p></li><li><p><strong>#NonForeignAccHolderData</strong> (the associated non-foreign account holders)</p></li></ul><p>…you can do one of two things:</p><p><strong>Approach 1</strong>: <strong>Union</strong> them into a single “reporting” table.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    EntityID,
+    EntityName,
+    IndividualId,
+    IndividualName,
+    -- ...
+    &#39;Foreign Controlling / Beneficial&#39; AS PersonCategory
+FROM #IndividualData
+
+UNION ALL
+
+SELECT
+    EntityID,
+    EntityName,
+    IndividualId,
+    IndividualName,
+    -- ...
+    &#39;Non-Foreign Account Holder&#39; AS PersonCategory
+FROM #NonForeignAccHolderData
+</pre>
+</div></div><p>This final union represents <em>everyone</em> that needs to appear in the FATCA/CRS data: the foreign persons themselves <em>and</em> the non-foreign account holders for those same entities.</p><p><strong>Approach 2</strong>: <strong>Keep them separate</strong> and do a <strong>JOIN</strong> only if needed.<br/>Sometimes the reporting format requires you to break out data in two sections:</p><ol start="1"><li><p>A “Reporting Entity / Account” section listing the account holder(s) (that’s your #NonForeignAccHolderData).</p></li><li><p>A “Controlling Persons” section listing all foreign controlling persons (that’s your #IndividualData).</p></li></ol><p>In that scenario, you might produce two separate tables in your final output.</p><hr/><h2 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-5.Cleanup&amp;FinalTips">5. Cleanup &amp; Final Tips</h2><ol start="1"><li><p><strong>Check Data Quality</strong></p><ul><li><p>As you noted, real CRM data can be incomplete or incorrectly entered. Your code has many filters (e.g. TIN is not null, country is not null) which helps, but be prepared for corner cases.</p></li></ul></li><li><p><strong>Use Meaningful Column Aliases</strong></p><ul><li><p>If you are outputting to a downstream system, rename your columns to reflect FATCA/CRS standards (e.g., “AccountHolderName”, “ControllingPersonTIN”, etc.).</p></li></ul></li><li><p><strong>Document Each WHERE Condition</strong></p><ul><li><p>Because the logic is so specialized, keep an internal data dictionary or at least a short note for each filter to justify why it exists (like ignoring NZ TINs, ignoring certain entity types, etc.). This is a huge time-saver for future debugging.</p></li></ul></li><li><p><strong>Watch Out for Double Counting</strong></p><ul><li><p>If you find the same individual showing up multiple times in the final set for the same role, you may need a <code>DISTINCT</code> or a more carefully structured join.</p></li></ul></li><li><p><strong>Consider Performance</strong></p><ul><li><p>Joins with many large tables (especially if <code>dsl_roles</code>, <code>Contact</code>, <code>Account</code>, <code>cip_foreigntaxrecord</code> are big) can get slow. Make sure you have relevant indexes on <code>dsl_TradingEntityID</code>, <code>ContactId</code>, etc.</p></li></ul></li></ol><hr/><h2 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-6.FinalTakeaway">6. Final Takeaway</h2><ul><li><p><strong><span style="background-color: rgb(211,241,167);">Your logic is valid</span></strong><span style="background-color: rgb(211,241,167);">: building two sets—foreign individuals (#IndividualData) and non-foreign account holders in foreign-flagged entities (#NonForeignAccHolderData)—is exactly the approach typically used for FATCA/CRS.</span></p></li><li><p>The key is understanding <em>why</em> you need both data sets and then combining them properly so that your final FATCA/CRS submission includes:</p><ol start="1"><li><p>The account info (and its official holders, even if they aren’t foreign themselves),</p></li><li><p>All the foreign beneficial owners / controlling persons tied to that account.</p></li></ol></li></ul><p>Once you refine your final “reporting” step to include both sets (via a <code>UNION ALL</code> or two separate final outputs), you’ll have a clear, consistent method for ensuring no foreign person or corresponding non-foreign account holder is missed in the final CRS/FATCA data submission.</p><p /><p /><p>Below is a <strong>comprehensive</strong> end-to-end outline of how you can pull together both <strong>foreign controlling individuals</strong> and <strong>non-foreign account holders</strong> into a <strong>single, coherent</strong> solution for FATCA/CRS. It reflects the <strong>entire context</strong> of this conversation—why you do each step, which tables you build, and how you can combine them in a final output that meets reporting requirements.</p><hr/><h2 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-CoreGoal"><strong>Core Goal</strong></h2><ol start="1"><li><p><strong>Identify foreign individuals</strong> (either USCitizensforTaxPurposes=1 or ots_foreigntaxresident=1) who:</p><ul><li><p>Are beneficial owners, OR</p></li><li><p>Are controlling persons (authorized persons, guardians, executors, etc.)<br/>These individuals <strong>must</strong> be reported in the FATCA/CRS controlling-person section.</p></li></ul></li><li><p><strong>Identify the non-foreign account holders</strong> for those same “reportable” entities.</p><ul><li><p>Even if they aren’t foreign themselves, if an account has at least one foreign person, the entire account is reportable, meaning you need to list the “Account Holder(s)” as well.</p></li></ul></li></ol><p>Hence, you need to produce:</p><ul><li><p><strong>Foreign Individuals</strong>: #IndividualData</p></li><li><p><strong>Non-Foreign Account Holders</strong>: #NonForeignAccHolderData (only for accounts flagged as having at least one foreign individual)</p></li></ul><p>After that, you <strong>merge</strong> or <strong>use</strong> both tables in your final FATCA/CRS logic so that each account’s structure is fully captured.</p><hr/><h2 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-High-LevelSteps"><strong>High-Level Steps</strong></h2><p>Below is a condensed overview:</p><ol start="1"><li><p><strong>(#TIN_Counts)</strong> – Count distinct TINs per foreign beneficial owner</p></li><li><p><strong>(#IndividualData)</strong> – Pull all foreign individuals (beneficial owners or controlling persons)</p></li><li><p><strong>(#EntitiesWithFlaggedIndividuals)</strong> – Identify which accounts have at least one foreign individual</p></li><li><p><strong>(#NonForeignAccHolderData)</strong> – For those flagged accounts in Step 3, pull the non-foreign account holders</p></li><li><p><strong>Final</strong> – Combine or report both sets:</p><ul><li><p>#IndividualData → FATCA/CRS “Controlling Persons”</p></li><li><p>#NonForeignAccHolderData → FATCA/CRS “Account Holders”</p></li></ul></li></ol><p>Let’s walk through each step in detail.</p><hr/><h3 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-Step1:Create#TIN_Counts"><strong>Step 1: Create #TIN_Counts</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">IF OBJECT_ID(&#39;tempdb..#TIN_Counts&#39;) IS NOT NULL 
+    DROP TABLE #TIN_Counts;
+
+SELECT
+    a.AccountId,
+    ps.dsl_PortfolioIdName AS PortfolioNo,
+    ps.dsl_PortfolioServiceLevelName,
+    i.ContactId AS IndividualId,
+    COUNT(DISTINCT ft2.cip_identification) AS TIN_Count
+INTO #TIN_Counts
+FROM [CRM_MSCRM].dbo.Account AS a
+INNER JOIN [CRM_MSCRM].dbo.dsl_roles AS r
+    ON a.AccountId = r.dsl_TradingEntityID
+    AND r.statuscode = 1
+    AND r.dsl_BeneficialOwner = 1
+INNER JOIN [CRM_MSCRM].dbo.Contact AS i
+    ON i.ContactId = r.dsl_IndividualId
+LEFT JOIN [CRM_MSCRM].dbo.dsl_portfolioservice AS ps
+    ON ps.dsl_TradingEntityId = a.AccountId
+LEFT JOIN [CRM_MSCRM].[dbo].[cip_foreigntaxrecord] AS ft2
+    ON ft2.cip_Individual = i.ContactId
+WHERE
+    ft2.cip_CountryJurisdiction IS NOT NULL
+    AND ft2.cip_Identification IS NOT NULL
+    AND (
+        i.dsl_USCitizensforTaxPurposes = 1
+        OR i.ots_foreigntaxresident = 1
+    )
+GROUP BY
+    a.AccountId,
+    ps.dsl_PortfolioIdName,
+    ps.dsl_PortfolioServiceLevelName,
+    i.ContactId;
+</pre>
+</div></div><p><strong>Purpose</strong>: Determine how many foreign TINs each foreign beneficial owner has (to distinguish “Single TIN” vs. “Multiple TINs Individual”).</p><hr/><h3 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-Step2:Build#IndividualData(ForeignIndividuals)"><strong>Step 2: Build #IndividualData (Foreign Individuals)</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">IF OBJECT_ID(&#39;tempdb..#IndividualData&#39;) IS NOT NULL 
+    DROP TABLE #IndividualData;
+
+SELECT DISTINCT
+    CASE 
+        WHEN r.dsl_BeneficialOwner &lt;&gt; 1
+             AND r.dsl_RoleTypeIdName IN (&#39;Authorised Person&#39;,&#39;Corporate Trustee Agent&#39;,&#39;Other&#39;,&#39;Executor&#39;,&#39;Guardian&#39;)
+             AND r.dsl_Authorised = 1
+             AND ft2.cip_identification IS NOT NULL
+        THEN &#39;Foreign Controlling Individual&#39;
+        ELSE &#39;Normal Individual&#39;
+    END AS Indtype,
+
+    CASE
+        WHEN tc.TIN_Count &gt; 1 THEN &#39;Multiple TINs Individual&#39;
+        ELSE &#39;Single TIN Individual&#39;
+    END AS AccountType,
+
+    i.ContactId AS AccountID,
+    i.ContactId AS IndividualId,
+    i.FullName   AS IndividualName,
+    -- ... (Address, phone, etc.)
+
+    a.Name       AS EntityName,
+    a.AccountId  AS EntityID,
+    ft2.cip_identification AS cip_Identification,
+    -- e.g. cc2.cip_ISOcode, Ind_TaxCodeCountryName, etc.
+
+    r.dsl_RoleTypeIdName,
+    r.dsl_BeneficialOwner,
+    r.dsl_BeneficiaryOwnership,
+    r.dsl_Authorised,
+    sm.Value        AS TradingEntityType,
+    smPS.Value      AS PortfolioServiceStatus,
+    -- ... (other columns like DOB, CountryOfBirth, etc.)
+
+INTO #IndividualData
+FROM [CRM_MSCRM].dbo.Account AS a
+INNER JOIN [CRM_MSCRM].dbo.dsl_roles AS r
+    ON a.AccountId = r.dsl_TradingEntityID
+    AND r.statuscode = 1
+    AND (
+        -- If beneficial owner is 1, or if the role is in (authorized person, etc.) &amp; dsl_Authorised=1
+        r.dsl_BeneficialOwner = 1
+        OR (
+          r.dsl_RoleTypeIdName IN (
+            &#39;Authorised Person&#39;,&#39;Corporate Trustee Agent&#39;,&#39;Individual&#39;,&#39;Guardian&#39;,&#39;Other&#39;,&#39;Executor&#39;
+          )
+          AND r.dsl_Authorised = 1
+        )
+    )
+INNER JOIN [CRM_MSCRM].dbo.Contact AS i
+    ON i.ContactId = r.dsl_IndividualId
+LEFT JOIN [CRM_MSCRM].dbo.dsl_portfolioservice AS ps
+    ON ps.dsl_TradingEntityId = a.AccountId
+LEFT JOIN [CRM_MSCRM].dbo.StringMap AS sm
+    ON sm.AttributeValue = a.dsl_TradingEntityType
+    AND sm.AttributeName = &#39;dsl_tradingentitytype&#39;
+LEFT JOIN [CRM_MSCRM].[dbo].[cip_foreigntaxrecord] AS ft2
+    ON ft2.cip_Individual = i.ContactId
+LEFT JOIN #TIN_Counts AS tc
+    ON tc.AccountId = a.AccountId
+    AND tc.PortfolioNo = ps.dsl_PortfolioIdName
+    AND tc.dsl_PortfolioServiceLevelName = ps.dsl_PortfolioServiceLevelName
+    AND tc.IndividualId = i.ContactId
+-- ... (other joins)
+WHERE
+    ISNULL(cc2.cip_ISOCode, &#39;&#39;) &lt;&gt; &#39;NZL&#39;  -- Exclude NZ TIN
+    AND sm.Value IN (&#39;Individual&#39;,&#39;Joint&#39;,&#39;Minor Under 18 yrs&#39;)
+    AND ft2.cip_CountryJurisdiction IS NOT NULL
+    AND ft2.cip_Identification IS NOT NULL
+    AND (
+        i.dsl_USCitizensforTaxPurposes = 1
+        OR i.ots_foreigntaxresident = 1
+    );
+</pre>
+</div></div><p><strong>Purpose</strong>:</p><ol start="1"><li><p>Grabs <strong>all foreign</strong> individuals from eligible account types.</p></li><li><p>Distinguishes “Foreign Controlling Individual” vs. “Normal Individual” (still foreign, but beneficial owner).</p></li><li><p>Uses #TIN_Counts to determine if they have multiple TINs.</p></li><li><p>Excludes NZ TIN.</p></li><li><p>Excludes trusts, estates, etc.</p></li></ol><hr/><h3 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-Step3:FlagEntitieswithAtLeastOneForeignIndividual"><strong>Step 3: Flag Entities with At Least One Foreign Individual</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">IF OBJECT_ID(&#39;tempdb..#EntitiesWithFlaggedIndividuals&#39;) IS NOT NULL
+    DROP TABLE #EntitiesWithFlaggedIndividuals;
+
+SELECT DISTINCT 
+    r.dsl_TradingEntityID AS EntityId
+INTO #EntitiesWithFlaggedIndividuals
+FROM [CRM_MSCRM].dbo.dsl_roles AS r
+INNER JOIN [CRM_MSCRM].dbo.Contact AS i
+    ON r.dsl_IndividualId = i.ContactId
+WHERE r.statuscode = 1
+  AND (i.dsl_USCitizensforTaxPurposes = 1 OR i.ots_foreigntaxresident = 1);
+</pre>
+</div></div><p><strong>Purpose</strong>:</p><ul><li><p>Find any <strong>AccountId</strong> (<code>TradingEntityID</code>) that has at least <strong>one</strong> foreign person.</p></li><li><p>This table drives the next step, where we collect <strong>non-foreign</strong> holders for these same accounts.</p></li></ul><hr/><h3 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-Step4:Build#NonForeignAccHolderData"><strong>Step 4: Build #NonForeignAccHolderData</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">IF OBJECT_ID(&#39;tempdb..#NonForeignAccHolderData&#39;) IS NOT NULL
+    DROP TABLE #NonForeignAccHolderData;
+
+SELECT DISTINCT
+    CASE 
+        WHEN r.dsl_RoleTypeIdName IN (
+               &#39;Individual&#39;,&#39;Bank Account Holder&#39;,&#39;Minor&#39;,&#39;Power of Attorney&#39;,&#39;Beneficiary&#39;
+             )
+             AND ft2.cip_identification IS NULL
+        THEN &#39;non-Foreign Acc Holder&#39;
+        ELSE &#39;&#39;
+    END AS IndType,
+
+    sm.Value AS dsl_tradingentitytype,
+    i.ContactId AS IndividualId,
+    i.FullName  AS IndividualName,
+    a.AccountId AS EntityID,
+    a.Name      AS EntityName,
+    r.dsl_RoleTypeIdName,
+    r.dsl_BeneficialOwner,
+    r.dsl_BeneficiaryOwnership,
+    r.dsl_Authorised,
+    ft2.cip_identification,
+    a.dsl_USCitizensforTaxPurposes AS USCitizensforTaxPurposes_acc,
+    i.dsl_USCitizensforTaxPurposes AS USCitizensforTaxPurposes_ind,
+    a.ots_ForeignTaxResident       AS OTSCitizensforTaxPurposes_acc,
+    i.ots_ForeignTaxResident       AS OTSCitizensforTaxPurposes_ind
+
+INTO #NonForeignAccHolderData
+FROM [CRM_MSCRM].dbo.Account AS a
+INNER JOIN [CRM_MSCRM].dbo.dsl_roles AS r
+    ON a.AccountId = r.dsl_TradingEntityID
+    AND r.statuscode = 1
+    AND r.dsl_RoleTypeIdName IN (
+        &#39;Individual&#39;,&#39;Bank Account Holder&#39;,&#39;Minor&#39;,&#39;Power of Attorney&#39;,&#39;Beneficiary&#39;
+    )
+    AND r.dsl_Authorised = 1
+INNER JOIN #EntitiesWithFlaggedIndividuals ewf
+    ON ewf.EntityId = a.AccountId
+INNER JOIN [CRM_MSCRM].dbo.Contact AS i
+    ON i.ContactId = r.dsl_IndividualId
+LEFT JOIN [CRM_MSCRM].dbo.StringMap AS sm
+    ON sm.AttributeValue = a.dsl_TradingEntityType
+    AND sm.AttributeName = &#39;dsl_tradingentitytype&#39;
+LEFT JOIN [CRM_MSCRM].[dbo].[cip_foreigntaxrecord] AS ft2
+    ON ft2.cip_Individual = i.ContactId
+-- (other joins)
+WHERE
+    ft2.cip_identification IS NULL
+    AND a.Name &lt;&gt; &#39;#Training&#39;
+    AND a.Name NOT LIKE &#39;%OFFICE%&#39;
+    AND (i.FullName NOT LIKE &#39;%Dummy%&#39; OR i.FullName NOT LIKE &#39;%TEST%&#39;);
+</pre>
+</div></div><p><strong>Purpose</strong>:</p><ul><li><p>Identify all <strong>non-foreign</strong> individuals (no foreign TIN) who are <strong>account holders</strong> or similar roles on accounts that have <strong>at least one</strong> foreign person (from Step 3).</p></li><li><p>They still need to be reported in the “account holder” section even though <strong>they</strong> are not foreign.</p></li></ul><hr/><h3 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-Step5:UseBothTablesinFinalOutput"><strong>Step 5: Use Both Tables in Final Output</strong></h3><p>Depending on how you output data, you typically do one of two things:</p><ol start="1"><li><p><strong>Generate a single final “flat” table</strong> with columns for the Account, the Account Holder, and the Foreign Controlling Person. You’d do something like:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT
+    nfah.EntityID           AS AccountId,
+    nfah.EntityName         AS AccountName,
+    nfah.IndividualId       AS NonForeignAccHolderId,
+    nfah.IndividualName     AS NonForeignAccHolderName,
+    id.IndividualId         AS ForeignPersonId,
+    id.IndividualName       AS ForeignPersonName,
+    id.cip_Identification   AS ForeignTIN,
+    ...
+FROM #NonForeignAccHolderData nfah
+INNER JOIN #IndividualData id
+    ON nfah.EntityID = id.EntityID
+</pre>
+</div></div><ul><li><p>This yields <strong>multiple rows</strong> per account if there are multiple foreign persons or multiple account holders.</p></li><li><p>You can then transform that into your FATCA/CRS XML or pass it to compliance.</p></li></ul></li><li><p><strong>Keep them separate</strong> and transform each table to XML:</p><ul><li><p><strong>#NonForeignAccHolderData</strong> → “Account Holder” node in FATCA/CRS</p></li><li><p><strong>#IndividualData</strong> → “Controlling Person” node in FATCA/CRS</p></li></ul><p>Then you merge them under the same “Account” in your final XML.</p></li></ol><p>Either way, the <strong>main concept</strong> is that any entity with <strong>at least</strong> one foreign controlling individual is reported, so you must also include that entity’s <strong>non-foreign</strong> owners in the account-holder section.</p><hr/><h2 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-HandlingEdgeCases&amp;DataQuality"><strong>Handling Edge Cases &amp; Data Quality</strong></h2><ol start="1"><li><p><strong>Data Gaps</strong>: If TIN is missing but the person is flagged as USCitizensforTaxPurposes=1, they might get excluded from #IndividualData. That’s a data-quality issue—<strong>not</strong> a logic error.</p></li><li><p><strong>Multiple TINs</strong>: Handled by #TIN_Counts. If duplicates or erroneous TIN entries exist, the count can be off.</p></li><li><p><strong>Multiple Account Holders</strong>: You’ll naturally get multiple rows if multiple non-foreign holders exist. This is correct for a “flat” table approach.</p></li><li><p><strong>Beneficial Ownership %</strong>: The code tries to handle <code>r.dsl_BeneficiaryOwnership</code> for “SubstantialControllingInterest,” but recognizes that data might be unreliable.</p></li></ol><hr/><h2 id="IndividualsAccountthathavemultipleIndividuals(Contacts)invariousroles-Summary:AComprehensiveApproach"><strong>Summary: A Comprehensive Approach</strong></h2><ol start="1"><li><p><strong>#TIN_Counts</strong>: Distinguishes single vs. multiple TINs.</p></li><li><p><strong>#IndividualData</strong>: Captures <em>foreign</em> persons needing FATCA/CRS.</p></li><li><p><strong>#EntitiesWithFlaggedIndividuals</strong>: Finds all accounts with at least one foreign person.</p></li><li><p><strong>#NonForeignAccHolderData</strong>: Pulls in the non-foreign holders for those same flagged accounts.</p></li><li><p><strong>Final</strong>: Combine or keep separate for your reporting format. In practice, for FATCA/CRS XML:</p><ul><li><p>One “Account” node with sub-nodes:</p><ul><li><p>“AccountHolder” (from #NonForeignAccHolderData)</p></li><li><p>“ControllingPersons” (from #IndividualData)</p></li></ul></li></ul></li></ol><p>This ensures <strong>all</strong> foreign individuals are reported as controlling persons or beneficial owners, and <strong>all</strong> the related non-foreign holders appear so the account is properly reported in compliance with FATCA/CRS.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 18.3 Step 6 Extreme Complex fitlerings Logcis Review</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="2762113156.html">18. Rebuild FATCA/CRS step 1 - 10</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 18.3 Step 6 Extreme Complex fitlerings Logcis Review
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 17-10-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <style type='text/css'>/*<![CDATA[*/
+div.rbtoc1755550407727 {padding: 0px;}
+div.rbtoc1755550407727 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1755550407727 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style><div class='toc-macro rbtoc1755550407727'>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-StreamliningFilteringLogicinStep6'>Streamlining Filtering Logic in Step 6</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-1.UnderstandingtheExistingFilteringLogic'>1. Understanding the Existing Filtering Logic</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-2.IntegratingAdditionalFilteringConditions'>2. Integrating Additional Filtering Conditions</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-ConditionsforDeletion:'>Conditions for Deletion:</a></li>
+</ul>
+</li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-3.StreamliningtheFilteringLogic'>3. Streamlining the Filtering Logic</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-A.SimplifytheExistingFilters'>A. Simplify the Existing Filters</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-B.IncorporatetheNewFilteringConditions'>B. Incorporate the New Filtering Conditions</a></li>
+</ul>
+</li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-4.RevisedSQLCodewithStreamlinedFilters'>4. Revised SQL Code with Streamlined Filters</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-5.ExplanationoftheStreamlinedFilters'>5. Explanation of the Streamlined Filters</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-A.PortfolioStatusandDateConditions'>A. Portfolio Status and Date Conditions</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-B.RegimeandPortfolioServiceLevelConditions'>B. Regime and Portfolio Service Level Conditions</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-C.Exclusionof&#39;EstateWinding-Up&#39;Entities'>C. Exclusion of &#39;Estate Winding-Up&#39; Entities</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-D.ComplexConditionsforEntitiesandIndividuals'>D. Complex Conditions for Entities and Individuals</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-E.Excluding&#39;StandardBrokingService&#39;Portfolios'>E. Excluding &#39;Standard Broking Service&#39; Portfolios</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Subquery1:CheckforSafeCustodyHoldings'>Subquery 1: Check for Safe Custody Holdings</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Subquery2:CheckforCashManagementAccount'>Subquery 2: Check for Cash Management Account</a></li>
+</ul>
+</li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-6.BenefitsoftheStreamlinedApproach'>6. Benefits of the Streamlined Approach</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-7.TestingandValidation'>7. Testing and Validation</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-8.AdditionalRecommendations'>8. Additional Recommendations</a></li>
+</ul>
+</li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-DetailedExplanationoftheFilteringConditionsintheWHEREClause'>Detailed Explanation of the Filtering Conditions in the WHERE Clause</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-1.InitialCondition:WHERE1=1'>1. Initial Condition: WHERE 1=1</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-2.PortfolioStatusandDateConditions'>2. Portfolio Status and Date Conditions</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:'>What it does:</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:'>Why it&#39;s included:</a></li>
+</ul>
+</li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-3.RegimeConditions'>3. Regime Conditions</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.1'>What it does:</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.1'>Why it&#39;s included:</a></li>
+</ul>
+</li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-4.ExcludeNon-ReportablePortfoliosBasedonRegimeandServiceLevel'>4. Exclude Non-Reportable Portfolios Based on Regime and Service Level</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.2'>What it does:</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.2'>Why it&#39;s included:</a></li>
+</ul>
+</li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-5.Exclude&#39;EstateWinding-Up&#39;Entities'>5. Exclude &#39;Estate Winding-Up&#39; Entities</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.3'>What it does:</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.3'>Why it&#39;s included:</a></li>
+</ul>
+</li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-6.ApplyComplexFilteringforEntitiesandIndividuals'>6. Apply Complex Filtering for Entities and Individuals</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.4'>What it does:</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.4'>Why it&#39;s included:</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-6.1.ConditionsforEntities'>6.1. Conditions for Entities</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.5'>What it does:</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.5'>Why it&#39;s included:</a></li>
+</ul>
+</li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-6.2.ConditionsforIndividuals'>6.2. Conditions for Individuals</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.6'>What it does:</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.6'>Why it&#39;s included:</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-7.Exclude&#39;StandardBrokingService&#39;PortfolioswithoutSafeCustodyHoldingsandwithoutCashManagementAccount'>7. Exclude &#39;Standard Broking Service&#39; Portfolios without Safe Custody Holdings and without Cash Management Account</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.7'>What it does:</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.7'>Why it&#39;s included:</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-7.1.Subquery1:CheckforSafeCustodyHoldings'>7.1. Subquery 1: Check for Safe Custody Holdings</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.8'>What it does:</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.8'>Why it&#39;s included:</a></li>
+</ul>
+</li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-7.2.Subquery2:CheckforCashManagementAccount'>7.2. Subquery 2: Check for Cash Management Account</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.9'>What it does:</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.9'>Why it&#39;s included:</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-8.CombiningtheConditionswithNOTOperator'>8. Combining the Conditions with NOT Operator</a>
+<ul class='toc-indentation'>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.10'>What it does:</a></li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.10'>Why it&#39;s included:</a></li>
+</ul>
+</li>
+<li><a href='#id-18.3Step6ExtremeComplexfitleringsLogcisReview-9.SummaryoftheFilteringLogic'>9. Summary of the Filtering Logic</a></li>
+</ul>
+</li>
+</ul>
+</div><p>Step 1 -6 are all i nthe same scrtips pupose is to out put a clean table for FATCA CRS</p><p>SQL script  Workscipt #5.1 FATCACRS 10 steps rebuild v2<br/><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/2763259969/2778103983.sql" data-nice-type="null" data-file-src="/wiki/download/attachments/2763259969/Workscipt%20%235.1%20FATCACRS%2010%20steps%20rebuild%20v2.sql?version=1&amp;modificationDate=1729195444736&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="2778103983" data-linked-resource-type="attachment" data-linked-resource-container-id="2763259969" data-linked-resource-default-alias="Workscipt #5.1 FATCACRS 10 steps rebuild v2.sql" data-mime-type="binary/octet-stream" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="a28f64ee-0c87-4cc4-8bdf-6f8bfcf38dd9" data-media-type="file"><img src="attachments/thumbnails/2763259969/2778103983" height="250"/></a></span> </p><h1 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-StreamliningFilteringLogicinStep6">Streamlining Filtering Logic in Step 6</h1><p><strong>Introduction</strong></p><p> We'll focus on simplifying the conditions related to:</p><ol start="1"><li><p><strong>Excluding 'Standard Broking Service' portfolios without safe custody holdings and without a Cash Management account.</strong></p></li><li><p><strong>Ensuring that the rest of your filtering logic remains effective and efficient.</strong></p></li></ol><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-1.UnderstandingtheExistingFilteringLogic"><strong>1. Understanding the Existing Filtering Logic</strong></h2><p>Your current filtering conditions in <strong>Step 6</strong> include:</p><ul><li><p><strong>Portfolio Status and Date Conditions:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">AND (PortfolioServiceStatus NOT IN(&#39;Closed&#39;)
+     OR (PortfolioServiceStatus = &#39;Closed&#39;
+         AND dsl_CloseDate BETWEEN &#39;2024-04-01&#39; AND &#39;2025-03-31&#39;))
+     AND dsl_inceptiondate &lt;= &#39;2025-03-31&#39;</pre>
+</div></div></li><li><p><strong>Regime and Portfolio Service Level Name Exclusions:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">AND Regime IS NOT NULL
+AND (
+    (Regime = &#39;FATCA&#39; 
+        AND ISNULL(PortfolioServiceLevelName, &#39;&#39;) NOT IN (&#39;&#39;, &#39;QuayStreet KiwiSaver Scheme&#39;, &#39;Craigs KiwiSaver&#39;, &#39;superSTART&#39;, &#39;Craigs Super&#39;))
+    OR
+    (Regime IN (&#39;CRS&#39;, &#39;FATCA_CRS&#39;) 
+        AND ISNULL(PortfolioServiceLevelName, &#39;&#39;) NOT IN (&#39;&#39;, &#39;QuayStreet KiwiSaver Scheme&#39;, &#39;Craigs KiwiSaver&#39;))
+)</pre>
+</div></div></li><li><p><strong>Exclusion of 'Estate Winding-Up' Entities:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">AND TradingEntityType &lt;&gt; &#39;Estate Winding-Up&#39;</pre>
+</div></div></li><li><p><strong>Complex Conditions for Entities and Individuals:</strong></p><p>(Lengthy conditions involving <code>AccountType</code>, <code>Regime</code>, <code>cip_Identification</code>, <code>PassiveActive</code>, <code>TradingEntityType</code>, <code>dsl_RoleTypeIdName</code>, and more.)</p></li></ul><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-2.IntegratingAdditionalFilteringConditions"><strong>2. Integrating Additional Filtering Conditions</strong></h2><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-ConditionsforDeletion:"><strong>Conditions for Deletion:</strong></h3><p>You've added conditions to exclude certain records based on:</p><ul><li><p><strong>a. Portfolio Service Level Name is 'Standard Broking Service'.</strong></p></li><li><p><strong>b. No Safe Custody Holdings.</strong></p></li><li><p><strong>c. No Cash Management Account.</strong></p></li></ul><p>These conditions were previously handled by a <code>DELETE</code> statement. Now, you want to incorporate them into the <code>WHERE</code> clause of your <code>SELECT</code> statement to filter out the unwanted data without deleting it.</p><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-3.StreamliningtheFilteringLogic"><strong>3. Streamlining the Filtering Logic</strong></h2><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-A.SimplifytheExistingFilters"><strong>A. Simplify the Existing Filters</strong></h3><p>First, let's see if any of the existing filters can be simplified:</p><ul><li><p><strong>Consolidate Date Conditions:</strong></p><p>Instead of multiple <code>AND</code> conditions for dates, we can combine them for clarity.</p></li><li><p><strong>Simplify Regime and Portfolio Service Level Conditions:</strong></p><p>Combine similar conditions using <code>IN</code> and <code>NOT IN</code> clauses.</p></li></ul><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-B.IncorporatetheNewFilteringConditions"><strong>B. Incorporate the New Filtering Conditions</strong></h3><p>We'll add the new conditions to exclude 'Standard Broking Service' portfolios without safe custody holdings and without a Cash Management account.</p><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-4.RevisedSQLCodewithStreamlinedFilters"><strong>4. Revised SQL Code with Streamlined Filters</strong></h2><p>Here's the revised SQL code for <strong>Step 6</strong>, with the filtering conditions streamlined:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Step 6: Combine Entity and Individual Data with Streamlined Filtering
+
+-- Drop the final filtered temporary table if it exists
+IF OBJECT_ID(&#39;tempdb..##crmdatafatcacrs&#39;) IS NOT NULL 
+    DROP TABLE ##crmdatafatcacrs;
+
+-- Create ##crmdatafatcacrs by combining #EntityData and #IndividualData, applying collation, and filtering
+SELECT *
+INTO ##crmdatafatcacrs
+FROM (
+    -- Combine Entity Data
+    SELECT
+        -- (Select columns with COLLATE DATABASE_DEFAULT as needed)
+        -- ...
+    FROM #EntityData
+
+    UNION ALL
+
+    -- Combine Individual Data
+    SELECT
+        -- (Select columns with COLLATE DATABASE_DEFAULT as needed)
+        -- ...
+    FROM #IndividualData
+) AS CombinedData
+WHERE
+    -- Portfolio Status and Date Conditions
+    (
+        PortfolioServiceStatus NOT IN (&#39;Closed&#39;)
+        OR
+        (PortfolioServiceStatus = &#39;Closed&#39; AND dsl_CloseDate BETWEEN &#39;2024-04-01&#39; AND &#39;2025-03-31&#39;)
+    )
+    AND dsl_inceptiondate &lt;= &#39;2025-03-31&#39;
+
+    -- Regime Conditions
+    AND Regime IS NOT NULL
+
+    -- Exclude Non-Reportable Portfolios Based on Regime and Service Level
+    AND (
+        (Regime = &#39;FATCA&#39; AND ISNULL(PortfolioServiceLevelName, &#39;&#39;) NOT IN (&#39;&#39;, &#39;QuayStreet KiwiSaver Scheme&#39;, &#39;Craigs KiwiSaver&#39;, &#39;superSTART&#39;, &#39;Craigs Super&#39;))
+        OR
+        (Regime IN (&#39;CRS&#39;, &#39;FATCA_CRS&#39;) AND ISNULL(PortfolioServiceLevelName, &#39;&#39;) NOT IN (&#39;&#39;, &#39;QuayStreet KiwiSaver Scheme&#39;, &#39;Craigs KiwiSaver&#39;))
+    )
+
+    -- Exclude &#39;Estate Winding-Up&#39; Entities
+    AND TradingEntityType &lt;&gt; &#39;Estate Winding-Up&#39;
+
+    -- Apply Complex Filtering for Entities and Individuals
+    AND (
+        -- Conditions for Entities
+        (
+            AccountType IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;)
+            AND Regime IN (&#39;FATCA&#39;, &#39;CRS&#39;, &#39;FATCA_CRS&#39;)
+            AND (
+                ISNULL(cip_Identification, &#39;&#39;) &lt;&gt; &#39;&#39; -- Entity TIN is provided
+                OR (PassiveActive IS NULL OR PassiveActive != &#39;Active&#39;) -- Entity is passive or PassiveActive is null
+            )
+            AND -- (Additional conditions for roles and ownership)
+            -- ...
+            AND (
+                (
+                    ISNULL(cip_Identification, &#39;&#39;) &lt;&gt; &#39;&#39; -- TIN is provided
+                    AND ISNULL(USCitizensforTaxPurposes_acc, 1) &lt;&gt; 2 -- US Citizenship not explicitly &#39;No&#39;
+                )
+                OR
+                ISNULL(cip_Identification, &#39;&#39;) = &#39;&#39; -- TIN is not provided
+            )
+        )
+        OR
+        -- Conditions for Individuals
+        (
+            AccountType IN (&#39;Multiple TINs Individual&#39;, &#39;Single TIN Individual&#39;)
+            AND (
+                ISNULL(cip_Identification, &#39;&#39;) &lt;&gt; &#39;&#39; -- Individual TIN is provided
+                OR (PassiveActive IS NULL OR PassiveActive != &#39;Active&#39;) -- Account is passive or PassiveActive is null
+            )
+            AND (
+                (Regime IN (&#39;FATCA&#39;, &#39;FATCA_CRS&#39;) AND (
+                    (ISNULL(cip_Identification, &#39;&#39;) &lt;&gt; &#39;&#39; AND ISNULL(USCitizensforTaxPurposes_ind, 1) &lt;&gt; 2)
+                    OR ISNULL(cip_Identification, &#39;&#39;) = &#39;&#39;
+                ))
+                OR
+                Regime = &#39;CRS&#39;
+            )
+        )
+    )
+
+    -- Exclude &#39;Standard Broking Service&#39; Portfolios without Safe Custody Holdings and without Cash Management Account
+    AND NOT (
+        PortfolioServiceLevelName = &#39;Standard Broking Service&#39;
+        AND NOT EXISTS (
+            -- Subquery 1: Check for Safe Custody Holdings
+            SELECT 1
+            FROM [AACARPTSRV].[fusion].[dbo].[Trn] t
+            JOIN [AACARPTSRV].[fusion].[dbo].[Portfolio] p ON t.portfolioID = p.portfolioID
+            JOIN [AACARPTSRV].[fusion].[dbo].[Drum] d ON p.drumID = d.drumID
+            WHERE t.holdingTypeID = 3270 -- Safe Custody Nominee
+                AND t.trnStatusID = 502
+                AND t.settleDate &lt;= &#39;2025-03-31&#39; -- Use your @PeriodEndDate variable
+                AND d.code COLLATE DATABASE_DEFAULT = CombinedData.PortfolioNo COLLATE DATABASE_DEFAULT
+            GROUP BY d.code
+            HAVING SUM(t.nominal) &gt; 0
+        )
+        AND NOT EXISTS (
+            -- Subquery 2: Check for Cash Management Account
+            SELECT 1
+            FROM (
+                SELECT AccountID, IndividualId, Regime, PortfolioServiceLevelName
+                FROM #EntityData
+                UNION ALL
+                SELECT AccountID, IndividualId, Regime, PortfolioServiceLevelName
+                FROM #IndividualData
+            ) AS AllData
+            WHERE AllData.AccountID = CombinedData.AccountID
+                AND AllData.IndividualId = CombinedData.IndividualId
+                AND AllData.Regime = CombinedData.Regime
+                AND AllData.PortfolioServiceLevelName = &#39;Cash Management&#39;
+        )
+    );</pre>
+</div></div><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-5.ExplanationoftheStreamlinedFilters"><strong>5. Explanation of the Streamlined Filters</strong></h2><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-A.PortfolioStatusandDateConditions"><strong>A. Portfolio Status and Date Conditions</strong></h3><p>We combined the date conditions for clarity:</p><ul><li><p>Include portfolios that are not closed, or if closed, they closed within the reporting period.</p></li><li><p>Only include portfolios with an inception date on or before the period end date.</p></li></ul><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-B.RegimeandPortfolioServiceLevelConditions"><strong>B. Regime and Portfolio Service Level Conditions</strong></h3><p>We streamlined the conditions to exclude non-reportable portfolios based on the <code>Regime</code> and <code>PortfolioServiceLevelName</code>.</p><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-C.Exclusionof&#39;EstateWinding-Up&#39;Entities"><strong>C. Exclusion of 'Estate Winding-Up' Entities</strong></h3><p>This condition remains as is, as it's straightforward.</p><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-D.ComplexConditionsforEntitiesandIndividuals"><strong>D. Complex Conditions for Entities and Individuals</strong></h3><p>These conditions are necessary for compliance and can't be significantly simplified without potentially excluding required data.</p><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-E.Excluding&#39;StandardBrokingService&#39;Portfolios"><strong>E. Excluding 'Standard Broking Service' Portfolios</strong></h3><p>We added the new filtering condition at the end, incorporating it directly into the <code>WHERE</code> clause:</p><ul><li><p><strong>Exclude</strong> records where:</p><ul><li><p><code>PortfolioServiceLevelName</code> is 'Standard Broking Service' <strong>AND</strong></p></li><li><p>The client <strong>does not have</strong> safe custody holdings <strong>AND</strong></p></li><li><p>The client <strong>does not have</strong> a Cash Management account.</p></li></ul></li></ul><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Subquery1:CheckforSafeCustodyHoldings"><strong>Subquery 1: Check for Safe Custody Holdings</strong></h3><ul><li><p><strong>Purpose:</strong> Determine if the client has any safe custody holdings.</p></li><li><p><strong>Modification:</strong> Adjusted to use <code>CombinedData.PortfolioNo</code> to match the current context.</p></li></ul><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Subquery2:CheckforCashManagementAccount"><strong>Subquery 2: Check for Cash Management Account</strong></h3><ul><li><p><strong>Purpose:</strong> Determine if the client has a Cash Management account.</p></li><li><p><strong>Modification:</strong> Created a subquery combining <code>AccountID</code>, <code>IndividualId</code>, <code>Regime</code>, and <code>PortfolioServiceLevelName</code> from both <code>#EntityData</code> and <code>#IndividualData</code> to check across all data.</p></li></ul><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-6.BenefitsoftheStreamlinedApproach"><strong>6. Benefits of the Streamlined Approach</strong></h2><ul><li><p><strong>Clarity:</strong> The filtering conditions are organized logically, making the SQL script easier to read and maintain.</p></li><li><p><strong>Efficiency:</strong> By incorporating the deletion conditions directly into the <code>WHERE</code> clause, we avoid unnecessary data manipulation steps.</p></li><li><p><strong>Non-Destructive:</strong> Filtering out unwanted data without deleting ensures data integrity and allows for easier adjustments if needed.</p></li></ul><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-7.TestingandValidation"><strong>7. Testing and Validation</strong></h2><ul><li><p><strong>Test the Revised Query:</strong> Run the revised SQL code in a development environment to ensure it returns the expected results.</p></li><li><p><strong>Validate the Data:</strong> Confirm that:</p><ul><li><p>Records with 'Standard Broking Service' portfolios <strong>without</strong> safe custody holdings and <strong>without</strong> a Cash Management account are excluded.</p></li><li><p>All other necessary data is included as per your reporting requirements.</p></li></ul></li><li><p><strong>Performance Considerations:</strong> Monitor the query execution time. If performance issues arise due to the subqueries, consider optimizing them (e.g., by indexing key columns or precomputing certain results).</p></li></ul><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-8.AdditionalRecommendations"><strong>8. Additional Recommendations</strong></h2><ul><li><p><strong>Use Variables for Dates:</strong> Instead of hardcoding dates like <code>'2025-03-31'</code>, use your <code>@PeriodEndDate</code> variable for consistency and ease of maintenance.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">AND t.settleDate &lt;= @PeriodEndDate</pre>
+</div></div></li><li><p><strong>Consider Creating Temporary Tables for Subqueries:</strong> If performance is an issue, you might precompute the results of the subqueries into temporary tables.</p></li></ul><hr/><p><strong>Please let me know if you need further clarification or assistance with any part of this process. I'm here to help you ensure that your SQL script is both efficient and meets your data processing requirements!</strong></p><hr/><h1 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-DetailedExplanationoftheFilteringConditionsintheWHEREClause">Detailed Explanation of the Filtering Conditions in the WHERE Clause</h1><hr/><p>In the provided SQL <code>WHERE</code> clause, several filtering conditions are applied to ensure that the data included in the final result set meets specific criteria relevant for FATCA and CRS reporting. These conditions are carefully crafted to:</p><ul><li><p><strong>Include</strong> only relevant portfolios and accounts that are reportable.</p></li><li><p><strong>Exclude</strong> portfolios and accounts that are not subject to reporting under FATCA or CRS.</p></li><li><p><strong>Ensure compliance</strong> with regulatory requirements by applying complex logic based on account types, regimes, TIN availability, citizenship status, and account activity.</p></li></ul><p>Below, I will explain each part of the <code>WHERE</code> clause in detail, focusing on both <strong>what</strong> each condition does and <strong>why</strong> it is included.</p><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-1.InitialCondition:WHERE1=1"><strong>1. Initial Condition: </strong><code>WHERE 1=1</code></h2><p><strong>What it does:</strong></p><ul><li><p><code>WHERE 1=1</code> is a common SQL practice used to simplify the addition of further <code>AND</code> conditions. Since <code>1=1</code> is always true, it doesn't filter out any rows.</p></li></ul><p><strong>Why it's included:</strong></p><ul><li><p>It serves as a placeholder that allows for easier concatenation of additional <code>AND</code> conditions without worrying about syntax errors or the need to handle the first condition differently.</p></li></ul><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-2.PortfolioStatusandDateConditions"><strong>2. Portfolio Status and Date Conditions</strong></h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">(
+    PortfolioServiceStatus NOT IN (&#39;Closed&#39;)
+    OR
+    (PortfolioServiceStatus = &#39;Closed&#39; AND dsl_CloseDate BETWEEN &#39;2024-04-01&#39; AND &#39;2025-03-31&#39;)
+)
+AND dsl_inceptiondate &lt;= &#39;2025-03-31&#39;</pre>
+</div></div><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:"><strong>What it does:</strong></h3><ul><li><p><strong>Includes portfolios that are active or were closed during the reporting period:</strong></p><ul><li><p><strong>Active portfolios:</strong> <code>PortfolioServiceStatus NOT IN ('Closed')</code></p></li><li><p><strong>Portfolios closed within the reporting period:</strong> <code>(PortfolioServiceStatus = 'Closed' AND dsl_CloseDate BETWEEN '2024-04-01' AND '2025-03-31')</code></p></li></ul></li><li><p><strong>Ensures that only portfolios opened on or before the reporting period end date are included:</strong></p><ul><li><p><code>dsl_inceptiondate &lt;= '2025-03-31'</code></p></li></ul></li></ul><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:"><strong>Why it's included:</strong></h3><ul><li><p><strong>Relevance:</strong> To focus on portfolios that are relevant for the current reporting period, including those that were closed during the period.</p></li><li><p><strong>Compliance:</strong> Excluding portfolios closed before the reporting period or opened after ensures that reporting obligations are met accurately.</p></li><li><p><strong>Date Constraints:</strong> By limiting portfolios to those with an inception date on or before the end date, we avoid including future accounts not relevant to the current period.</p></li></ul><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-3.RegimeConditions"><strong>3. Regime Conditions</strong></h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">AND Regime IS NOT NULL</pre>
+</div></div><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.1"><strong>What it does:</strong></h3><ul><li><p><strong>Includes only records where the </strong><code>Regime</code> is specified (not NULL).</p></li></ul><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.1"><strong>Why it's included:</strong></h3><ul><li><p><strong>Mandatory Field:</strong> The <code>Regime</code> field indicates under which regulatory framework (e.g., FATCA, CRS) the account falls.</p></li><li><p><strong>Filtering:</strong> Excluding records without a specified regime avoids processing irrelevant or incomplete data.</p></li></ul><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-4.ExcludeNon-ReportablePortfoliosBasedonRegimeandServiceLevel"><strong>4. Exclude Non-Reportable Portfolios Based on Regime and Service Level</strong></h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">AND (
+    (Regime = &#39;FATCA&#39; AND ISNULL(PortfolioServiceLevelName, &#39;&#39;) NOT IN (&#39;&#39;, &#39;QuayStreet KiwiSaver Scheme&#39;, &#39;Craigs KiwiSaver&#39;, &#39;superSTART&#39;, &#39;Craigs Super&#39;))
+    OR
+    (Regime IN (&#39;CRS&#39;, &#39;FATCA_CRS&#39;) AND ISNULL(PortfolioServiceLevelName, &#39;&#39;) NOT IN (&#39;&#39;, &#39;QuayStreet KiwiSaver Scheme&#39;, &#39;Craigs KiwiSaver&#39;))
+)</pre>
+</div></div><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.2"><strong>What it does:</strong></h3><ul><li><p><strong>For FATCA:</strong></p><ul><li><p>Excludes portfolios with <code>PortfolioServiceLevelName</code> in <code>('', 'QuayStreet KiwiSaver Scheme', 'Craigs KiwiSaver', 'superSTART', 'Craigs Super')</code>.</p></li></ul></li><li><p><strong>For CRS and FATCA_CRS:</strong></p><ul><li><p>Excludes portfolios with <code>PortfolioServiceLevelName</code> in <code>('', 'QuayStreet KiwiSaver Scheme', 'Craigs KiwiSaver')</code>.</p></li></ul></li></ul><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.2"><strong>Why it's included:</strong></h3><ul><li><p><strong>Non-Reportable Portfolios:</strong> Certain portfolios are exempt from reporting under specific regimes.</p></li><li><p><strong>Efficiency:</strong> By excluding these portfolios early, we reduce unnecessary processing.</p></li><li><p><strong>Regulatory Compliance:</strong> Ensures that only portfolios subject to FATCA or CRS reporting are included.</p></li></ul><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-5.Exclude&#39;EstateWinding-Up&#39;Entities"><strong>5. Exclude 'Estate Winding-Up' Entities</strong></h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">AND TradingEntityType &lt;&gt; &#39;Estate Winding-Up&#39;</pre>
+</div></div><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.3"><strong>What it does:</strong></h3><ul><li><p><strong>Excludes entities where </strong><code>TradingEntityType</code> is 'Estate Winding-Up'.</p></li></ul><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.3"><strong>Why it's included:</strong></h3><ul><li><p><strong>Exemption:</strong> Entities involved in estate winding-up are typically not reportable.</p></li><li><p><strong>Relevance:</strong> Including such entities could lead to incorrect reporting and potential compliance issues.</p></li></ul><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-6.ApplyComplexFilteringforEntitiesandIndividuals"><strong>6. Apply Complex Filtering for Entities and Individuals</strong></h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">AND (
+    -- Conditions for Entities
+    (
+        ... -- Conditions for Entities
+    )
+    OR
+    -- Conditions for Individuals
+    (
+        ... -- Conditions for Individuals
+    )
+)</pre>
+</div></div><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.4"><strong>What it does:</strong></h3><ul><li><p><strong>Separately applies specific inclusion criteria for entities and individuals.</strong></p></li><li><p>**Ensures that only accounts meeting certain conditions are included, based on factors like account type, regime, TIN availability, and citizenship status.</p></li></ul><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.4"><strong>Why it's included:</strong></h3><ul><li><p><strong>Tailored Filtering:</strong> Entities and individuals have different reporting requirements.</p></li><li><p><strong>Accuracy:</strong> Ensures that only reportable accounts are included, avoiding false positives or negatives.</p></li></ul><hr/><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-6.1.ConditionsforEntities"><strong>6.1. Conditions for Entities</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">(
+    AccountType IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;)
+    AND Regime IN (&#39;FATCA&#39;, &#39;CRS&#39;, &#39;FATCA_CRS&#39;)
+    AND (
+        ISNULL(cip_Identification, &#39;&#39;) &lt;&gt; &#39;&#39; -- Entity TIN is provided
+        OR (PassiveActive IS NULL OR PassiveActive != &#39;Active&#39;) -- Entity is passive or PassiveActive is null
+    )
+    AND -- (Additional conditions for roles and ownership)
+    -- ...
+    AND (
+        (
+            ISNULL(cip_Identification, &#39;&#39;) &lt;&gt; &#39;&#39; -- TIN is provided
+            AND ISNULL(USCitizensforTaxPurposes_acc, 1) &lt;&gt; 2 -- US Citizenship not explicitly &#39;No&#39;
+        )
+        OR
+        ISNULL(cip_Identification, &#39;&#39;) = &#39;&#39; -- TIN is not provided
+    )
+)</pre>
+</div></div><h4 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.5"><strong>What it does:</strong></h4><ul><li><p><strong>Includes entities that:</strong></p><ul><li><p>Are of type 'Layered Entity' or 'Normal Entity'.</p></li><li><p>Fall under 'FATCA', 'CRS', or 'FATCA_CRS' regimes.</p></li><li><p>Have a TIN provided or are passive (not active).</p></li><li><p>Meet additional role and ownership conditions (omitted for brevity).</p></li><li><p>Do not have US citizenship explicitly marked as 'No' when a TIN is provided.</p></li></ul></li></ul><h4 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.5"><strong>Why it's included:</strong></h4><ul><li><p><strong>Regulatory Requirements:</strong> Entities with TINs or passive entities may be reportable.</p></li><li><p><strong>Citizenship Confirmation:</strong> Ensures entities that have not denied US citizenship and have provided a TIN are included.</p></li><li><p><strong>Avoiding False Exclusions:</strong> By checking for explicit 'No' responses, we avoid excluding entities that should be reported.</p></li></ul><hr/><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-6.2.ConditionsforIndividuals"><strong>6.2. Conditions for Individuals</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">(
+    AccountType IN (&#39;Multiple TINs Individual&#39;, &#39;Single TIN Individual&#39;)
+    AND (
+        ISNULL(cip_Identification, &#39;&#39;) &lt;&gt; &#39;&#39; -- Individual TIN is provided
+        OR (PassiveActive IS NULL OR PassiveActive != &#39;Active&#39;) -- Account is passive or PassiveActive is null
+    )
+    AND (
+        (Regime IN (&#39;FATCA&#39;, &#39;FATCA_CRS&#39;) AND (
+            (ISNULL(cip_Identification, &#39;&#39;) &lt;&gt; &#39;&#39; AND ISNULL(USCitizensforTaxPurposes_ind, 1) &lt;&gt; 2)
+            OR ISNULL(cip_Identification, &#39;&#39;) = &#39;&#39;
+        ))
+        OR
+        Regime = &#39;CRS&#39;
+    )
+)</pre>
+</div></div><h4 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.6"><strong>What it does:</strong></h4><ul><li><p><strong>Includes individuals that:</strong></p><ul><li><p>Are of type 'Multiple TINs Individual' or 'Single TIN Individual'.</p></li><li><p>Have a TIN provided or are passive.</p></li><li><p>For FATCA and FATCA_CRS regimes:</p><ul><li><p>Have not explicitly stated 'No' to US citizenship when a TIN is provided.</p></li><li><p>Or have not provided a TIN.</p></li></ul></li><li><p>For CRS regime:</p><ul><li><p>Are included regardless of US citizenship status.</p></li></ul></li></ul></li></ul><h4 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.6"><strong>Why it's included:</strong></h4><ul><li><p><strong>Compliance:</strong> Ensures individuals reportable under FATCA or CRS are included.</p></li><li><p><strong>Citizenship Confirmation:</strong> Excludes individuals who have explicitly denied US citizenship when a TIN is provided, to prevent incorrect reporting.</p></li><li><p><strong>Inclusivity under CRS:</strong> CRS may require reporting regardless of US citizenship.</p></li></ul><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-7.Exclude&#39;StandardBrokingService&#39;PortfolioswithoutSafeCustodyHoldingsandwithoutCashManagementAccount"><strong>7. Exclude 'Standard Broking Service' Portfolios without Safe Custody Holdings and without Cash Management Account</strong></h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">AND NOT (
+    PortfolioServiceLevelName = &#39;Standard Broking Service&#39;
+    AND NOT EXISTS (
+        -- Subquery 1: Check for Safe Custody Holdings
+        ...
+    )
+    AND NOT EXISTS (
+        -- Subquery 2: Check for Cash Management Account
+        ...
+    )
+)</pre>
+</div></div><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.7"><strong>What it does:</strong></h3><ul><li><p><strong>Excludes 'Standard Broking Service' portfolios where the client:</strong></p><ul><li><p>Does <strong>not</strong> have any safe custody holdings.</p></li><li><p>Does <strong>not</strong> have a Cash Management account.</p></li></ul></li></ul><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.7"><strong>Why it's included:</strong></h3><ul><li><p><strong>Relevance:</strong> Clients without safe custody holdings or cash management accounts in 'Standard Broking Service' are typically not reportable.</p></li><li><p><strong>Efficiency:</strong> Reduces unnecessary data processing by excluding non-reportable accounts.</p></li><li><p><strong>Compliance:</strong> Ensures reporting focuses on clients with reportable financial activity.</p></li></ul><hr/><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-7.1.Subquery1:CheckforSafeCustodyHoldings"><strong>7.1. Subquery 1: Check for Safe Custody Holdings</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">NOT EXISTS (
+    SELECT 1
+    FROM [AACARPTSRV].[fusion].[dbo].[Trn] t
+    JOIN [AACARPTSRV].[fusion].[dbo].[Portfolio] p ON t.portfolioID = p.portfolioID
+    JOIN [AACARPTSRV].[fusion].[dbo].[Drum] d ON p.drumID = d.drumID
+    WHERE t.holdingTypeID = 3270 -- Safe Custody Nominee
+        AND t.trnStatusID = 502
+        AND t.settleDate &lt;= &#39;2025-03-31&#39; -- Reporting period end date
+        AND d.code COLLATE DATABASE_DEFAULT = CombinedData.PortfolioNo COLLATE DATABASE_DEFAULT
+    GROUP BY d.code
+    HAVING SUM(t.nominal) &gt; 0
+)</pre>
+</div></div><h4 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.8"><strong>What it does:</strong></h4><ul><li><p><strong>Determines if the client has any safe custody holdings:</strong></p><ul><li><p>Filters transactions with <code>holdingTypeID = 3270</code> (safe custody holdings).</p></li><li><p>Considers only transactions with status <code>trnStatusID = 502</code>.</p></li><li><p>Includes transactions settled on or before the reporting end date.</p></li><li><p>Matches the portfolio code with the current record.</p></li><li><p>Groups by portfolio code and checks if the total nominal amount is positive.</p></li></ul></li></ul><h4 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.8"><strong>Why it's included:</strong></h4><ul><li><p><strong>Exclude Clients Without Holdings:</strong> Clients without safe custody holdings are not engaging in activities reportable under FATCA or CRS.</p></li><li><p><strong>Accurate Reporting:</strong> Ensures that only clients with actual holdings are included.</p></li></ul><hr/><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-7.2.Subquery2:CheckforCashManagementAccount"><strong>7.2. Subquery 2: Check for Cash Management Account</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">AND NOT EXISTS (
+    SELECT 1
+    FROM (
+        SELECT AccountID, IndividualId, Regime, PortfolioServiceLevelName
+        FROM #EntityData
+        UNION ALL
+        SELECT AccountID, IndividualId, Regime, PortfolioServiceLevelName
+        FROM #IndividualData
+    ) AS AllData
+    WHERE AllData.AccountID = CombinedData.AccountID
+        AND AllData.IndividualId = CombinedData.IndividualId
+        AND AllData.Regime = CombinedData.Regime
+        AND AllData.PortfolioServiceLevelName = &#39;Cash Management&#39;
+)</pre>
+</div></div><h4 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.9"><strong>What it does:</strong></h4><ul><li><p><strong>Checks if the client has a 'Cash Management' account:</strong></p><ul><li><p>Combines account data from entities and individuals.</p></li><li><p>Filters records matching the current account ID, individual ID, and regime.</p></li><li><p>Checks if there is a 'Cash Management' portfolio.</p></li></ul></li></ul><h4 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.9"><strong>Why it's included:</strong></h4><ul><li><p><strong>Exclude Clients Without Cash Accounts:</strong> Clients without a cash management account may not be engaging in financial transactions that require reporting.</p></li><li><p><strong>Focus on Relevant Accounts:</strong> Ensures reporting efforts are concentrated on clients with reportable financial activities.</p></li></ul><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-8.CombiningtheConditionswithNOTOperator"><strong>8. Combining the Conditions with </strong><code>NOT</code> Operator</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">AND NOT (
+    -- Conditions
+)</pre>
+</div></div><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whatitdoes:.10"><strong>What it does:</strong></h3><ul><li><p><strong>Excludes records that meet all specified conditions within the </strong><code>NOT</code> block.</p></li><li><p><strong>Ensures that only relevant 'Standard Broking Service' portfolios are included in the report.</strong></p></li></ul><h3 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-Whyit&#39;sincluded:.10"><strong>Why it's included:</strong></h3><ul><li><p><strong>Precision:</strong> Using <code>NOT</code> in combination with <code>AND</code> and <code>NOT EXISTS</code> allows for precise exclusion of non-reportable accounts.</p></li><li><p><strong>Avoiding Over-Exclusion:</strong> By carefully crafting the conditions, we prevent the accidental exclusion of reportable accounts.</p></li></ul><hr/><h2 id="id-18.3Step6ExtremeComplexfitleringsLogcisReview-9.SummaryoftheFilteringLogic"><strong>9. Summary of the Filtering Logic</strong></h2><ul><li><p><strong>Portfolio and Date Constraints:</strong> Include portfolios active or closed within the reporting period.</p></li><li><p><strong>Regime Specification:</strong> Ensure only accounts with a specified reporting regime are included.</p></li><li><p><strong>Service Level Exclusions:</strong> Exclude portfolios not subject to reporting based on their service level and regime.</p></li><li><p><strong>Entity and Individual Conditions:</strong> Apply specific filters to entities and individuals to include only reportable accounts.</p></li><li><p><strong>Exclusion of Non-Reportable 'Standard Broking Service' Accounts:</strong> Exclude accounts without safe custody holdings or cash management accounts.</p></li><li><p><strong>Precision and Compliance:</strong> The combination of these filters ensures that the data set is accurate, relevant, and compliant with FATCA and CRS reporting requirements.</p></li></ul><hr/>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2763259969/2778103983.sql">Workscipt #5.1 FATCACRS 10 steps rebuild v2.sql</a> (binary/octet-stream)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

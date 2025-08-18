@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 01. Private Wealth Assistant Dashbaord Development Notes</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="3.-Project-related_2555609113.html">3. Project related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 01. Private Wealth Assistant Dashbaord Development Notes
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 17-07-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>This is the dev note for me to refresh wha ti have done in the Private Wealth Assistant Dashbaord.</p><h2 id="id-01.PrivateWealthAssistantDashbaordDevelopmentNotes-Background">Background</h2><p>We got this Private Wealth Assistant Dashbaord developed by someone called Amy from the PWA BA team.</p><p>But this dashbaord haven’t been maintained since 2021. which mean a lot of data souces are out dated.</p><p>the report itself are visually well deisgned but the backend is pretty messy i am tasked to refactored the</p><p>backend to avoid using all the Linked server especially not JOIN on any linked server datasouces.</p><p>there are a lot of count measures and calcaulted columns to use a switc hstatement to wap longer name into shorter name.</p><p>they also used a manually curated table called ““ to handle most of the tooltips.</p><p /><h2 id="id-01.PrivateWealthAssistantDashbaordDevelopmentNotes-WhatIhavedone:">What I have done:</h2><p>I researched what backgroud data they are actaully using</p><h3 id="id-01.PrivateWealthAssistantDashbaordDevelopmentNotes-Thereare3maindataSources:">There are 3 main data Sources:</h3><ol start="1"><li><p>Server=KAPSQLCRM\CRM;  DB=CRM_MSCRM (Dynamics 365 CRM report server and databases, mainly get the CRM details etc. humna names, addresses, their roles and theirs activities) &gt;&gt; most client related data are with this DB.</p></li><li><p>Server=<a class="external-link" href="http://cip-sql-reporting.nzxwt.nz" rel="nofollow">cip-sql-reporting.nzxwt.nz</a>;  DB=CRAIGS_PROD_MAIN (this is NZXWT report server it contains the NZX wealth Technology orders and treansactional data, lowest grain is at the portfolioService ID level)&gt;&gt; most data realted to this are Mystart/Super start these kind of samller cleitns data trasactions and their orders, the DB is fully managed by us.</p></li><li><p>Server=aacarptsrv; DB = ace (this is the Chemers report server conencted to a Database called ACE, this database contain trasactional data related to Craigs manged serveices like Stanadrd broking, IAS, IPS these group of people paid higher fee for craigs and the PWA gave them more attention in return)</p></li></ol><h3 id="id-01.PrivateWealthAssistantDashbaordDevelopmentNotes-SmallerSources:">Smaller Sources:</h3><ol start="1"><li><p>Server = SVSQLCIP\SQLCIP; DB = VCA, DB = DataServices, DB = formsdb</p></li></ol><p>from my udnersrtanding this SVSQLCIP\SQLCIP data had been migrated to another server.</p><p>but this server bascially are the dumping groud of all the DB that doesn' fit with the transactional main DB like NZXWT and ACE these kind of DB, it lowest rgain ususaly is the <strong>PortfolioNumber/ Portfolio/ ClientId (they are the same things)</strong></p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240715-215627.png" width="333" loading="lazy" src="attachments/2608332919/2608594958.png?width=333" data-image-src="attachments/2608332919/2608594958.png" data-height="248" data-width="333" data-unresolved-comment-count="0" data-linked-resource-id="2608594958" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240715-215627.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2608332919" data-linked-resource-container-version="10" data-media-id="b18c7d40-985f-424d-b64a-87464af465d5" data-media-type="file"></span><p /><p>OnLearn DataSource (this is the online learning paltforms that Craigs saved all their training data for new employee like anti mondey laundering etc. it is relateively simple it is using <strong>two APIs</strong> to managed the source data)</p><ul><li><p><a class="external-link" href="http://craigsip.onlearn.co.nz/onlearnLMS/ext/4" rel="nofollow">http://craigsip.onlearn.co.nz/onlearnLMS/ext/4</a> (Elearning Compulsory Modules Completion) &gt;&gt; lowest grain is the coure completion level doesn’t give you the details of which courses</p></li><li><p><a class="external-link" href="http://craigsip.onlearn.co.nz/onlearnLMS/ext/7" rel="nofollow">http://craigsip.onlearn.co.nz/onlearnLMS/ext/7</a>(ELearning Compulsory Modules Completion By Courses) &gt;lowest grain is the course compeltion level wit hindividaul cosures name &gt;&gt; it is really wierd set up , each staff got like muliple courses , and then they go a flag of courses compelted or not.</p></li></ul><div class="confluence-information-macro confluence-information-macro-information"><span class="aui-icon aui-icon-small aui-iconfont-info confluence-information-macro-icon"></span><div class="confluence-information-macro-body"><p>*** this <a class="external-link" href="http://craigsip.onlearn.co.nz/onlearnLMS/ext/7" rel="nofollow">ext/7</a> API sources data are out dated though for some reasons &gt;&gt; lastest data is at 2023/05/01, (i am writing this at 2024/07/16), we have requeted the<span style="background-color: rgb(254,222,200);"> onlearn to investigate but not sure what resposne they would comes back</span></p></div></div><p /><h3 id="id-01.PrivateWealthAssistantDashbaordDevelopmentNotes-TableLevelDetailsandWalkthough:">Table Level Details and Walkthough:</h3><p>Using these data sources there are 39 tables (fact and dim), i have grouped them into fodler like below better Understadning. i just highlighted the important one for future reference.</p><ol start="1"><li><p>NZXWT Optimisation (this group optimised by jackson to improve performance, in the previous code it si linked server joining 2 millions on 2 millions rows so it alwasy server side times out, due to using linked servers in a Join) &gt;&gt; i have managedto join them using Power Query Instead, NZXWT_Orders Joins on #CRM_Details</p></li></ol><p>they joined on this <strong><span style="background-color: rgb(211,241,167);">PortfolioServiceID String</span></strong> which casued slow performance, but it seems these are the only joinable key fot these two Data sources <br/></p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240715-221206.png" width="736" loading="lazy" src="attachments/2608332919/2608726027.png?width=736" data-image-src="attachments/2608332919/2608726027.png" data-height="683" data-width="1019" data-unresolved-comment-count="0" data-linked-resource-id="2608726027" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240715-221206.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2608332919" data-linked-resource-container-version="10" data-media-id="8ea264c6-b549-4f75-9401-e0d1a83df3a3" data-media-type="file"></span><p /><ol start="2"><li><p>SmartSheet ELearning (Onlearn API sources)</p></li><li><p>PWA Open Activities Owner or Assigned to Others (lowest Grain is the PWA full name)</p></li></ol><ul><li><p>they are the exact same tables but just one table for a view fot the open Dynamic CRM activies that owned by the PWA, </p></li><li><p>and then anotehr view is for filtering on Dynamic CRM activies that assigned By the  PWA to others people)</p></li></ul><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240715-213633.png" width="543" loading="lazy" src="attachments/2608332919/2608332945.png?width=543" data-image-src="attachments/2608332919/2608332945.png" data-height="509" data-width="543" data-unresolved-comment-count="0" data-linked-resource-id="2608332945" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240715-213633.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2608332919" data-linked-resource-container-version="10" data-media-id="57d0efbb-5895-48ef-8933-f48e1b5ead58" data-media-type="file"></span><ol start="4"><li><p>Account Maintenance had 7 tables, it related to all the subsets from the CRM, they are measures a specific sets of clients by Accounts<br/></p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240715-221803.png" width="466" loading="lazy" src="attachments/2608332919/2608955429.png?width=466" data-image-src="attachments/2608332919/2608955429.png" data-height="294" data-width="466" data-unresolved-comment-count="0" data-linked-resource-id="2608955429" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240715-221803.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2608332919" data-linked-resource-container-version="10" data-media-id="2e9a4462-761d-47a0-b1ca-797f21d4daf8" data-media-type="file"></span><p /></li></ol><p> 5. <strong>Clinet Base </strong></p><p>only have one related table &gt;&gt; <em><strong>C&amp;P Active Portfolios</strong></em> &gt;&gt; i am not really sure what C&amp;P mean in this context, it is recommende as descritpive as possible in the future dev.</p><p><strong><span style="background-color: rgb(211,241,167);">Portfolio Service Name and Trading Entity</span></strong> seems to have a similar level of grain i don’t udnerstand why the yneed these 2 columns either.</p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240715-222154.png" width="760" loading="lazy" src="attachments/2608332919/2608791579.png?width=760" data-image-src="attachments/2608332919/2608791579.png" data-height="259" data-width="1219" data-unresolved-comment-count="0" data-linked-resource-id="2608791579" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240715-222154.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2608332919" data-linked-resource-container-version="10" data-media-id="efcdc4db-fd2e-4923-ab72-b6e4c2b5f5fa" data-media-type="file"></span><p>i think by looking at the reports it is a view for the PWA to look at what client they have across different systems??</p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240715-222426.png" width="760" loading="lazy" src="attachments/2608332919/2608758803.png?width=760" data-image-src="attachments/2608332919/2608758803.png" data-height="939" data-width="1563" data-unresolved-comment-count="0" data-linked-resource-id="2608758803" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240715-222426.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2608332919" data-linked-resource-container-version="10" data-media-id="6d72b7ef-1f90-4f05-bc86-95b1bc35a84d" data-media-type="file"></span><p /><ol start="6"><li><p>Onboarding (for PWA client onbarding??)</p></li></ol><p>from my understading the cleint onboading had a whole tea mt omeanully check passports and stuff etc.</p><p>probbaly giving a Primary Assitant a view to understad how many peopke arfe on beading and what other actions are required</p><p>it seems really manual process (potential for improvement) </p><p>it is records the communciation with onebaring team with the PWA, </p><p>CRT??? = Clients Records team now is Onbarding Team &gt;&gt; Responsible for onboarding new clients</p><p>Onboearing tab &gt;&gt; seems some Ourdated data &gt;&gt; it is outdate beacsure athere is a visal level filer on the 2022</p><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240715-225031.png" width="503" loading="lazy" src="attachments/2608332919/2608824343.png?width=503" data-image-src="attachments/2608332919/2608824343.png" data-height="361" data-width="503" data-unresolved-comment-count="0" data-linked-resource-id="2608824343" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240715-225031.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2608332919" data-linked-resource-container-version="10" data-media-id="0d605cdf-6810-42d7-b9b6-c588ee5054ca" data-media-type="file"></span><p /><p>Not linked date to the Created date it is because there are filters contex blocking the created date if connectione made.</p><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240715-225131.png" width="378" loading="lazy" src="attachments/2608332919/2609184769.png?width=378" data-image-src="attachments/2608332919/2609184769.png" data-height="439" data-width="378" data-unresolved-comment-count="0" data-linked-resource-id="2609184769" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240715-225131.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2608332919" data-linked-resource-container-version="10" data-media-id="51bad434-799e-4ebd-830b-aaaf994df324" data-media-type="file"></span><ol start="7"><li><p>Team Hierachy is Important (it serves as the main Dim table for dealing with all the messy team struture)</p></li></ol><p>i learn from Chris that the team strute are not linear, i draw a graph by hand </p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="IMG20240716112317.jpg" width="760" loading="lazy" src="attachments/2608332919/2608824362.jpg?width=760" data-image-src="attachments/2608332919/2608824362.jpg" data-height="4624" data-width="3468" data-unresolved-comment-count="0" data-linked-resource-id="2608824362" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="IMG20240716112317.jpg" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/jpeg" data-linked-resource-container-id="2608332919" data-linked-resource-container-version="10" data-media-id="1bb53c86-b685-491a-b260-941218da95fb" data-media-type="file"></span><ol start="8"><li><p>ACE Orders Optimisation<br/>this one mainly just optimised the Chemlers reports servers join with the CRM</p></li><li><p>Forms DB</p></li></ol><p>it is an access database build in old time <a href="https://craigsip.atlassian.net/wiki/spaces/ARCH/pages/2285994012/Forms+DB" data-linked-resource-id="2285994012" data-linked-resource-version="1" data-linked-resource-type="page">Forms DB</a> </p><p>** it would be replaced and removed (<em>FormsDB is being toasted.</em>)</p><p>the backend is appending a few subset into a main set &gt;&gt; (Instruction)</p><ul><li><p><em>-- ACE JOURNAL TRANSFER </em></p></li><li><p><em>-- CMT Deposit from ledger (</em>Craigs Investment Partners Cash Management Trust Limited (CMT)</p></li><li><p><em>-- CMT Journal Transfer (</em>Craigs Investment Partners Cash Management Trust Limited (CMT)</p></li><li><p><em>--CMT Telegraphic Transfer (</em>Craigs Investment Partners Cash Management Trust Limited (CMT)</p></li><li><p><em>--CMT Term Deposit  (</em>Craigs Investment Partners Cash Management Trust Limited (CMT)</p></li><li><p><em>--CMT Withdrawl to ACE Ledger  (</em>Craigs Investment Partners Cash Management Trust Limited (CMT)</p></li><li><p><em>--Cash Travel Card Request  (</em>Craigs Investment Partners Cash Management Trust Limited (CMT)</p></li><li><p><em>--12A Request </em></p></li><li><p><em>--FX Instruction </em></p></li><li><p><em>--Settlement Instruction - Domestic </em></p></li><li><p><em>--Settlement Instruction - Foreign </em></p></li></ul><ol start="10"><li><p>Portfolio Activities<br/>From SQLCIP and CRM, records different Portfolio Activities for team<br/><br/><br/></p></li><li><p><span style="background-color: rgb(211,241,167);">NonCompliant TEs</span> This only used at the summary page, data souces from CRM</p></li></ol><p>learning from Researching the CRM based on the <span style="background-color: rgb(211,241,167);">NonCompliant TEs</span> source query</p><h2 id="id-01.PrivateWealthAssistantDashbaordDevelopmentNotes-ImportantConceptsfromCRM:">Important Concepts from CRM:</h2><p>A. there is a table called <a href="https://craigsip.atlassian.net/wiki/spaces/CRM/pages/29261940/Portfolio+Service+Level" data-linked-resource-id="29261940" data-linked-resource-version="2" data-linked-resource-type="page">Portfolio Service Level</a> </p><p><strong>The level of service (or &quot;product&quot;) given to a client's </strong><a href="https://craigsip.atlassian.net/wiki/spaces/CRM/pages/21332370" rel="nofollow"><strong>Portfolio Service</strong></a><strong> to manage it's fee levels, among other settings.</strong></p><p>Service Levels while not strictly matching CIP's range of products 1-for-1 are as close enough to think of as what type of service we as a company will apply to the assets inside</p><p>This is an important entity and contains links to outside services, eg. Chelmer and the AACPR databases</p><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="d36726a9-f8f6-4428-98d2-518745958eb0" class="confluenceTable"><tbody><tr><td data-highlight-colour="initial" class="confluenceTd"><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">dsl_portfolioservicelevel</pre>
+</div></div></td></tr></tbody></table></div><p>B. one level up is called <a href="https://craigsip.atlassian.net/wiki/spaces/CRM/pages/21332370/Portfolio+Service" data-linked-resource-id="21332370" data-linked-resource-version="4" data-linked-resource-type="page">Portfolio Service</a> </p><p>Portfolio Service (<code>dsl_portfolioservice</code>)</p><p>this table contain most of the data.</p><p>Explanation: <strong>A client's financial portfolio, containing </strong><a href="https://craigsip.atlassian.net/wiki/spaces/CRM/pages/21037394/Holding+entity" data-linked-resource-id="21037394" data-linked-resource-version="5" data-linked-resource-type="page"><strong>holding </strong></a><strong>information and a product (&quot;</strong><a href="https://craigsip.atlassian.net/wiki/spaces/CRM/pages/42205498" rel="nofollow"><strong>service level</strong></a><strong>&quot;) that governs how the assets are managed and charged for</strong></p><p>Multiple Portfolio Services can exist under a single <a href="https://craigsip.atlassian.net/wiki/spaces/CRM/pages/21299604" rel="nofollow">Portfolio</a></p><p><a href="https://craigsip.atlassian.net/wiki/spaces/CRM/pages/21037394/Holding+entity" data-linked-resource-id="21037394" data-linked-resource-version="5" data-linked-resource-type="page">Holdings </a>are assigned to a Portfolio Service as well as a Portfolio, this is because while a parent Portfolio can hold many assets / holdings they can be separated into different Portfolio Services for the purpose of having different management schemes (or products, called service levels) apply to individual assets</p><p>A Portfolio Service will usually have a <em><span style="background-color: rgb(211,241,167);">Portfolio Service ID</span></em>, which is unique, this ID is <span style="background-color: rgb(211,241,167);">sent up to the owning Trading Entity</span> as a value in <em>Portfolio ID's Searching</em> to assist finding accounts by <em><span style="background-color: rgb(211,241,167);">Portfolio Service ID</span></em></p><p><a href="https://craigsip.atlassian.net/wiki/spaces/CRM/pages/21168270" rel="nofollow">File Notes</a> and <a href="https://craigsip.atlassian.net/wiki/spaces/CRM/pages/20349215" rel="nofollow">Contract Notes</a> link here because these type of communications usually refer to a specific set of holdings that the Portfolio Service will be managing.</p><p /><p>C. <strong><span style="background-color: rgb(211,241,167);">An entity is a table of data within the CRM database</span></strong></p><span class="confluence-embedded-file-wrapper image-right-wrap-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-wrap-right" width="170" loading="lazy" src="attachments/2608332919/2610888723.png?width=170" data-image-src="attachments/2608332919/2610888723.png" data-height="163" data-width="169" data-unresolved-comment-count="0" data-linked-resource-id="2610888723" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20190326-213207.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2608332919" data-linked-resource-container-version="10" data-media-id="583e25f3-86af-46cf-b2cc-e22112f737d9" data-media-type="file"></span><p /><p>When a user is looking at a record in the CRM UI it is data retrieved behind-the-scenes from the entity that stores it. These are essentially tables, and can be accessed in much the same way as any SQL-based data structure eg. by query to a view or the table directly</p><p>Each entity has a unique number assigned to it, referenced by CRM as an <a href="https://craigsip.atlassian.net/wiki/spaces/CRM/pages/574947578" rel="nofollow">Object Type Code</a></p><p>Custom entities are prefixed with some letters, whereas out-of-the-box ones are not</p><p>For example, the entity <em>activitypointer </em>is for Activities and is part of standard CRM, whereas <em>cip_webroleallocation </em>has “cip” at the front to mean that a staff member of CIP added it</p><div class="panel" style="background-color: #EAE6FF;border-color: #998DD9;border-width: 1px;"><div class="panelContent" style="background-color: #EAE6FF;">
+<p>The prefixes in use are:</p><p>cip = Craigs</p><p>dsl = Datacom</p><p>cdi = Click Dimensions</p><p>xt = Xpertdocs</p>
+</div></div><p><strong>Each entity has a dedicated Confluence page, view the A-Z list on the left-hand-side of this page or search for the one you are looking for</strong></p><p /><hr/><h2 id="id-01.PrivateWealthAssistantDashbaordDevelopmentNotes-17.07.2024CurrentState:">17.07.2024 Current State:</h2><p>most of the data sources had been refactored and replaced the Smartsheets with APIs sources.</p><p>PWA dashbaords linked to 4 different tickets, chris mentioned need to talked to support manager to walk them through again.</p><p>I will do some verification check to make sure it work properly from the data side.</p><p /><hr/><p /><p /><p /><p /><p /><p /><p /><p /><p /><p /><p /><p /><h2 id="id-01.PrivateWealthAssistantDashbaordDevelopmentNotes-Instructions"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4d8" data-emoji-shortname=":blue_book:" data-emoji-fallback="\uD83D\uDCD8" src="images/icons/emoticons/72/1f4d8.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Instructions</h2><p></p><ol start="1"><li><p></p></li><li><p></p></li><li><p></p></li></ol><div class="confluence-information-macro confluence-information-macro-information"><span class="aui-icon aui-icon-small aui-iconfont-info confluence-information-macro-icon"></span><div class="confluence-information-macro-body"><p>Highlight important information in a panel like this one. To edit this panel's color or style, select one of the options in the menu.</p></div></div><h2 id="id-01.PrivateWealthAssistantDashbaordDevelopmentNotes-Relatedarticles"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4cb" data-emoji-shortname=":clipboard:" data-emoji-fallback="\uD83D\uDCCB" src="images/icons/emoticons/72/1f4cb.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Related articles</h2><p></p>
+
+
+
+
+
+
+
+
+
+
+
+    
+    <ul class="content-by-label">
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="3021504564" data-linked-resource-type="page" data-linked-resource-version="3" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/3021504564/Power+BI+Dynamic+Subscriptions+Set+Up+Guide">Power BI Dynamic Subscriptions Set Up Guide</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2698248202" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2698248202/10.+Known+Issues+-+Ace+Holdings+Data+at+Month+End">10. Known Issues - Ace Holdings Data at Month End</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2703098031" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2703098031/12.+Minors+turning+18">12. Minors turning 18</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2702376988" data-linked-resource-type="page" data-linked-resource-version="5" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2702376988/11.+CRM+advisers+and+PWAs+complex+relationships">11. CRM advisers and PWAs complex relationships</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2688352258" data-linked-resource-type="page" data-linked-resource-version="7" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2688352258/09.+CIP+0209441Cashman+accounts+balance+report+By+Brenden">09. CIP:0209441Cashman accounts balance report By Brenden</a>
+                        
+                        
+                    </div>
+    </li>
+    </ul>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2608332919/2608300195.png">image-20240715-213625.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2608332919/2608332945.png">image-20240715-213633.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2608332919/2608594958.png">image-20240715-215627.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2608332919/2608726027.png">image-20240715-221206.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2608332919/2608955429.png">image-20240715-221803.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2608332919/2608726051.png">image-20240715-222149.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2608332919/2608791579.png">image-20240715-222154.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2608332919/2608758803.png">image-20240715-222426.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2608332919/2608824343.png">image-20240715-225031.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2608332919/2609184769.png">image-20240715-225131.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2608332919/2608824362.jpg">IMG20240716112317.jpg</a> (image/jpeg)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2608332919/2610888723.png">image-20190326-213207.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:52</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 18.10 Step 11.2 FATCA final code</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="2762113156.html">18. Rebuild FATCA/CRS step 1 - 10</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 18.10 Step 11.2 FATCA final code
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 29-10-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Certainly! Below is the audited and enhanced version of <strong>Step 11.1: FATCA Final Select</strong>. I've retained your original comments and added detailed FATCA-specific audit comments to improve clarity and understanding, especially for new developers. The script is organized into clear sections with comprehensive explanations to facilitate easier comprehension and maintenance.</p><hr/><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">---- Step 11.1: FATCA Final Select 
+---- In Anease&#39;s original scripts, this was Step 7 FATCA Query for IHS Markit (Now S&amp;P Global) for FATCA compliance
+----
+---- Who is Anease?
+---- Anease is the original developer whose code I worked on. I suspect that Anease had access to view the code logic, but from the Entity Views level, some inaccuracies were present.
+---- It is challenging to explain what went wrong, which is why I decided to redo the entire code from CRM.
+----
+---- Note to Developers:
+---- If you are a developer reading this, please revisit Step 6. It will help you test the data using the &#39;narrative&#39; field I created to understand the underlying processes better.
+
+-- Check and drop the temporary table if it already exists to avoid conflicts
+IF OBJECT_ID(&#39;tempdb..##fatcafinalselect&#39;) IS NOT NULL
+    DROP TABLE ##fatcafinalselect;
+
+-- Final FATCA Data Selection with Simplified Logic
+-- This section selects and transforms data to comply with FATCA reporting requirements.
+
+SELECT 
+    -- -------------------------------
+    -- 1. Operation and Reporting Details
+    -- ------------------------------- 
+    &#39;N&#39; AS &#39;Operation Type&#39;, -- Set to &#39;N&#39; for New File as per IDES 2.0 FATCA Account Import v3.19 requirement
+
+    &#39;NZ&#39; AS &#39;Reporting Jurisdiction Country Code&#39;, -- Hardcoded to New Zealand (NZ)
+
+    -- Concatenate AccountID and PortfolioNo to create a unique Recipient ID
+    (CONVERT(VARCHAR(MAX), ah.[AccountID]) + CONVERT(VARCHAR(MAX), ah.[PortfolioNo])) AS &#39;Recipient ID&#39;,
+
+    -- -------------------------------
+    -- 2. Reportable Account Type (Including Pooled Reporting) for FATCA
+    -- -------------------------------
+    CASE
+        -- For individual accounts
+        WHEN ah.[AccountType] IN (&#39;Single TIN Individual&#39;, &#39;Multiple TINs Individual&#39;)
+             AND ah.[TradingEntityType] IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;)
+        THEN &#39;4&#39; -- Specified Person - Individual (FATCA104)
+
+        -- For entity accounts with substantial U.S. owners/controlling persons
+        WHEN ah.[AccountType] IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;)
+             AND ah.[TradingEntityType] NOT IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;)
+             AND ah.dsl_BeneficialOwner = 1 -- Due to data quality issues in CRM, using dsl_BeneficiaryOwnership instead of SubstantialControllingInterest
+        THEN &#39;2&#39; -- Passive NFFE with Substantial U.S. Owners / Controlling Persons (FATCA102)
+
+        -- Handle unexpected cases
+        ELSE &#39;ERROR&#39;
+    END AS &#39;Reportable Account Type (Including Pooled Reporting)&#39;,
+
+    -- -------------------------------
+    -- 3. Filer / Sponsored Entity Information
+    -- -------------------------------
+    -- Concatenate ReportingEntityType with &#39;_FATCA&#39; to form the short name (e.g., CSL_FATCA)
+    CAST(ad.ReportingEntityType AS VARCHAR(10)) + &#39;_FATCA&#39; AS &#39;Filer / Sponsored Entity Short Name&#39;,
+
+    -- -------------------------------
+    -- 4. Account Number Details
+    -- -------------------------------
+    ad.[Account Number] AS &#39;Account Number&#39;, -- Portfolio number
+    ad.[Account Number Type] AS &#39;Account Number Type&#39;, -- Typically blank unless specified
+
+    -- -------------------------------
+    -- 5. Portfolio Service Level Information
+    -- -------------------------------
+    ad.PortfolioServiceLevelName AS &#39;PortfolioServiceLevelName&#39;, -- Not directly reported for FATCA
+    ad.ReportingEntityType, -- Not directly reported for FATCA
+
+    -- -------------------------------
+    -- 6. Account Descriptions and Statuses
+    -- -------------------------------
+    CASE
+        WHEN ISDATE(ad.[Closure Date]) = 1
+        THEN CASE
+                 WHEN CONVERT(DATETIME, ad.[Closure Date]) &lt; GETDATE()
+                 THEN &#39;True&#39;
+                 ELSE &#39;&#39;
+             END
+        ELSE &#39;&#39;
+    END AS &#39;Account Description&#39;, -- Indicates if the account was closed during the year
+
+    -- -------------------------------
+    -- 7. Account Holder Information and TINs
+    -- -------------------------------
+    -- Tax Jurisdiction Code
+    CASE 
+        WHEN cp.[AccountType] IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;) 
+            THEN &#39;NZ&#39; -- Entities are always reported under NZ jurisdiction
+        WHEN ah.[AccountType] = &#39;Single TIN Individual&#39; 
+            THEN &#39;US&#39; -- Specified US persons
+        WHEN ah.[AccountType] = &#39;Multiple TINs Individual&#39; 
+            THEN 
+                CASE 
+                    WHEN ah.TaxCountry1 = &#39;US&#39; 
+                        THEN &#39;US&#39; -- US tax residence
+                    ELSE &#39;&#39; -- Non-US tax residence
+                END
+    END AS &#39;Account Holder Tax Jurisdiction Code&#39;,
+
+    -- Tax Identification Number (TIN) for Account Holders
+    CASE 
+        WHEN ah.[AccountType] IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;) THEN 
+            -- Entity Account Holder TIN
+            CASE 
+                WHEN ah.[EntityTIN] IS NOT NULL THEN ah.[EntityTIN]
+                WHEN ah.[EntityTIN] IS NULL AND ah.[TaxCountry1] = &#39;US&#39; THEN &#39;999999999&#39; -- Placeholder for missing US Entity TIN
+                WHEN ah.[EntityTIN] IS NULL AND ah.[TaxCountry1] &lt;&gt; &#39;US&#39; THEN &#39;NA&#39; -- Not Available for non-US Entities
+                ELSE NULL  
+            END
+        ELSE
+            -- Individual Account Holder TIN
+            CASE
+                WHEN ah.TIN1 IS NOT NULL THEN ah.TIN1
+                WHEN ah.TIN1 IS NULL AND ah.[TaxCountry1] = &#39;US&#39; THEN &#39;999999999&#39; -- Placeholder for missing US Individual TIN
+                WHEN ah.TIN1 IS NULL AND ah.[TaxCountry1] &lt;&gt; &#39;US&#39; THEN &#39;NA&#39; -- Not Available for non-US Individuals
+                ELSE NULL 
+            END
+    END AS &#39;Account Holder TIN&#39;,
+
+    -- -------------------------------
+    -- 8. Issued By Country Codes
+    -- -------------------------------
+    ah.TaxCountry1 AS &#39;Account Holder TIN Issued By Country Code&#39;, -- Ensured all are US TINs in previous step
+
+    -- -------------------------------
+    -- 9. Account Holder Information Continued
+    -- -------------------------------
+    &#39;&#39; AS &#39;Account Holder Name Type&#39;, -- Default is blank
+
+    -- -------------------------------
+    -- 10. Account Holder Organization Details
+    -- -------------------------------
+    -- Organization Name for Entity Account Holders
+    CASE
+        WHEN ah.AccountType IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;)
+        THEN ah.[EntityName]
+        ELSE &#39;&#39;
+    END AS &#39;Account Holder Organization Name&#39;,
+
+    -- Leave additional organization-related fields empty
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Organization Name Type&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Preceding Title&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Title&#39;,
+
+    -- -------------------------------
+    -- 11. Account Holder Personal Details 
+    -- -------------------------------
+    ah.FirstName AS &#39;Account Holder First Name&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder First Name Type&#39;,
+
+    ISNULL(ah.MiddleName, &#39;&#39;) AS &#39;Account Holder Middle Name&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Middle Name Type&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Name Prefix&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Name Prefix Type&#39;,  
+
+    ah.LastName AS &#39;Account Holder Last Name&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Last Name Type&#39;,
+
+    -- Leave additional personal name fields empty
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Generation Identifier&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Suffix&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder General Suffix&#39;, 
+
+    -- -------------------------------
+    -- 12. Account Holder Address Details
+    -- -------------------------------
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Address Type&#39;, 
+    ISNULL(ah.[Res Country Code], &#39;&#39;) AS &#39;Account Holder Address Country Code&#39;,
+
+    -- Concatenate residential address lines into a single free-format address
+    ah.[ResidentialAddressLine1] + &#39; &#39; + 
+    ah.[ResidentialAddressLine2] + &#39; &#39; + 
+    ah.[ResidentialAddressLine3] + &#39; &#39; + 
+    ah.[ResidentialCity] + &#39; &#39; + 
+    ah.[ResidentialPostalCode] AS &#39;Account Holder Address Free&#39;, 
+
+    -- Fixed Address Components (Not used for FATCA)
+    CONVERT(VARCHAR(50), &#39;&#39;)  AS &#39;Account Holder Fixed Street&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed Building Identifier&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed Suite Identifier&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed Floor Identifier&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed District Name&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed Post Office Box&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed Postal Code&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed City&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed Subentity&#39;, 
+
+    -- Date of Birth
+    ISNULL(CONVERT(VARCHAR, ah.[DOB], 101), &#39;&#39;) AS &#39;Account Holder Birth Date&#39;,  
+
+    -- Leave non-FATCA related fields empty
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Nationality&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Country of Birth&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;POB City&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;POB CitySubentity&#39;, 
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;POB FormerCountryName&#39;, 
+
+    -- -------------------------------
+    -- 13. Substantial U.S. Owner&#39;s Information
+    -- -------------------------------
+    -- Substantial U.S. Owner&#39;s Type: Always &#39;1&#39; for Individual in NZ FATCA reporting
+    CASE
+        WHEN ah.[AccountType] IN (&#39;Single TIN Individual&#39;, &#39;Multiple TINs Individual&#39;)
+        THEN 1            
+        ELSE &#39;&#39;
+    END AS &#39;Substantial U.S. Owner&#39;&#39;s Type&#39;,
+
+    -- -------------------------------
+    -- 14. Substantial U.S. Owner / Controlling Person Tax Details
+    -- -------------------------------
+    -- Primary Controlling Person Tax Country Code with fallback to Residential Country Code
+    CASE
+        WHEN cp.TaxCountry1 = &#39;US&#39;
+        THEN &#39;US&#39;
+        ELSE &#39;&#39;
+    END AS &#39;Substantial U.S. Owner Tax Country Code&#39;, -- Should be 2-digit ISO code: &#39;US&#39; or blank
+
+    -- TIN for Substantial U.S. Owner / Controlling Person
+    ISNULL(cp.TIN1, &#39;&#39;) AS &#39;Substantial U.S. Owner / Controlling Person TIN&#39;,  
+
+    -- Issued By Country Codes for Controlling Person TINs
+    &#39;US&#39; AS &#39;Substantial U.S. Owner / Controlling Person TIN Issued By&#39;,
+
+    -- -------------------------------
+    -- 15. Substantial U.S. Owner / Controlling Person Personal Details
+    -- -------------------------------
+    &#39;&#39; AS &#39;Substantial US Owner Name Type&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person Organization Name&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person Organization Name Type&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person Preceding Title&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person Title&#39;, 
+
+    ISNULL(cp.FirstName, &#39;&#39;) AS &#39;Substantial U.S. Owner / Controlling Person First Name&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person First Name Type&#39;, 
+
+    ISNULL(cp.MiddleName, &#39;&#39;) AS &#39;Substantial U.S. Owner / Controlling Person Middle Name&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person Middle Name Type&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person Name Prefix&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person Name Prefix Type&#39;, 
+
+    ISNULL(cp.LastName, &#39;&#39;) AS &#39;Substantial U.S. Owner / Controlling Person Last Name&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person Last Name Type&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person Generation Identifier&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person Suffix&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person General Suffix&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person Address Type&#39;, 
+
+    ISNULL(cp.[Res Country Code], &#39;&#39;) AS &#39;Substantial U.S. Person Address Country Code&#39;, 
+
+    -- Concatenate residential address lines into a single free-format address
+    ISNULL(cp.[ResidentialAddressLine1], &#39;&#39;) + &#39; &#39; + 
+    ISNULL(cp.[ResidentialAddressLine2], &#39;&#39;) + &#39; &#39; + 
+    ISNULL(cp.[ResidentialAddressLine3], &#39;&#39;) + &#39; &#39; + 
+    ISNULL(cp.[ResidentialCity], &#39;&#39;) + &#39; &#39; + 
+    ISNULL(cp.[ResidentialPostalCode], &#39;&#39;) AS &#39;Substantial U.S. Owner / Controlling Person Address Free 1&#39;, 
+
+    -- Fixed Address Components (Not used for FATCA)
+    &#39;&#39; AS &#39;Substantial U.S. Person Fixed Street&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Person Fixed Building Identifier&#39;,
+    &#39;&#39; AS &#39;Substantial U.S. Person Fixed Suite Identifier&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Person Fixed Floor Identifier&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Person Fixed District Name&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Person Fixed Post Office Box&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Person Fixed Postal Code&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Person Fixed City&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Person Fixed Subentity&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person Nationality&#39;, 
+
+    -- Date of Birth for Substantial U.S. Owner / Controlling Person
+    ISNULL(CONVERT(VARCHAR, cp.[DOB], 101), &#39;&#39;) AS &#39;Substantial U.S. Owner / Controlling Person Birth Date&#39;,
+   
+    -- Leave non-FATCA related fields empty
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person POB City&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person POB CitySubentity&#39;,
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person Country of Birth&#39;, 
+    &#39;&#39; AS &#39;Substantial U.S. Owner / Controlling Person POB FormerCountryName&#39;,
+
+    -- -------------------------------
+    -- 16. Financial Information
+    -- -------------------------------
+    -- Account Balance: Set to 0 if balance is negative or zero
+    CASE 
+        WHEN ad.balance &lt;= 0 THEN 0 
+        ELSE ad.balance 
+    END AS &#39;Account Balance&#39;, 
+
+    ad.currency AS &#39;Account Currency Code&#39;, -- ISO currency code, all are NZD in our context
+
+    -- Interest: Set to 0 if interest is negative or zero
+    CASE 
+        WHEN ad.interest &lt;= 0 THEN 0 
+        ELSE ad.interest 
+    END AS &#39;Interest&#39;,
+
+    ad.currency AS &#39;Interest Currency Code&#39;, -- ISO currency code for Interest
+
+    &#39;&#39; AS &#39;Payment Type Description Interest&#39;,
+
+    -- Dividends related
+    CASE
+        WHEN ad.dividends &lt;= 0
+        THEN 0
+        ELSE ad.dividends
+    END AS &#39;Dividends&#39;, 
+    ad.currency AS &#39;Dividends Currency Code&#39;,
+
+    &#39;&#39; AS &#39;Payment Type Description Dividends&#39;,
+
+    -- Gross Proceeds/Redemptions
+    CASE
+        WHEN ad.grossprocredem &lt;= 0  -- Empty data should be 0
+        THEN 0
+        ELSE ad.grossprocredem
+    END AS &#39;Gross Proceeds_Redemptions&#39;, 
+
+    ad.currency AS &#39;Gross Proceeds_Redemptions Currency Code&#39;,
+
+    &#39;&#39; AS &#39;Payment Type Description Gross Proceeds_Redemptions&#39;, 
+    &#39;&#39; AS &#39;Other&#39;, 
+    &#39;&#39; AS &#39;Other Currency Code&#39;, 
+    &#39;&#39; AS &#39;Payment Type Description Other&#39;, 
+
+    &#39;&#39; AS &#39;Pooled Reporting Type&#39;, -- Populate for Account Holder type 7, not intended for Type 2 or Type 4
+    &#39;&#39; AS &#39;Number of Accounts&#39;, -- Populate for Account Holder type 7, not intended for Type 2 or Type 4
+
+    -- -------------------------------
+    -- 17. Aggregated Fields (Deliberately left empty)
+    -- -------------------------------
+    -- These fields are only required for Account Type 7: &quot;Non-Reporting IGA FFI&quot; and Pool Reporting Type 4: &quot;Non-Reporting IGA FFI&quot;
+    -- We do not have any accounts under Account Type 7 and Pool Reporting Type 4, so these fields are left empty
+    &#39;&#39; AS &#39;Aggregate Payment Amount&#39;, 
+    &#39;&#39; AS &#39;Aggregate Account Balance&#39;, 
+    &#39;&#39; AS &#39;Aggregate Account Interest&#39;, 
+    &#39;&#39; AS &#39;Aggregate Account Dividends&#39;, 
+    &#39;&#39; AS &#39;Aggregate Account Currency Code&#39;, 
+
+    -- -------------------------------
+    -- 18. Other Required Information
+    -- -------------------------------
+    &#39;&#39; AS &#39;Item Name&#39;, 
+    &#39;&#39; AS &#39;Item Content&#39;, 
+    &#39;&#39; AS &#39;Line of Business&#39;, 
+    &#39;&#39; AS &#39;Level 1&#39;, 
+    &#39;&#39; AS &#39;Level 2&#39;, 
+
+    -- Newly added fields in the IDES 2.0 audit, internal tags, do not submit to IRS
+    &#39;&#39; AS &#39;Business Unit&#39;,
+    &#39;&#39; AS &#39;Business Sub Unit&#39;,
+    &#39;&#39; AS &#39;Business Sub Unit 2&#39;,
+
+    -- Custom Fields (Leave empty as per current requirements)
+    &#39;&#39; AS &#39;Custom 1&#39;, 
+    &#39;&#39; AS &#39;Custom 2&#39;, 
+    &#39;&#39; AS &#39;Custom 3&#39;, 
+    &#39;&#39; AS &#39;Custom 4&#39;, 
+    &#39;&#39; AS &#39;Custom 5&#39;, 
+    &#39;&#39; AS &#39;Custom 6&#39;, 
+    &#39;&#39; AS &#39;Custom 7&#39;, 
+    &#39;&#39; AS &#39;Custom 8&#39;, 
+    &#39;&#39; AS &#39;Custom 9&#39;, 
+    &#39;&#39; AS &#39;Custom 10&#39;, 
+    &#39;&#39; AS &#39;Custom 11&#39;, 
+    &#39;&#39; AS &#39;Custom 12&#39;, 
+    &#39;&#39; AS &#39;Custom 13&#39;
+
+INTO ##fatcafinalselect
+
+FROM ##FATCAAccountDetails ad -- Account Details (Financial-related data)
+
+-- Explanation:
+-- The FATCA data is reported in the same row but has two different sections:
+-- 1. Account Holder sections with about 40 columns
+-- 2. Substantial U.S. Owner / Controlling Person sections with about 40 columns
+-- 3. Financial details section with some columns
+-- Therefore, we join the table twice to bring in details that report in the correct sections for FATCA.
+
+-- -------------------------------
+-- JOIN Operations
+-- -------------------------------
+
+-- Join with Account Holder Data (Individuals and Entities)
+LEFT JOIN [DataServices].FATCA.Stage_FATCAPivotedData_jf ah 
+    ON ad.[ee_uniqueID] = ah.[AccountID]
+    AND ad.IndividualId = ah.IndividualId
+    AND ad.[Account Number] = ah.[PortfolioNo] 
+    AND ad.PortfolioServiceLevelName = ah.PortfolioServiceLevelName
+    -- AND ah.AccountType IN (&#39;Multiple TINs Individual&#39;, &#39;Single TIN Individual&#39;) -- Commented out as per original script
+    -- Note: This join brings in Account Holder details for Individuals and Entities
+
+-- Join with Substantial U.S. Owner / Controlling Person Data (Entities Only)
+LEFT JOIN [DataServices].FATCA.Stage_FATCAPivotedData_jf cp 
+    ON ad.[ee_uniqueID] = cp.[AccountID]
+    AND ad.IndividualId = cp.IndividualId
+    AND ad.[Account Number] = cp.[PortfolioNo] 
+    AND ad.PortfolioServiceLevelName = cp.PortfolioServiceLevelName
+    AND cp.AccountType IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;)
+    -- Note: This join brings in Controlling Person details for Entity Account Holders
+
+-- -------------------------------
+-- 19. Filter Using Anease&#39;s Original Data Filter
+-- -------------------------------
+WHERE 1=1 
+    -- Exclude test or house accounts based on Account Number patterns
+    AND ad.[Account Number] NOT LIKE &#39;%dummy%&#39; 
+    AND ad.[Account Number] NOT LIKE &#39;OO%&#39; 
+    AND ad.[Account Number] NOT LIKE &#39;OM%&#39; 
+
+    -- Exclude specific transactions that are less than 50,000 when ReportingEntityType is &#39;CCM&#39;
+    AND (
+        ReportingEntityType &lt;&gt; &#39;CCM&#39; 
+        OR (
+            CAST(ad.balance AS INT) 
+            + CAST(ad.interest AS INT) 
+            + CAST(ad.dividends AS INT)
+            + CAST(ad.grossprocredem AS INT)
+        ) / 1.00 &gt;= 50000
+        -- @USDNZDFxRate &gt;= 50000 -- Commented out placeholder for potential FX rate filtering
+    )
+
+-- -------------------------------
+-- End of Step 11.1: FATCA Final Select
+-- -------------------------------</pre>
+</div></div><hr/><h3 id="id-18.10Step11.2FATCAfinalcode-DetailedBreakdownandEnhancements"><strong>Detailed Breakdown and Enhancements</strong></h3><ol start="1"><li><p><strong>General Structure and Comments:</strong></p><ul><li><p>The script is divided into numbered sections corresponding to the different parts of the FATCA reporting requirements.</p></li><li><p>Each section includes clear headers and detailed comments explaining the purpose and logic behind the SQL statements.</p></li><li><p>Original comments are preserved to maintain context and historical information about the code's development.</p></li></ul></li><li><p><strong>Operation and Reporting Details:</strong></p><ul><li><p>Sets up basic information such as Operation Type and Reporting Jurisdiction.</p></li><li><p><strong>Recipient ID</strong> is created by concatenating <code>AccountID</code> and <code>PortfolioNo</code> to ensure uniqueness.</p></li></ul></li><li><p><strong>Reportable Account Type:</strong></p><ul><li><p>Uses <code>CASE</code> statements to determine the reportable account type based on account and entity types.</p></li><li><p>Handles individual and entity accounts, setting specific codes (<code>'4'</code> for individuals, <code>'2'</code> for entities with substantial U.S. owners).</p></li><li><p>Includes an <code>'ERROR'</code> fallback for unexpected cases to facilitate debugging.</p></li></ul></li><li><p><strong>Filer / Sponsored Entity Information:</strong></p><ul><li><p>Constructs the filer/sponsored entity short name by appending <code>'_FATCA'</code> to the <code>ReportingEntityType</code>.</p></li></ul></li><li><p><strong>Account Number Details:</strong></p><ul><li><p>Directly maps <code>Account Number</code> and <code>Account Number Type</code> from the source.</p></li></ul></li><li><p><strong>Portfolio Service Level Information:</strong></p><ul><li><p>Includes <code>PortfolioServiceLevelName</code> and <code>ReportingEntityType</code> for completeness, though they're not directly used in FATCA reporting.</p></li></ul></li><li><p><strong>Account Descriptions and Statuses:</strong></p><ul><li><p>Determines if an account was closed during the year by checking the <code>Closure Date</code>.</p></li></ul></li><li><p><strong>Account Holder Information and TINs:</strong></p><ul><li><p><strong>Tax Jurisdiction Code:</strong> Differentiates between entities (<code>'NZ'</code>) and individuals (<code>'US'</code> or blank based on tax country).</p></li><li><p><strong>Account Holder TIN:</strong> Assigns TINs with specific rules, including placeholders for missing TINs (<code>'999999999'</code> for US entities/individuals and <code>'NA'</code> for non-US).</p></li></ul></li><li><p><strong>Issued By Country Codes:</strong></p><ul><li><p>Assigns the country code based on <code>TaxCountry1</code>, ensuring all TINs are US-issued as per prior data preparation.</p></li></ul></li><li><p><strong>Account Holder Organization Details:</strong></p><ul><li><p>Populates organization names for entity account holders, leaving other related fields blank.</p></li></ul></li><li><p><strong>Account Holder Personal Details:</strong></p><ul><li><p>Maps personal names and handles cases where certain name parts may be missing.</p></li><li><p>Leaves non-essential fields blank to adhere to FATCA requirements.</p></li></ul></li><li><p><strong>Account Holder Address Details:</strong></p><ul><li><p>Concatenates residential address lines into a free-format address.</p></li><li><p>Leaves fixed address components blank as they're not required for FATCA.</p></li></ul></li><li><p><strong>Substantial U.S. Owner's Information:</strong></p><ul><li><p>Sets the owner type to <code>'1'</code> for individuals, as per New Zealand FATCA reporting standards.</p></li></ul></li><li><p><strong>Substantial U.S. Owner / Controlling Person Tax Details:</strong></p><ul><li><p>Assigns tax country codes and TINs for controlling persons, ensuring compliance with FATCA's requirement for US-issued TINs.</p></li></ul></li><li><p><strong>Substantial U.S. Owner / Controlling Person Personal Details:</strong></p><ul><li><p>Maps personal details for controlling persons, leaving non-essential fields blank.</p></li></ul></li><li><p><strong>Financial Information:</strong></p><ul><li><p>Ensures financial figures like balance, interest, dividends, and gross proceeds/redemptions are non-negative.</p></li><li><p>Assigns currency codes, with all transactions in NZD as per context.</p></li></ul></li><li><p><strong>Aggregated Fields:</strong></p><ul><li><p>Leaves aggregated fields empty as they're only relevant for specific account types not present in the current dataset.</p></li></ul></li><li><p><strong>Other Required Information:</strong></p><ul><li><p>Leaves additional required fields empty, aligning with current reporting needs.</p></li></ul></li><li><p><strong>Filter Using Anease's Original Data Filter:</strong></p><ul><li><p>Excludes test or house accounts based on specific patterns in the <code>Account Number</code>.</p></li><li><p>Filters out transactions below 50,000 for <code>ReportingEntityType</code> <code>'CCM'</code> to meet FATCA thresholds.</p></li></ul></li></ol><h3 id="id-18.10Step11.2FATCAfinalcode-AdditionalRecommendations"><strong>Additional Recommendations</strong></h3><ul><li><p><strong>Error Handling:</strong></p><ul><li><p>Consider implementing logging or error handling mechanisms for cases where <code>'ERROR'</code> is assigned in the <code>Reportable Account Type</code>. This can aid in identifying and rectifying data issues promptly.</p></li></ul></li><li><p><strong>Data Validation:</strong></p><ul><li><p>Ensure that all joined tables (<code>Stage_FATCAPivotedData_jf</code>) contain the expected data. Regular data quality checks can prevent unexpected <code>NULL</code> values or mismatches.</p></li></ul></li><li><p><strong>Performance Optimization:</strong></p><ul><li><p>Review the performance of the joins, especially if the datasets are large. Indexing key columns can enhance query performance.</p></li></ul></li><li><p><strong>Documentation:</strong></p><ul><li><p>Maintain an external documentation repository detailing each step, data source, and transformation logic. This facilitates onboarding new developers and ensures consistency in future updates.</p></li></ul></li><li><p><strong>Version Control:</strong></p><ul><li><p>Use version control systems (e.g., Git) to track changes to the script. This provides a history of modifications and aids in collaborative development.</p></li></ul></li></ul><p>By following the structured approach and detailed commenting in this script, even new developers should find it easier to understand and maintain the FATCA reporting logic. Ensuring clarity and thorough documentation is crucial for compliance and long-term sustainability of financial reporting systems.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

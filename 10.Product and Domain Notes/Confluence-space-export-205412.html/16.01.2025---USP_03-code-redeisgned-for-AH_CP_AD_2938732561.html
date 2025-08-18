@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 16.01.2025 - USP_03 code redeisgned for AH_CP_AD</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 16.01.2025 - USP_03 code redeisgned for AH_CP_AD
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 15-01-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is a <strong>combined</strong> T-SQL script that brings together all of the relevant steps for creating the final CRS data output, along with <strong>explanations</strong>, <strong>objectives</strong>, and a <strong>conceptual diagram</strong> of the data flow. The script is based on your original code (Steps 8.1 through 9.2), with added commentary to clarify the logic.</p><hr/><h1 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-OverallObjective">Overall Objective</h1><ol start="1"><li><p><strong>Extract</strong> and <strong>prepare</strong> account-holder and controlling-person data for the <strong>Common Reporting Standard (CRS)</strong>.</p></li><li><p><strong>Cleanse</strong> and <strong>merge</strong> data from multiple staging sources (e.g., <code>[DataServices].FATCA.Stage_CRSPivotedData_jf</code>, <code>[SQLCIP].Dataservices.[dbo].[tmpHoldingsPreload]</code>, etc.) into <strong>temporary</strong> tables (<code>#NFAH</code>, <code>#ALLAH</code>, <code>#ControllingPersons</code>, <code>##CRSAccountDetails</code>) and then into a <strong>final</strong> table <code>[FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf]</code>.</p></li><li><p><strong>Classify</strong> each account as CRS101, CRS102, or CRS103 (or “non-reportable” and thus excluded) based on whether the account holder is an <strong>individual</strong> (reportable person), a <strong>passive entity</strong> with <strong>foreign controlling persons</strong>, or a <strong>reportable entity</strong> in its own right.</p></li></ol><hr/><h1 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-High-LevelApproach">High-Level Approach</h1><ol start="1"><li><p><strong>Step 8.1</strong>: Gather <strong>Non-Foreign Account Holders</strong> (NFAH) that still require CRS reporting because they have at least one foreign controlling person. Store them in <code>#NFAH</code>.</p></li><li><p><strong>Step 8.2</strong>: Gather <strong>Foreign Account Holders</strong> (both individuals and entities) into <code>#IndividualAccountHolders</code> and <code>#EntityAccountHolders</code>. Combine them into <code>#AccountHolders</code>.</p></li><li><p><strong>Step 8.3</strong>: Union <code>#NFAH</code> and <code>#AccountHolders</code> → <code>#ALLAH</code> (all account holders).</p></li><li><p><strong>Step 8.4</strong>: Extract relevant <strong>Controlling Persons</strong> into <code>#ControllingPersons</code>.</p></li><li><p><strong>Step 8.5</strong>: Create or populate <code>##CRSAccountDetails</code> with <strong>financial/income</strong> data (balance, interest, dividends) for each portfolio.</p></li><li><p><strong>Step 8.6</strong>: Join <code>#ALLAH</code>, <code>#ControllingPersons</code>, and <code>##CRSAccountDetails</code> into <code>[FATCA].[CRS_AH_CP_AD_jf]</code>.</p></li><li><p><strong>Step 9.1</strong>: Transform <code>[FATCA].[CRS_AH_CP_AD_jf]</code> into the <strong>final</strong> 143-column format (<code>##crsfinalselect</code>).</p></li><li><p><strong>Step 9.2</strong>: Insert from <code>##crsfinalselect</code> into <code>[FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf]</code>.</p></li></ol><hr/><h2 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-ConceptualDiagram">Conceptual Diagram</h2><p>Below is a simplified view of the data flow:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence"> ┌─────────────────────────┐
+ │Staging Tables (Pivoted) │
+ │e.g. Stage_CRSPivotedData│
+ └─────────────┬───────────┘
+               │(SELECT ...)
+               ▼
+    ┌────────────────────────────────┐
+    │ #NFAH  (NZ Non-Foreign, has   │
+    │        foreign controllingP)  │
+    └────────────────────────────────┘
+               │
+               │ (UNION ALL)
+               ▼
+    ┌────────────────────────────────┐
+    │ #AccountHolders (Foreign AH)  │
+    └────────────────────────────────┘
+               ▼
+    ┌────────────────────────────────┐
+    │ #ALLAH  (All AccountHolders)  │
+    └────────────────────────────────┘
+
+               ┌─────────────────────┐
+               │ #ControllingPersons │
+               └─────────────────────┘
+
+               ┌────────────────────────────┐
+               │ ##CRSAccountDetails (Fin$) │
+               └────────────────────────────┘
+
+   ┌─────────────────────────────────────────────────────┐
+   │ [FATCA].[CRS_AH_CP_AD_jf] (AH + CP + Fin. Details) │
+   └─────────────────────────────────────────────────────┘
+               │
+               │ (SELECT ... Step 9)
+               ▼
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ [FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_...]    │
+   │ Final 143-column CRS file structure for submission.                │
+   └─────────────────────────────────────────────────────────────────────┘
+</pre>
+</div></div><hr/><h2 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-FullScriptwithExplanations">Full Script with Explanations</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">/*==============================================================================
+ Author:          Jackson Fan
+ Create Date:     16.01.2025
+ Procedure Name:  [FATCA].[USP_02_FATCA_CRS_TransformRowtoColumnData] 
+ (or direct code with no procedure wrapper)
+
+ Description:
+   This script handles the extraction, cleansing, and final transformation
+   of data required for CRS reporting. It goes through multiple steps to
+   build a final 143-column table in [FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf].
+   
+ Objectives:
+   1) Identify Non-Foreign Account Holders (NFAH) in New Zealand with
+      at least one foreign controlling person.
+   2) Identify Foreign Account Holders (FAH), both Individuals and Entities.
+   3) Merge NFAH + FAH into a unified #ALLAH dataset.
+   4) Extract Controlling Persons.
+   5) Collect financial/income details (balance, interest, dividends, etc.).
+   6) Create a final consolidated table containing Account Holder,
+      Controlling Person, and Finance information for CRS.
+
+ Source Tables:
+   - FATCA.NonForeignAccHolderData_jf nfah
+   - DataServices.FATCA.Stage_CRSPivotedData_jf cpd
+   - SQLCIP.Dataservices.dbo.tmpHoldingsPreload tm
+   - FATCA.CountryReference crf
+
+ Output:
+   - [FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf]
+
+ Approach:
+   Steps 8.1 to 9.2:
+   - Step 8.1: #NFAH
+   - Step 8.2: #IndividualAccountHolders, #EntityAccountHolders → #AccountHolders
+   - Step 8.3: Union #NFAH &amp; #AccountHolders → #ALLAH
+   - Step 8.4: #ControllingPersons
+   - Step 8.5: ##CRSAccountDetails (Financial info)
+   - Step 8.6: Join #ALLAH, #ControllingPersons, ##CRSAccountDetails → [FATCA].[CRS_AH_CP_AD_jf]
+   - Step 9.1 &amp; 9.2: Final select into ##crsfinalselect → 
+                     [FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf]
+==============================================================================*/
+
+--------------------------------------------------------------------------------
+-- Step 8.1: Extract Non-Foreign Account Holders (NFAH)
+--------------------------------------------------------------------------------
+IF OBJECT_ID(&#39;tempdb..#NFAH&#39;) IS NOT NULL
+    DROP TABLE #NFAH;
+
+SELECT DISTINCT 
+       cpd.AccountID, 
+       nfah.IndType COLLATE DATABASE_DEFAULT AS AccountType, 
+       nfah.dsl_tradingentitytype COLLATE DATABASE_DEFAULT AS TradingEntityType, 
+       nfah.IndividualId, 
+       nfah.FullName COLLATE DATABASE_DEFAULT AS IndividualName, 
+       &#39;NA&#39; AS TIN1,                      -- Use &#39;NA&#39; for CRS if TIN is not applicable
+       &#39;&#39; AS IndividualIDTypeName1,       -- ID Type
+       &#39;NZ&#39; AS TaxCountry1,               -- Tax Country
+       &#39;&#39; AS TIN2,
+       &#39;&#39; AS IndividualIDTypeName2,
+       &#39;&#39; AS TaxCountry2,
+       &#39;&#39; AS TIN3,
+       &#39;&#39; AS IndividualIDTypeName3,
+       &#39;&#39; AS TaxCountry3,
+       &#39;&#39; AS TIN4,
+       &#39;&#39; AS IndividualIDTypeName4,
+       &#39;&#39; AS TaxCountry4,
+       &#39;&#39; AS TIN5,
+       &#39;&#39; AS IndividualIDTypeName5,
+       &#39;&#39; AS TaxCountry5,
+
+       nfah.FirstName COLLATE DATABASE_DEFAULT AS FirstName, 
+       nfah.MiddleName COLLATE DATABASE_DEFAULT AS MiddleName, 
+       nfah.LastName COLLATE DATABASE_DEFAULT AS LastName, 
+       nfah.DOB COLLATE DATABASE_DEFAULT AS DOB, 
+       (
+         nfah.[ResidentialAddressLine1] + &#39; &#39;
+       + nfah.[ResidentialAddressLine2] + &#39; &#39;
+       + nfah.[ResidentialAddressLine3] + &#39; &#39;
+       + nfah.[ResidentialCity] + &#39; &#39;
+       + nfah.[ResidentialPostalCode]
+       ) COLLATE DATABASE_DEFAULT AS ResidentialAddress, 
+       
+       ISNULL(crf.ISOCode COLLATE DATABASE_DEFAULT, &#39;NZ&#39;) AS [Res Country Code],
+
+       nfah.CountryofBirthIdName      COLLATE DATABASE_DEFAULT AS CountryofBirthIdName, 
+       nfah.CountryofCitizenship      COLLATE DATABASE_DEFAULT AS CountryofCitizenship, 
+       nfah.CountryofTaxResidency     COLLATE DATABASE_DEFAULT AS CountryofTaxResidency,
+       nfah.ResidentialCountry1       COLLATE DATABASE_DEFAULT AS ResidentialCountry1,
+
+       nfah.EntityID, 
+       nfah.EntityName                COLLATE DATABASE_DEFAULT AS EntityName, 
+       cpd.EntityTIN                  COLLATE DATABASE_DEFAULT AS EntityTIN,
+       &#39;NZ&#39;                           AS EntityTaxCodeCountryISOShort,
+       &#39;New Zealand&#39;                  AS TrustCountry,
+       &#39;New Zealand&#39;                  AS OrgPrimaryTaxDomicile,
+
+       nfah.dsl_RoleTypeIdName        COLLATE DATABASE_DEFAULT AS dsl_RoleTypeIdName, 
+       nfah.dsl_BeneficialOwner, 
+       nfah.dsl_BeneficiaryOwnership, 
+       nfah.dsl_Authorised, 
+       nfah.dsl_portfolioid, 
+       nfah.PortfolioNo               COLLATE DATABASE_DEFAULT AS PortfolioNo, 
+       nfah.dsl_PortfolioServiceLevelName COLLATE DATABASE_DEFAULT AS PortfolioServiceLevelName,
+
+       CASE
+           WHEN nfah.dsl_PortfolioServiceLevelName = &#39;Cash Management&#39;
+                THEN &#39;CCM&#39;
+           WHEN nfah.dsl_PortfolioServiceLevelName = &#39;myStart&#39;
+                THEN &#39;CIP&#39;
+           WHEN nfah.dsl_PortfolioServiceLevelName IN (
+                &#39;PAS&#39;,&#39;IAS&#39;,&#39;MPS&#39;,&#39;DIMS - Personalised&#39;,&#39;Standard Broking Service&#39;
+           )
+                THEN &#39;CSL&#39;
+           WHEN nfah.dsl_PortfolioServiceLevelName = &#39;Craigs Super&#39;
+                THEN &#39;CS&#39;
+           WHEN nfah.dsl_PortfolioServiceLevelName = &#39;superStart&#39;
+                THEN &#39;SS&#39;
+           ELSE &#39;Other&#39;
+       END AS [ReportingEntityType]
+INTO #NFAH
+FROM FATCA.NonForeignAccHolderData_jf nfah
+LEFT JOIN [SQLUAT].[DataServices].FATCA.CountryReference crf
+    ON UPPER(crf.Country) = UPPER(LTRIM(RTRIM(nfah.ResidentialCountry1 COLLATE DATABASE_DEFAULT)))
+INNER JOIN FATCA.Stage_CRSPivotedData_jf AS cpd 
+    ON cpd.EntityID = nfah.EntityID;
+
+
+--------------------------------------------------------------------------------
+-- Step 8.2: Extract CRS Foreign Account Holders (Individual &amp; Entity)
+--------------------------------------------------------------------------------
+
+IF OBJECT_ID(&#39;tempdb..#IndividualAccountHolders&#39;) IS NOT NULL
+    DROP TABLE #IndividualAccountHolders;
+IF OBJECT_ID(&#39;tempdb..#EntityAccountHolders&#39;) IS NOT NULL
+    DROP TABLE #EntityAccountHolders;
+IF OBJECT_ID(&#39;tempdb..#AccountHolders&#39;) IS NOT NULL
+    DROP TABLE #AccountHolders;
+
+-------------------------------------------------------------------------------
+-- Subset 2a: Individual Foreign Account Holders (FAH)
+-------------------------------------------------------------------------------
+SELECT DISTINCT
+       ah.AccountID,
+       ah.AccountType                COLLATE DATABASE_DEFAULT AS AccountType,
+       ah.TradingEntityType          COLLATE DATABASE_DEFAULT AS TradingEntityType,
+       ah.IndividualId,
+       ah.IndividualName             COLLATE DATABASE_DEFAULT AS IndividualName,
+       ah.TIN1                       COLLATE DATABASE_DEFAULT AS TIN1, -- Tax Identification Number (TIN)
+       ah.IndividualIDTypeName1      COLLATE DATABASE_DEFAULT AS IndividualIDTypeName1, -- ID Type
+       ah.TaxCountry1                COLLATE DATABASE_DEFAULT AS TaxCountry1,           -- Tax Country
+
+       ah.TIN2,
+       ah.IndividualIDTypeName2,
+       ah.TaxCountry2,
+       ah.TIN3,
+       ah.IndividualIDTypeName3,
+       ah.TaxCountry3,
+       ah.TIN4,
+       ah.IndividualIDTypeName4,
+       ah.TaxCountry4,
+       ah.TIN5,
+       ah.IndividualIDTypeName5,
+       ah.TaxCountry5,
+
+       ah.FirstName                  COLLATE DATABASE_DEFAULT AS FirstName,
+       ah.MiddleName                 COLLATE DATABASE_DEFAULT AS MiddleName,
+       ah.LastName                   COLLATE DATABASE_DEFAULT AS LastName,
+       ah.DOB                        COLLATE DATABASE_DEFAULT AS DOB,
+       (
+         ah.[ResidentialAddressLine1] + &#39; &#39;
+       + ah.[ResidentialAddressLine2] + &#39; &#39;
+       + ah.[ResidentialAddressLine3] + &#39; &#39;
+       + ah.[ResidentialCity]        + &#39; &#39;
+       + ah.[ResidentialPostalCode]
+       ) COLLATE DATABASE_DEFAULT AS ResidentialAddress,
+       ah.[Res Country Code],
+       ah.CountryofBirthIdName       COLLATE DATABASE_DEFAULT AS CountryofBirthIdName,
+       ah.CountryofCitizenship       COLLATE DATABASE_DEFAULT AS CountryofCitizenship,
+       ah.CountryofTaxResidency      COLLATE DATABASE_DEFAULT AS CountryofTaxResidency,
+       ah.ResidentialCountry1        COLLATE DATABASE_DEFAULT AS ResidentialCountry1,
+
+       ah.EntityID,
+       ah.EntityName                 COLLATE DATABASE_DEFAULT AS EntityName,
+       ISNULL(ah.[EntityTIN], &#39;&#39;)    COLLATE DATABASE_DEFAULT AS [EntityTIN],
+       ISNULL(ah.[EntityTaxCodeCountryISOShort],&#39;&#39;) COLLATE DATABASE_DEFAULT AS [EntityTaxCodeCountryISOShort],
+       ISNULL(ah.TrustCountry, &#39;&#39;)   COLLATE DATABASE_DEFAULT AS TrustCountry,
+       ISNULL(ah.OrgPrimaryTaxDomicile, &#39;&#39;) COLLATE DATABASE_DEFAULT AS OrgPrimaryTaxDomicile,
+
+       ah.dsl_RoleTypeIdName         COLLATE DATABASE_DEFAULT AS dsl_RoleTypeIdName,
+       ah.dsl_BeneficialOwner,
+       ah.dsl_BeneficiaryOwnership,
+       ah.dsl_Authorised,
+       ah.dsl_portfolioid,
+       ah.PortfolioNo                COLLATE DATABASE_DEFAULT AS PortfolioNo,
+       ah.PortfolioServiceLevelName  COLLATE DATABASE_DEFAULT AS PortfolioServiceLevelName,
+       
+       CASE
+           WHEN ah.PortfolioServiceLevelName = &#39;Cash Management&#39;
+                THEN &#39;CCM&#39;
+           WHEN ah.PortfolioServiceLevelName = &#39;myStart&#39;
+                THEN &#39;CIP&#39;
+           WHEN ah.PortfolioServiceLevelName IN (
+                &#39;PAS&#39;, &#39;IAS&#39;, &#39;MPS&#39;, &#39;DIMS - Personalised&#39;, &#39;Standard Broking Service&#39;
+           )
+                THEN &#39;CSL&#39;
+           WHEN ah.PortfolioServiceLevelName = &#39;Craigs Super&#39;
+                THEN &#39;CS&#39;
+           WHEN ah.PortfolioServiceLevelName = &#39;superStart&#39;
+                THEN &#39;SS&#39;
+           ELSE &#39;Other&#39;
+       END AS [ReportingEntityType]
+INTO #IndividualAccountHolders
+FROM [DataServices].FATCA.Stage_CRSPivotedData_jf AS ah
+WHERE ah.TradingEntityType IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;)
+  AND ah.dsl_RoleTypeIdName IN (&#39;Individual&#39;, &#39;Bank Account Holder&#39;, &#39;Minor&#39;);
+
+
+-------------------------------------------------------------------------------
+-- Subset 2b: Extract Foreign Account Holders that only have Organisation details (FAHO)
+-------------------------------------------------------------------------------
+SELECT DISTINCT
+       ah.AccountID,
+       ISNULL(ah.AccountType, &#39;&#39;)               COLLATE DATABASE_DEFAULT AS AccountType,
+       ISNULL(ah.TradingEntityType, &#39;&#39;)         COLLATE DATABASE_DEFAULT AS TradingEntityType,
+       ISNULL(ah.EntityID, &#39;&#39;)                  AS EntityID,
+       ISNULL(ah.EntityName, &#39;&#39;)                COLLATE DATABASE_DEFAULT AS EntityName,
+       ISNULL(ah.[EntityTIN], &#39;&#39;)               COLLATE DATABASE_DEFAULT AS [EntityTIN],
+       ISNULL(ah.[EntityTaxCodeCountryISOShort],&#39;&#39;) COLLATE DATABASE_DEFAULT AS [EntityTaxCodeCountryISOShort],
+       ISNULL(ah.TrustCountry, &#39;&#39;)              COLLATE DATABASE_DEFAULT AS TrustCountry,
+       ISNULL(ah.OrgPrimaryTaxDomicile, &#39;&#39;)     COLLATE DATABASE_DEFAULT AS OrgPrimaryTaxDomicile,
+       ISNULL(ah.PortfolioNo, &#39;&#39;)               COLLATE DATABASE_DEFAULT AS PortfolioNo,
+       ISNULL(ah.PortfolioServiceLevelName, &#39;&#39;) COLLATE DATABASE_DEFAULT AS PortfolioServiceLevelName,
+
+       CASE
+           WHEN ah.PortfolioServiceLevelName = &#39;Cash Management&#39;
+                THEN &#39;CCM&#39;
+           WHEN ah.PortfolioServiceLevelName = &#39;myStart&#39;
+                THEN &#39;CIP&#39;
+           WHEN ah.PortfolioServiceLevelName IN (
+                &#39;PAS&#39;, &#39;IAS&#39;, &#39;MPS&#39;, &#39;DIMS - Personalised&#39;, &#39;Standard Broking Service&#39;
+           )
+                THEN &#39;CSL&#39;
+           WHEN ah.PortfolioServiceLevelName = &#39;Craigs Super&#39;
+                THEN &#39;CS&#39;
+           WHEN ah.PortfolioServiceLevelName = &#39;superStart&#39;
+                THEN &#39;SS&#39;
+           ELSE &#39;Other&#39;
+       END AS [ReportingEntityType]
+INTO #EntityAccountHolders
+FROM [DataServices].FATCA.Stage_CRSPivotedData_jf AS ah
+WHERE ah.TradingEntityType IN (&#39;Trust&#39;, &#39;Company&#39;, &#39;Incorporated Entity&#39;, &#39;Partnership&#39;);
+
+
+-------------------------------------------------------------------------------
+-- Combine Both Subsets → #AccountHolders
+-------------------------------------------------------------------------------
+SELECT DISTINCT
+       AccountID,
+       AccountType,
+       TradingEntityType,
+       IndividualId,
+       IndividualName,
+       TIN1,
+       IndividualIDTypeName1,
+       TaxCountry1,
+       TIN2,
+       IndividualIDTypeName2,
+       TaxCountry2,
+       TIN3,
+       IndividualIDTypeName3,
+       TaxCountry3,
+       TIN4,
+       IndividualIDTypeName4,
+       TaxCountry4,
+       TIN5,
+       IndividualIDTypeName5,
+       TaxCountry5,
+       FirstName,
+       MiddleName,
+       LastName,
+       DOB,
+       ResidentialAddress,
+       [Res Country Code],
+       CountryofBirthIdName,
+       CountryofCitizenship,
+       CountryofTaxResidency,
+       ResidentialCountry1,
+       EntityID,
+       EntityName,
+       [EntityTIN],
+       [EntityTaxCodeCountryISOShort],
+       TrustCountry,
+       OrgPrimaryTaxDomicile,
+       dsl_RoleTypeIdName,
+       dsl_BeneficialOwner,
+       dsl_BeneficiaryOwnership,
+       dsl_Authorised,
+       dsl_portfolioid,
+       PortfolioNo,
+       PortfolioServiceLevelName,
+       [ReportingEntityType]
+INTO #AccountHolders
+FROM
+(
+    SELECT *
+    FROM #IndividualAccountHolders
+
+    UNION ALL
+
+    SELECT
+           AccountID,
+           AccountType,
+           TradingEntityType,
+           NULL AS IndividualId,
+           NULL AS IndividualName,
+           NULL AS TIN1,
+           NULL AS IndividualIDTypeName1,
+           NULL AS TaxCountry1,
+           NULL AS TIN2,
+           NULL AS IndividualIDTypeName2,
+           NULL AS TaxCountry2,
+           NULL AS TIN3,
+           NULL AS IndividualIDTypeName3,
+           NULL AS TaxCountry3,
+           NULL AS TIN4,
+           NULL AS IndividualIDTypeName4,
+           NULL AS TaxCountry4,
+           NULL AS TIN5,
+           NULL AS IndividualIDTypeName5,
+           NULL AS TaxCountry5,
+           NULL AS FirstName,
+           NULL AS MiddleName,
+           NULL AS LastName,
+           NULL AS DOB,
+           NULL AS ResidentialAddress,
+           &#39;NZ&#39;  AS [Res Country Code],
+           NULL AS CountryofBirthIdName,
+           NULL AS CountryofCitizenship,
+           NULL AS CountryofTaxResidency,
+           NULL AS ResidentialCountry1,
+           EntityID,
+           EntityName,
+           [EntityTIN],
+           [EntityTaxCodeCountryISOShort],
+           TrustCountry,
+           OrgPrimaryTaxDomicile,
+           NULL AS dsl_RoleTypeIdName,
+           NULL AS dsl_BeneficialOwner,
+           NULL AS dsl_BeneficiaryOwnership,
+           NULL AS dsl_Authorised,
+           NULL AS dsl_portfolioid,
+           PortfolioNo,
+           PortfolioServiceLevelName,
+           [ReportingEntityType]
+    FROM #EntityAccountHolders
+) AS CombinedData;
+
+
+--------------------------------------------------------------------------------
+-- Step 8.3: Union NFAH and #AccountHolders → #ALLAH (All Account Holders)
+--------------------------------------------------------------------------------
+IF OBJECT_ID(&#39;tempdb..#ALLAH&#39;,&#39;U&#39;) IS NOT NULL
+    DROP TABLE #ALLAH;
+
+SELECT DISTINCT
+       nfah.*
+INTO #ALLAH
+FROM #NFAH nfah
+
+UNION ALL
+
+SELECT DISTINCT
+       fah.*
+FROM #AccountHolders fah;
+
+
+--------------------------------------------------------------------------------
+-- Step 8.4: Extract Controlling Persons (CP) → #ControllingPersons
+--------------------------------------------------------------------------------
+IF OBJECT_ID(&#39;tempdb..#ControllingPersons&#39;) IS NOT NULL
+    DROP TABLE #ControllingPersons;
+
+SELECT DISTINCT
+    cp.TradingEntityType                 COLLATE DATABASE_DEFAULT AS CP_TradingEntityType,
+    cp.EntityName                        COLLATE DATABASE_DEFAULT AS CP_EntityName,
+    cp.PortfolioNo                       COLLATE DATABASE_DEFAULT AS CP_PortfolioNo,
+    cp.PortfolioServiceLevelName         COLLATE DATABASE_DEFAULT AS CP_PortfolioServiceLevelName,
+    CASE
+           WHEN cp.PortfolioServiceLevelName = &#39;Cash Management&#39;
+                THEN &#39;CCM&#39;
+           WHEN cp.PortfolioServiceLevelName = &#39;myStart&#39;
+                THEN &#39;CIP&#39;
+           WHEN cp.PortfolioServiceLevelName IN(
+                &#39;PAS&#39;,&#39;IAS&#39;,&#39;MPS&#39;,&#39;DIMS - Personalised&#39;,&#39;Standard Broking Service&#39;
+           )
+                THEN &#39;CSL&#39;
+           WHEN cp.PortfolioServiceLevelName = &#39;Craigs Super&#39;
+                THEN &#39;CS&#39;
+           WHEN cp.PortfolioServiceLevelName = &#39;superStart&#39;
+                THEN &#39;SS&#39;
+           ELSE &#39;Other&#39;
+       END                                    AS [CP_ReportingEntityType],
+
+    cp.dsl_RoleTypeIdName                COLLATE DATABASE_DEFAULT AS CP_RoleTypeIdName,
+    cp.AccountType                       COLLATE DATABASE_DEFAULT AS CP_AccountType,
+    cp.IndividualName                    COLLATE DATABASE_DEFAULT AS CP_Name,
+
+    cp.TIN1                              COLLATE DATABASE_DEFAULT AS CP_TIN,
+    cp.IndividualIDTypeName1            COLLATE DATABASE_DEFAULT AS CP_IndividualIDTypeName1,
+    cp.TaxCountry1                       COLLATE DATABASE_DEFAULT AS CP_TaxCountry,
+
+    cp.TIN2                              AS CP_TIN2,
+    cp.IndividualIDTypeName2            AS CP_IndividualIDTypeName2,
+    cp.TaxCountry2                       AS CP_TaxCountry2,
+    cp.TIN3                              AS CP_TIN3,
+    cp.IndividualIDTypeName3            AS CP_IndividualIDTypeName3,
+    cp.TaxCountry3                       AS CP_TaxCountry3,
+    cp.TIN4                              AS CP_TIN4,
+    cp.IndividualIDTypeName4            AS CP_IndividualIDTypeName4,
+    cp.TaxCountry4                       AS CP_TaxCountry4,
+    cp.TIN5                              AS CP_TIN5,
+    cp.IndividualIDTypeName5            AS CP_IndividualIDTypeName5,
+    cp.TaxCountry5                       AS CP_TaxCountry5,
+
+    cp.FirstName                         COLLATE DATABASE_DEFAULT AS CP_FirstName,
+    cp.MiddleName                        COLLATE DATABASE_DEFAULT AS CP_MiddleName,
+    cp.LastName                          COLLATE DATABASE_DEFAULT AS CP_LastName,
+    cp.[DOB]                             AS CP_DOB,
+
+    cp.CountryofBirthIdName             COLLATE DATABASE_DEFAULT AS CP_CountryofBirthIdName,
+    cp.CountryofCitizenship             COLLATE DATABASE_DEFAULT AS CP_CountryofCitizenship,
+    cp.CountryofTaxResidency            COLLATE DATABASE_DEFAULT AS CP_CountryofTaxResidency,
+    cp.ResidentialCountry1              COLLATE DATABASE_DEFAULT AS CP_ResidentialCountry1,
+
+    (
+        cp.[ResidentialAddressLine1] + &#39; &#39;
+      + cp.[ResidentialAddressLine2] + &#39; &#39;
+      + cp.[ResidentialAddressLine3] + &#39; &#39;
+      + cp.[ResidentialCity]         + &#39; &#39;
+      + cp.[ResidentialPostalCode]
+    ) COLLATE DATABASE_DEFAULT AS CP_ResidentialAddress,
+
+    cp.[Res Country Code]               COLLATE DATABASE_DEFAULT AS [CP_Res Country Code],
+    cp.[CP Value]
+INTO #ControllingPersons
+FROM [DataServices].FATCA.Stage_CRSPivotedData_jf cp
+WHERE
+    (
+     -- Conditions for Individual Controlling Persons
+     cp.AccountType IN(
+         &#39;Foreign Controlling Individual&#39;,&#39;Single TIN Individual&#39;,&#39;Multiple TINs Individual&#39;
+     )
+     AND cp.TradingEntityType IN(&#39;Individual&#39;,&#39;Joint&#39;,&#39;Minor Under 18 yrs&#39;)
+     AND cp.dsl_RoleTypeIdName IN(
+         &#39;Authorised Person&#39;,&#39;Corporate Trustee Agent&#39;,&#39;Other&#39;,&#39;Executor&#39;,&#39;Guardian&#39;
+     )
+    )
+    OR
+    (
+     -- Conditions for Entity-Related Controlling Persons
+     cp.TradingEntityType IN(
+         &#39;Trust&#39;,&#39;Company&#39;,&#39;Incorporated Entity&#39;,&#39;Partnership&#39;
+     )
+     AND cp.dsl_RoleTypeIdName IN(
+         &#39;Shareholder&#39;,&#39;Settlor (Trust)&#39;,&#39;Director&#39;,&#39;Executor&#39;,
+         &#39;Trustee&#39;,&#39;Corporate Trustee Agent&#39;,&#39;Other&#39;,&#39;Appointer&#39;,&#39;Authorised Person&#39;
+     )
+    );
+
+
+--------------------------------------------------------------------------------
+-- Step 8.5: Build Financial Details (AD) → ##CRSAccountDetails
+--------------------------------------------------------------------------------
+IF OBJECT_ID(&#39;tempdb..##CRSAccountDetails&#39;) IS NOT NULL
+    DROP TABLE ##CRSAccountDetails;
+
+DECLARE @PeriodStartDate   DATETIME = &#39;2024-04-01&#39;;  -- Period start date
+DECLARE @PeriodEndDate     DATETIME = &#39;2025-03-31&#39;;  -- Period end date
+DECLARE @rptYear           INT      = YEAR(@PeriodEndDate);
+
+-- Summarize interest/dividends/balance from CIP data
+;WITH cte_income AS
+(
+    -- Set A: For &#39;Cash Management&#39; portfolios
+    SELECT 
+          tm.AccountNumber AS PortfolioNo,
+          c.PortfolioServiceLevelName,
+          CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.[TotalCMGross] + tm.[TotalTDInterestGross] + tm.[TotalTDAI]), 0)) AS Interest,
+          CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.[TotalTDIncAI] + tm.[TotalCMBalance]), 0))                   AS Balance,
+          CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.[TotalCSLDivGross]), 0))                                    AS Dividend
+    FROM
+    (
+        SELECT DISTINCT 
+               fpd.PortfolioNo, 
+               fpd.PortfolioServiceLevelName
+        FROM [SQLUAT].[DataServices].FATCA.Stage_CRSPivotedData_jf fpd
+    ) c
+    JOIN [SQLCIP].Dataservices.[dbo].[tmpHoldingsPreload] tm
+       ON tm.AccountNumber COLLATE DATABASE_DEFAULT = c.[PortfolioNo] COLLATE DATABASE_DEFAULT
+      AND c.PortfolioServiceLevelName = &#39;Cash Management&#39;
+    GROUP BY tm.AccountNumber, c.PortfolioServiceLevelName
+
+    UNION
+
+    -- Set B: For non-&#39;Cash Management&#39; portfolios
+    SELECT 
+          tm.AccountNumber AS PortfolioNo,
+          c.PortfolioServiceLevelName,
+
+          CASE
+              WHEN c.PortfolioServiceLevelName NOT IN(
+                   &#39;Cash Management&#39;,&#39;Craigs Kiwisaver&#39;,&#39;Quaystreet Kiwisaver Scheme&#39;,
+                   &#39;QuayStreet Funds&#39;,&#39;mySTART&#39;,&#39;SuperSTART&#39;,&#39;Craigs Super&#39;
+              )
+              THEN CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.[TotalCSLIntGross]), 0))
+              ELSE CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.[TotalSTARTIntGross]), 0))
+          END AS Interest,
+
+          CASE
+              WHEN c.PortfolioServiceLevelName NOT IN(
+                   &#39;Cash Management&#39;,&#39;Craigs Kiwisaver&#39;,&#39;Quaystreet Kiwisaver Scheme&#39;,
+                   &#39;QuayStreet Funds&#39;,&#39;mySTART&#39;,&#39;SuperSTART&#39;,&#39;Craigs Super&#39;
+              )
+              THEN CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.TotalHolding), 0))
+              ELSE CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.TotalHolding), 0))
+          END AS Balance,
+
+          CASE
+              WHEN c.PortfolioServiceLevelName NOT IN(
+                   &#39;Cash Management&#39;,&#39;Craigs Kiwisaver&#39;,&#39;Quaystreet Kiwisaver Scheme&#39;,
+                   &#39;QuayStreet Funds&#39;,&#39;mySTART&#39;,&#39;SuperSTART&#39;,&#39;Craigs Super&#39;
+              )
+              THEN CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.[TotalSTARTDivGross]), 0))
+              ELSE CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.[TotalSTARTDivGross]), 0))
+          END AS Dividend
+
+    FROM
+    (
+        SELECT DISTINCT 
+               PortfolioNo, 
+               PortfolioServiceLevelName
+        FROM [SQLUAT].[DataServices].FATCA.Stage_CRSPivotedData_jf fpd
+    ) c
+    JOIN [SQLCIP].Dataservices.[dbo].[tmpHoldingsPreload] tm
+       ON tm.AccountNumber COLLATE DATABASE_DEFAULT = c.[PortfolioNo] COLLATE DATABASE_DEFAULT
+      AND tm.ServiceLevelShortName COLLATE DATABASE_DEFAULT = c.PortfolioServiceLevelName COLLATE DATABASE_DEFAULT
+    GROUP BY tm.AccountNumber, c.PortfolioServiceLevelName
+)
+SELECT DISTINCT
+       fpd.AccountID AS &#39;ee_uniqueID&#39;,
+       fpd.IndividualId,
+       fpd.IndividualName,
+       fpd.TradingEntityType,
+       CONVERT(VARCHAR, @PeriodEndDate, 101)        AS &#39;actiondate&#39;,
+       fpd.Regime                                   AS &#39;regime_id&#39;,
+       fpd.[PortfolioNo]                            AS &#39;Account Number&#39;,
+       fpd.PortfolioServiceLevelName,
+       CASE
+           WHEN fpd.PortfolioServiceLevelName = &#39;Cash Management&#39; THEN &#39;CCM&#39;
+           WHEN fpd.PortfolioServiceLevelName = &#39;myStart&#39;         THEN &#39;CIP&#39;
+           WHEN fpd.PortfolioServiceLevelName IN (
+                &#39;PAS&#39;,&#39;IAS&#39;,&#39;MPS&#39;,&#39;DIMS - Personalised&#39;,&#39;Standard Broking Service&#39;
+           ) THEN &#39;CSL&#39;
+           WHEN fpd.PortfolioServiceLevelName = &#39;Craigs Super&#39;    THEN &#39;CS&#39;
+           WHEN fpd.PortfolioServiceLevelName = &#39;superStart&#39;      THEN &#39;SS&#39;
+           ELSE &#39;Other&#39;
+       END AS ReportingEntityType,
+
+       &#39;&#39; AS &#39;Account Number Type&#39;,
+       &#39;NZD&#39; AS &#39;currency&#39;,
+
+       CASE
+           WHEN (fpd.ClosureDate != &#39;&#39; OR fpd.ClosureDate IS NOT NULL)
+                AND fpd.PortfolioServiceStatus NOT IN(&#39;Open&#39;,&#39;Pending closure&#39;)
+           THEN 0
+           ELSE ISNULL(ROUND(i.balance, 2), 0)
+       END AS &#39;balance&#39;,
+
+       ISNULL(i.dividend, 0)      AS &#39;dividends&#39;,
+       &#39;&#39;                         AS &#39;grossprocredem&#39;,
+       ISNULL(i.interest, 0)      AS &#39;interest&#39;,
+
+       ai.agg_balance             AS &#39;Aggregate Account Balance&#39;,
+       ai.agg_interest            AS &#39;Aggregate Account Interest&#39;,
+       ai.agg_dividends           AS &#39;Aggregate Account Dividends&#39;,
+
+       CASE
+           WHEN i.balance + i.dividend + i.interest &lt;&gt; 0 THEN 0
+           ELSE 1
+       END AS &#39;Non Reportable&#39;,
+
+       &#39;&#39; AS &#39;Dormant Account&#39;, -- Optional CRS field
+       CASE
+           WHEN fpd.Regime IN(&#39;CRS&#39;,&#39;FATCA_CRS&#39;)
+                AND fpd.CRSCert != &#39;Documented&#39;
+                AND fpd.[dsl_inceptiondate] &gt; &#39;2017-7-1&#39;
+                AND ISNULL(CONVERT(NUMERIC(20, 2), i.balance, 2), 0) &gt; 250000
+                AND fpd.[TradingEntityType] NOT IN(&#39;Individual&#39;,&#39;Joint&#39;,&#39;Minor Under 18 yrs&#39;)
+           THEN &#39;True&#39;
+           WHEN fpd.Regime IN(&#39;CRS&#39;,&#39;FATCA_CRS&#39;)
+                AND fpd.CRSCert != &#39;Documented&#39;
+                AND fpd.[dsl_inceptiondate] &gt; &#39;2017-7-1&#39;
+                AND fpd.[TradingEntityType] IN(&#39;Individual&#39;,&#39;Joint&#39;,&#39;Minor Under 18 yrs&#39;)
+           THEN &#39;True&#39;
+           ELSE &#39;&#39;
+       END AS &#39;Undocumented&#39;,
+
+       ISNULL(
+           CASE 
+               WHEN fpd.ClosureDate IS NOT NULL
+                    AND fpd.PortfolioServiceStatus NOT IN(&#39;Open&#39;,&#39;Pending closure&#39;)
+               THEN CONVERT(VARCHAR, fpd.ClosureDate, 101)
+               ELSE NULL
+           END, &#39;&#39;
+       ) AS &#39;Closure Date&#39;,
+
+       fpd.[dsl_inceptiondate] AS &#39;InceptionDate&#39;,
+       fpd.[CRSCert]
+INTO ##CRSAccountDetails
+FROM [SQLUAT].[DataServices].FATCA.Stage_CRSPivotedData_jf fpd
+LEFT JOIN cte_income i
+    ON i.PortfolioNo COLLATE DATABASE_DEFAULT = fpd.PortfolioNo COLLATE DATABASE_DEFAULT
+   AND i.PortfolioServiceLevelName = fpd.PortfolioServiceLevelName
+LEFT JOIN
+(
+    SELECT PortfolioNo,
+           SUM(balance)   AS agg_balance,
+           SUM(interest)  AS agg_interest,
+           SUM(dividend)  AS agg_dividends
+    FROM cte_income
+    GROUP BY PortfolioNo
+) ai
+    ON ai.PortfolioNo COLLATE DATABASE_DEFAULT = fpd.PortfolioNo COLLATE DATABASE_DEFAULT;
+
+
+--------------------------------------------------------------------------------
+-- Step 8.6: Join #ALLAH with #ControllingPersons and ##CRSAccountDetails
+--           to produce a Master Table [FATCA].[CRS_AH_CP_AD_jf]
+--------------------------------------------------------------------------------
+IF OBJECT_ID(&#39;FATCA.CRS_AH_CP_AD_jf&#39;,&#39;U&#39;) IS NOT NULL
+    DROP TABLE FATCA.CRS_AH_CP_AD_jf;
+
+SELECT 
+    ah.*,
+    cp.*,
+    ad.ReportingEntityType AS AD_ReportingEntityType,
+    ad.[Account Number],
+    ad.[Account Number Type],
+    ad.[Undocumented],
+    ad.[Dormant Account],
+    ad.[Closure Date],
+    ad.IndividualName AS AD_IndividualName,
+    ad.balance,
+    ad.currency,
+    ad.interest,
+    ad.dividends,
+    ad.grossprocredem
+INTO FATCA.[CRS_AH_CP_AD_jf]
+FROM #ALLAH ah
+LEFT JOIN #ControllingPersons cp
+    ON ah.TradingEntityType = cp.CP_TradingEntityType
+   AND ah.EntityName        = cp.CP_EntityName
+   AND ah.PortfolioNo       = cp.CP_PortfolioNo
+   AND ah.PortfolioServiceLevelName = cp.CP_PortfolioServiceLevelName
+
+LEFT JOIN ##CRSAccountDetails ad
+    ON ad.[ee_uniqueID] = ah.[AccountID]
+   AND ad.[Account Number] = ah.[PortfolioNo]
+   AND ad.PortfolioServiceLevelName = ah.PortfolioServiceLevelName
+WHERE 1=1
+  AND ad.[Account Number] NOT LIKE &#39;%dummy%&#39;
+  AND ad.[Account Number] NOT LIKE &#39;OO%&#39;
+  AND ad.[Account Number] NOT LIKE &#39;OM%&#39;
+  AND (CAST(ad.balance AS INT) + CAST(ad.interest AS INT) + CAST(ad.dividends AS INT) &lt;&gt; 0);
+
+
+--------------------------------------------------------------------------------
+-- Step 9: Output the Final CRS Selection (143+ columns)
+--------------------------------------------------------------------------------
+-- Step 9.1: Create #crsfinalselect with Simplified Logic
+IF OBJECT_ID(&#39;tempdb..##crsfinalselect&#39;) IS NOT NULL
+    DROP TABLE ##crsfinalselect;
+
+SELECT 
+    /* 1) Operation and Reporting Details */
+    &#39;N&#39; AS &#39;Operation Type&#39;,  -- &#39;N&#39; for New file
+    &#39;NZ&#39; AS &#39;Reporting Jurisdiction&#39;,
+    (CONVERT(VARCHAR(MAX), g.[AccountID]) + CONVERT(VARCHAR(MAX), g.[PortfolioNo])) AS &#39;Recipient ID&#39;,
+
+    /* 2) Reportable Account Type (CRS Type) */
+    CASE
+        -- 4 = CRS103
+        WHEN g.[AccountType] IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;)
+             AND g.TradingEntityType NOT IN (&#39;Individual&#39;,&#39;Joint&#39;,&#39;Minor Under 18 yrs&#39;)
+        THEN &#39;4&#39;
+        
+        -- 2 = CRS102
+        WHEN g.[AccountType] IN (&#39;Single TIN Individual&#39;,&#39;Multiple TINs Individual&#39;)
+             AND g.TradingEntityType IN (&#39;Individual&#39;,&#39;Joint&#39;,&#39;Minor Under 18 yrs&#39;)
+        THEN &#39;2&#39;
+
+        -- 1 = CRS101
+        WHEN g.[AccountType] = &#39;non-Foreign Acc Holder&#39;
+        THEN &#39;1&#39;
+
+        ELSE &#39;ERROR&#39;
+    END AS &#39;Reportable Account Type&#39;,
+
+    /* 3) Filer / Sponsored Entity Info */
+    CAST(ISNULL(g.ReportingEntityType, g.CP_ReportingEntityType) AS VARCHAR(10)) + &#39;_CRS&#39;
+        AS &#39;Filer / Sponsored Entity Short Name&#39;,
+
+    /* 4) Account Number Details */
+    ISNULL(g.[Account Number], ISNULL(g.[PortfolioNo], g.[CP_PortfolioNo])) AS &#39;Account Number&#39;,
+    ISNULL(g.[Account Number Type], &#39;&#39;) AS &#39;Account Number Type&#39;,
+
+    /* 5) Portfolio Service Level Info */
+    g.PortfolioServiceLevelName AS &#39;PortfolioServiceLevelName&#39;,
+    ISNULL(g.ReportingEntityType, g.CP_ReportingEntityType) AS [ReportingEntityType],
+
+    /* 6) Account Descriptions and Statuses */
+    g.Undocumented AS &#39;Account Description-Undocumented&#39;,
+
+    CASE
+        WHEN ISDATE(g.[Closure Date]) = 1
+        THEN
+            CASE
+                WHEN CONVERT(DATETIME, g.[Closure Date]) &lt; GETDATE() THEN &#39;True&#39;
+                ELSE &#39;&#39;
+            END
+        ELSE &#39;&#39;
+    END AS &#39;Account Description-Closed&#39;,
+
+    g.[Dormant Account] AS &#39;Account Description-Dormant&#39;,
+
+    /* 7) Account Holder Information and TINs */
+    CASE
+        WHEN g.[AccountType] IN (&#39;Layered Entity&#39;,&#39;Normal Entity&#39;)
+             AND g.[EntityTaxCodeCountryISOShort] = &#39;XX&#39;
+        THEN ISNULL(g.[Res Country Code] COLLATE DATABASE_DEFAULT, &#39;&#39;)
+
+        WHEN g.[AccountType] IN (&#39;Layered Entity&#39;,&#39;Normal Entity&#39;)
+             AND g.[EntityTaxCodeCountryISOShort] &lt;&gt; &#39;XX&#39;
+        THEN g.[EntityTaxCodeCountryISOShort]
+
+        WHEN g.[AccountType] = &#39;non-Foreign Acc Holder&#39;
+        THEN &#39;NZ&#39;
+
+        ELSE g.TaxCountry1
+    END AS &#39;Account Holder Tax Jurisdiction&#39;,
+
+    ISNULL(g.TaxCountry2, &#39;&#39;) AS &#39;Account Holder Tax Jurisdiction 2&#39;,
+    ISNULL(g.TaxCountry3, &#39;&#39;) AS &#39;Account Holder Tax Jurisdiction 3&#39;,
+    ISNULL(g.TaxCountry4, &#39;&#39;) AS &#39;Account Holder Tax Jurisdiction 4&#39;,
+    ISNULL(g.TaxCountry5, &#39;&#39;) AS &#39;Account Holder Tax Jurisdiction 5&#39;,
+
+    CASE 
+        WHEN g.[AccountType] IN (&#39;Layered Entity&#39;,&#39;Normal Entity&#39;)
+             THEN ISNULL(g.[EntityTIN],&#39;&#39;)
+        WHEN g.[AccountType] = &#39;non-Foreign Acc Holder&#39;
+             AND ISNULL(g.TIN1, &#39;&#39;) &lt;&gt; &#39;&#39; 
+             THEN g.TIN1
+        WHEN g.[AccountType] = &#39;non-Foreign Acc Holder&#39;
+             AND ISNULL(g.TIN1, &#39;&#39;) = &#39;&#39;
+             THEN &#39;NA&#39;
+        ELSE ISNULL(g.TIN1, &#39;&#39;)
+    END AS &#39;Account Holder IN&#39;,
+
+    ISNULL(g.TIN2, &#39;&#39;) AS &#39;Account Holder IN 2&#39;,
+    ISNULL(g.TIN3, &#39;&#39;) AS &#39;Account Holder IN 3&#39;,
+    ISNULL(g.TIN4, &#39;&#39;) AS &#39;Account Holder IN 4&#39;,
+    ISNULL(g.TIN5, &#39;&#39;) AS &#39;Account Holder IN 5&#39;,
+
+    /* 8) Account Holder IN Type */
+    CASE
+        WHEN g.AccountType IN (&#39;Layered Entity&#39;,&#39;Normal Entity&#39;)
+             AND ISNULL(g.[EntityTIN],&#39;&#39;) &lt;&gt; &#39;&#39; 
+        THEN &#39;TIN&#39;
+        ELSE &#39;&#39;
+    END AS &#39;Account Holder IN Type&#39;,
+
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder IN Type 2&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder IN Type 3&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder IN Type 4&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder IN Type 5&#39;,
+
+    /* 9) Issued By Country Codes */
+    CASE
+        WHEN g.[AccountType] IN (&#39;Layered Entity&#39;,&#39;Normal Entity&#39;)
+             AND g.[EntityTaxCodeCountryISOShort] = &#39;XX&#39;
+        THEN ISNULL(g.[Res Country Code] COLLATE DATABASE_DEFAULT, &#39;&#39;)
+        WHEN g.[AccountType] IN (&#39;Layered Entity&#39;,&#39;Normal Entity&#39;)
+             AND g.[EntityTaxCodeCountryISOShort] &lt;&gt; &#39;XX&#39;
+        THEN g.[EntityTaxCodeCountryISOShort]
+        ELSE g.TaxCountry1
+    END AS &#39;Account Holder IN Issued By Country Code&#39;,
+
+    CASE
+        WHEN g.TaxCountry2 IS NULL THEN &#39;&#39;
+        WHEN g.TaxCountry2 = g.TaxCountry1 AND g.TIN2 = g.TIN1 THEN &#39;&#39;
+        ELSE g.TaxCountry2
+    END AS &#39;Account Holder IN Issued By Country Code 2&#39;,
+
+    CASE
+        WHEN g.TaxCountry3 IS NULL THEN &#39;&#39;
+        WHEN g.TaxCountry3 = g.TaxCountry1 AND g.TIN3 = g.TIN1 THEN &#39;&#39;
+        WHEN g.TaxCountry3 = g.TaxCountry2 AND g.TIN3 = g.TIN2 THEN &#39;&#39;
+        ELSE g.TaxCountry3
+    END AS &#39;Account Holder IN Issued By Country Code 3&#39;,
+
+    CASE
+        WHEN g.TaxCountry4 IS NULL THEN &#39;&#39;
+        WHEN g.TaxCountry4 = g.TaxCountry1 AND g.TIN4 = g.TIN1 THEN &#39;&#39;
+        WHEN g.TaxCountry4 = g.TaxCountry2 AND g.TIN4 = g.TIN2 THEN &#39;&#39;
+        WHEN g.TaxCountry4 = g.TaxCountry3 AND g.TIN4 = g.TIN3 THEN &#39;&#39;
+        ELSE g.TaxCountry4
+    END AS &#39;Account Holder IN Issued By Country Code 4&#39;,
+
+    CASE
+        WHEN g.TaxCountry5 IS NULL THEN &#39;&#39;
+        WHEN g.TaxCountry5 = g.TaxCountry1 AND g.TIN5 = g.TIN1 THEN &#39;&#39;
+        WHEN g.TaxCountry5 = g.TaxCountry2 AND g.TIN5 = g.TIN2 THEN &#39;&#39;
+        WHEN g.TaxCountry5 = g.TaxCountry3 AND g.TIN5 = g.TIN3 THEN &#39;&#39;
+        WHEN g.TaxCountry5 = g.TaxCountry4 AND g.TIN5 = g.TIN4 THEN &#39;&#39;
+        ELSE g.TaxCountry5
+    END AS &#39;Account Holder IN Issued By Country Code 5&#39;,
+
+    /* 10) Organization Details */
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Name Type (Direct Individuals and Organizations)&#39;,
+    CASE
+        WHEN g.AccountType IN (&#39;Layered Entity&#39;,&#39;Normal Entity&#39;)
+        THEN g.[EntityName]
+        ELSE &#39;&#39;
+    END AS &#39;Account Holder Organization Name&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Organization Name Type&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Preceding Title&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Title&#39;,
+
+    /* 11) Personal Details (if Individual) */
+    CASE
+        WHEN g.AccountType IN (&#39;Layered Entity&#39;,&#39;Normal Entity&#39;)
+        THEN &#39;&#39;
+        ELSE g.FirstName
+    END AS &#39;Account Holder First Name&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder First Name Type&#39;,
+
+    CASE
+        WHEN g.AccountType IN (&#39;Layered Entity&#39;,&#39;Normal Entity&#39;)
+        THEN &#39;&#39;
+        ELSE ISNULL(g.MiddleName, &#39;&#39;)
+    END AS &#39;Account Holder Middle Name&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Middle Name Type&#39;,
+
+    CASE
+        WHEN g.AccountType IN (&#39;Layered Entity&#39;,&#39;Normal Entity&#39;)
+        THEN &#39;&#39;
+        ELSE g.LastName
+    END AS &#39;Account Holder Last Name&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Last Name Type&#39;,
+
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Name Prefix&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Name Prefix Type&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Generation Identifier&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Suffix&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder General Suffix&#39;,
+
+    /* 12) Address Details */
+    ISNULL(g.[Res Country Code], &#39;&#39;) AS &#39;Account Holder Address Country&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Address Type&#39;,
+    ISNULL(g.[ResidentialAddress], &#39;&#39;) AS &#39;Account Holder Address Free&#39;,
+
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed Street&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed Building Identifier&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed Suite Identifier&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed Floor Identifier&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed District Name&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed Post Office Box&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed Postal Code&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed City&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Fixed Subentity&#39;,
+
+    CASE
+        WHEN g.AccountType IN (&#39;Layered Entity&#39;,&#39;Normal Entity&#39;)
+        THEN &#39;&#39;
+        ELSE ISNULL(CONVERT(VARCHAR, g.[DOB], 101), &#39;&#39;)
+    END AS &#39;Account Holder Birth Date&#39;,
+
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Nationality&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Country of Birth&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;POB City&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;POB CitySubentity&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;POB FormerCountryName&#39;,
+
+    /* 13) Controlling Person Information */
+    ISNULL(g.[CP Value], &#39;&#39;) AS &#39;Controlling person Type&#39;,
+
+    /* 14) Controlling Person Tax Details */
+    CASE
+        WHEN ISNULL(g.[CP_TaxCountry], &#39;&#39;) = &#39;&#39;
+        THEN ISNULL(g.[CP_Res Country Code], &#39;&#39;)
+        ELSE ISNULL(g.[CP_TaxCountry], &#39;&#39;)
+    END AS &#39;Controlling person Tax Country Code&#39;,
+
+    ISNULL(g.CP_TaxCountry2, &#39;&#39;) AS &#39;Controlling person Tax Country Code 2&#39;,
+    ISNULL(g.CP_TaxCountry3, &#39;&#39;) AS &#39;Controlling person Tax Country Code 3&#39;,
+    ISNULL(g.CP_TaxCountry4, &#39;&#39;) AS &#39;Controlling Person Tax Country Code 4&#39;,
+    ISNULL(g.CP_TaxCountry5, &#39;&#39;) AS &#39;Controlling Person Tax Country Code 5&#39;,
+
+    ISNULL(g.CP_TIN, &#39;&#39;)  AS &#39;Controlling person TIN&#39;,
+    ISNULL(g.CP_TIN2, &#39;&#39;) AS &#39;Controlling person TIN 2&#39;,
+    ISNULL(g.CP_TIN3, &#39;&#39;) AS &#39;Controlling person TIN 3&#39;,
+    ISNULL(g.CP_TIN4, &#39;&#39;) AS &#39;Controlling person TIN 4&#39;,
+    ISNULL(g.CP_TIN5, &#39;&#39;) AS &#39;Controlling person TIN 5&#39;,
+
+    ISNULL(g.CP_TaxCountry,  &#39;&#39;) AS &#39;Controlling Person TIN Issued By&#39;,
+    ISNULL(g.CP_TaxCountry2, &#39;&#39;) AS &#39;Controlling Person TIN Issued By 2&#39;,
+    ISNULL(g.CP_TaxCountry3, &#39;&#39;) AS &#39;Controlling Person TIN Issued By 3&#39;,
+    ISNULL(g.CP_TaxCountry4, &#39;&#39;) AS &#39;Controlling Person TIN Issued By 4&#39;,
+    ISNULL(g.CP_TaxCountry5, &#39;&#39;) AS &#39;Controlling Person TIN Issued By 5&#39;,
+
+    /* 15) Controlling Person Personal Details */
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person Name Type&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person Preceding Title&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person Title&#39;,
+
+    ISNULL(g.CP_FirstName, &#39;&#39;)  AS &#39;Controlling Person First Name&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;)    AS &#39;Controlling Person First Name Type&#39;,
+    ISNULL(g.CP_MiddleName, &#39;&#39;) AS &#39;Controlling Person Middle Name&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;)    AS &#39;Controlling Person Middle Name Type&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;)    AS &#39;Controlling Person Name Prefix&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;)    AS &#39;Controlling Person Name Prefix Type&#39;,
+    ISNULL(g.CP_LastName, &#39;&#39;)   AS &#39;Controlling Person Last Name&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;)    AS &#39;Controlling Person Last Name Type&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;)    AS &#39;Controlling Person Generation Identifier&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;)    AS &#39;Controlling Person Suffix&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;)    AS &#39;Controlling Person General Suffix&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;)    AS &#39;Controlling Person Address Type&#39;,
+
+    ISNULL(g.[CP_Res Country Code], &#39;&#39;) AS &#39;Controlling Person Address Country Code&#39;,
+    ISNULL(g.[CP_ResidentialAddress], &#39;&#39;) AS &#39;Controlling Person Address Free&#39;,
+
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person Fixed Street&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person Fixed Building Identifier&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person Fixed Suite Identifier&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person Fixed Floor Identifier&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person Fixed District Name&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person Fixed Post Office Box&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person Fixed Postal Code&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person Fixed City&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person Fixed Subentity&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person Nationality&#39;,
+
+    ISNULL(CONVERT(VARCHAR, g.[CP_DOB], 101), &#39;&#39;) AS &#39;Controlling Person Birth Date&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person POB City&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person POB CitySubentity&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person Country of Birth&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Controlling Person POB FormerCountryName&#39;,
+
+    /* 16) Financial Information */
+    CASE 
+        WHEN ISNULL(g.balance,0) &lt;= 0 THEN 0 
+        ELSE ISNULL(g.balance,0)
+    END AS &#39;Account Balance&#39;,
+    &#39;NZD&#39; AS &#39;Account Currency&#39;,
+
+    CASE 
+        WHEN ISNULL(g.interest,0) &lt;= 0 THEN 0
+        ELSE ISNULL(g.interest,0)
+    END AS &#39;Interest&#39;,
+    &#39;NZD&#39; AS &#39;Interest Currency Code&#39;,
+
+    CASE
+        WHEN ISNULL(g.dividends,0) &lt;= 0 THEN 0
+        ELSE ISNULL(g.dividends,0)
+    END AS &#39;Dividends&#39;,
+    &#39;NZD&#39; AS &#39;Dividends Currency Code&#39;,
+
+    CASE
+        WHEN ISNULL(g.grossprocredem,0) &lt;= 0 THEN 0
+        ELSE ISNULL(g.grossprocredem,0)
+    END AS &#39;Gross Proceeds_Redemptions&#39;,
+    &#39;NZD&#39; AS &#39;Gross Proceeds_Redemptions Currency Code&#39;,
+
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Other&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Other Currency Code&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Line of Business&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Level 1&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Level 2&#39;,
+
+    /* New columns based on OECD CRS v3.19 requirements */
+    CONVERT(VARCHAR(50), &#39;&#39;) AS [Business Unit],
+    CONVERT(VARCHAR(50), &#39;&#39;) AS [Business Sub Unit],
+    CONVERT(VARCHAR(50), &#39;&#39;) AS [Business Sub Unit 2],
+
+    /* Custom placeholders */
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Custom 1&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Custom 2&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Custom 3&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Custom 4&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Custom 5&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Custom 6&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Custom 7&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Custom 8&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Custom 9&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Custom 10&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Custom 11&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Custom 12&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Custom 13&#39;
+INTO ##crsfinalselect
+FROM FATCA.CRS_AH_CP_AD_jf g;
+
+
+--------------------------------------------------------------------------------
+-- Step 9.2: Insert CRS Data into Final Table
+--------------------------------------------------------------------------------
+IF OBJECT_ID(&#39;FATCA.CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf&#39;,&#39;U&#39;) IS NOT NULL
+BEGIN
+    DROP TABLE [FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf];
+END
+
+SELECT 
+    @rptYear                              AS ReportingYear,
+    GETDATE()                             AS LastUpdated,
+    ReportingEntityType,
+    [Operation Type],
+    [Reporting Jurisdiction],
+    NEWID() AS [Recipient ID],
+    [Reportable Account Type],
+    [Filer / Sponsored Entity Short Name],
+    [Account Number],
+    [Account Number Type],
+    [Account Description-Undocumented],
+    [Account Description-Closed],
+    [Account Description-Dormant],
+    [Account Holder Tax Jurisdiction],
+    [Account Holder Tax Jurisdiction 2],
+    [Account Holder Tax Jurisdiction 3],
+    [Account Holder Tax Jurisdiction 4],
+    [Account Holder Tax Jurisdiction 5],
+    [Account Holder IN],
+    [Account Holder IN 2],
+    [Account Holder IN 3],
+    [Account Holder IN 4],
+    [Account Holder IN 5],
+    [Account Holder IN Type],
+    [Account Holder IN Type 2],
+    [Account Holder IN Type 3],
+    [Account Holder IN Type 4],
+    [Account Holder IN Type 5],
+    [Account Holder IN Issued By Country Code],
+    [Account Holder IN Issued By Country Code 2],
+    [Account Holder IN Issued By Country Code 3],
+    [Account Holder IN Issued By Country Code 4],
+    [Account Holder IN Issued By Country Code 5],
+    [Account Holder Name Type (Direct Individuals and Organizations)],
+    [Account Holder Organization Name],
+    [Account Holder Organization Name Type],
+    [Account Holder Preceding Title],
+    [Account Holder Title],
+    [Account Holder First Name],
+    [Account Holder First Name Type],
+    [Account Holder Middle Name],
+    [Account Holder Middle Name Type],
+    [Account Holder Name Prefix],
+    [Account Holder Name Prefix Type],
+
+    /* Clean up special characters for last name */
+    FATCA.CleanAccents([Account Holder Last Name]) AS [Account Holder Last Name],
+
+    [Account Holder Last Name Type],
+    [Account Holder Generation Identifier],
+    [Account Holder Suffix],
+    [Account Holder General Suffix],
+    [Account Holder Address Type],
+    [Account Holder Address Country],
+    FATCA.CleanAccents([Account Holder Address Free]) AS [Account Holder Address Free],
+
+    [Account Holder Fixed Street],
+    [Account Holder Fixed Building Identifier],
+    [Account Holder Fixed Suite Identifier],
+    [Account Holder Fixed Floor Identifier],
+    [Account Holder Fixed District Name],
+    [Account Holder Fixed Post Office Box],
+    [Account Holder Fixed Postal Code],
+    FATCA.CleanAccents([Account Holder Fixed City]) AS [Account Holder Fixed City],
+    [Account Holder Fixed Subentity],
+    [Account Holder Birth Date],
+    [Nationality],
+    [Country of Birth],
+    [POB City],
+    [POB CitySubentity],
+    [POB FormerCountryName],
+
+    [Controlling person Type],
+    [Controlling person Tax Country Code],
+    [Controlling person Tax Country Code 2],
+    [Controlling person Tax Country Code 3],
+    [Controlling person Tax Country Code 4],
+    [Controlling person Tax Country Code 5],
+    [Controlling person TIN],
+    [Controlling person TIN 2],
+    [Controlling person TIN 3],
+    [Controlling person TIN 4],
+    [Controlling person TIN 5],
+    [Controlling Person TIN Issued By],
+    [Controlling Person TIN Issued By 2],
+    [Controlling Person TIN Issued By 3],
+    [Controlling Person TIN Issued By 4],
+    [Controlling Person TIN Issued By 5],
+    [Controlling Person Name Type],
+    [Controlling Person Preceding Title],
+    [Controlling Person Title],
+    [Controlling Person First Name],
+    [Controlling Person First Name Type],
+    [Controlling Person Middle Name],
+    [Controlling Person Middle Name Type],
+    [Controlling Person Name Prefix],
+    [Controlling Person Name Prefix Type],
+    FATCA.CleanAccents([Controlling Person Last Name]) AS [Controlling Person Last Name],
+    [Controlling Person Last Name Type],
+    [Controlling Person Generation Identifier],
+    [Controlling Person Suffix],
+    [Controlling Person General Suffix],
+    [Controlling Person Address Type],
+    [Controlling Person Address Country Code],
+    FATCA.CleanAccents([Controlling Person Address Free]) AS [Controlling Person Address Free],
+    [Controlling Person Fixed Street],
+    [Controlling Person Fixed Building Identifier],
+    [Controlling Person Fixed Suite Identifier],
+    [Controlling Person Fixed Floor Identifier],
+    [Controlling Person Fixed District Name],
+    [Controlling Person Fixed Post Office Box],
+    [Controlling Person Fixed Postal Code],
+    FATCA.CleanAccents([Controlling Person Fixed City]) AS [Controlling Person Fixed City],
+    [Controlling Person Fixed Subentity],
+    [Controlling Person Nationality],
+    [Controlling Person Birth Date],
+    [Controlling Person POB City],
+    [Controlling Person POB CitySubentity],
+    [Controlling Person Country of Birth],
+    [Controlling Person POB FormerCountryName],
+
+    [Account Balance],
+    [Account Currency],
+    [Interest],
+    [Interest Currency Code],
+    [Dividends],
+    [Dividends Currency Code],
+    [Gross Proceeds_Redemptions],
+    [Gross Proceeds_Redemptions Currency Code],
+    [Other],
+    [Other Currency Code],
+    [Line of Business],
+    [Level 1],
+    [Level 2],
+    [Business Unit],
+    [Business Sub Unit],
+    [Business Sub Unit 2],
+    [Custom 1],
+    [Custom 2],
+    [Custom 3],
+    [Custom 4],
+    [Custom 5],
+    [Custom 6],
+    [Custom 7],
+    [Custom 8],
+    [Custom 9],
+    [Custom 10],
+    [Custom 11],
+    [Custom 12],
+    [Custom 13]
+INTO [FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf]
+FROM ##crsfinalselect;
+
+
+/*------------------------------------------------------------------------------
+ NOTE:
+   - You can review the final data in [FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf].
+   - The table includes ~143 columns aligned with CRS XML reporting needs.
+   - For debugging or partial checks, refer back to intermediate tables
+     (#NFAH, #AccountHolders, #ALLAH, #ControllingPersons, ##CRSAccountDetails, etc.)
+     rather than trying to debug the entire final structure at once.
+------------------------------------------------------------------------------*/
+</pre>
+</div></div><hr/><h3 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-FinalNotes">Final Notes</h3><ul><li><p>The <code>FATCA.CleanAccents()</code> function (used in a few <code>SELECT</code> statements) presumably <strong>normalizes</strong> or <strong>removes</strong> diacritics (e.g., é, ñ).</p></li><li><p>For <strong>NZ-based</strong> accounts with <strong>no TIN</strong> (the “non-foreign account holder” scenario), you are populating <code>'NA'</code> or <code>''</code> (depending on the logic).</p></li><li><p>The final table <code>[FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf]</code> contains the <strong>CRS</strong>-ready data for further processing (e.g., <strong>XML generation</strong>).</p></li><li><p>Always confirm with your local IRD/CRS guidelines if placeholders like <code>'NA'</code>, <code>''</code>, or <code>'NOTIN'</code> are acceptable or if a different placeholder is required.</p></li></ul><p>This completes the <strong>full script</strong> along with a <strong>conceptual overview</strong> and <strong>comments</strong> explaining each major step.</p><p>Below is a <strong>line-by-line commentary</strong> from the perspective of a <strong>tax auditor</strong> (familiar with the OECD CRS v3.19 requirements) who is also an <strong>expert-level SQL practitioner</strong>. I will summarize <strong>what each section of code is doing</strong>, <strong>where it seems aligned with CRS</strong> and <strong>where potential pitfalls or areas of concern may exist</strong>. The idea is to provide “audit-style” commentary on the logic and the compliance aspects, rather than just restating functionality.</p><hr/><h2 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-Overview&amp;Context">Overview &amp; Context</h2><ul><li><p>This T-SQL script <strong>extracts</strong> and <strong>transforms</strong> data for <strong>CRS</strong> reporting.</p></li><li><p>The final output is a table named <code>[FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf]</code>, presumably used for generating CRS XML files (or equivalent) for submission.</p></li><li><p>The script is broken down into “Step 8.x” and “Step 9.x.” The numbering suggests this code is part of a broader ETL or a stored procedure sequence.</p></li></ul><h3 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-KeyObservations">Key Observations</h3><ol start="1"><li><p><strong>Multiple Temporary Tables</strong></p><ul><li><p><code>#NFAH</code>, <code>#IndividualAccountHolders</code>, <code>#EntityAccountHolders</code>, <code>#AccountHolders</code>, <code>#ALLAH</code>, <code>#ControllingPersons</code>, <code>##CRSAccountDetails</code>, <code>##crsfinalselect</code>.</p></li><li><p>These are used for iterative merging and cleansing steps.</p></li></ul></li><li><p><strong>NZ-Specific Logic</strong></p><ul><li><p>For Non-Foreign Account Holders (NFAH) that are effectively <strong>NZ</strong> entities or individuals with <strong>foreign controlling persons</strong>.</p></li><li><p>You are marking TIN as <code>'NA'</code> or an empty string if the entity does not have a TIN.</p></li></ul></li><li><p><strong>CRS Classification</strong></p><ul><li><p>The script uses numeric codes <code>1</code>, <code>2</code>, <code>4</code> (CRS101, CRS102, and CRS103) to classify accounts.</p></li><li><p>“<code>WHEN g.[AccountType] = 'non-Foreign Acc Holder' THEN '1'</code>” → CRS101 = Passive NFE with foreign controlling person.</p></li><li><p>“<code>WHEN g.[AccountType] IN ('Single TIN Individual','Multiple TINs Individual') THEN '2'</code>” → CRS102 = Individual.</p></li><li><p>“<code>WHEN g.[AccountType] IN ('Layered Entity','Normal Entity') THEN '4'</code>” → CRS103 = Passive NFE is itself a reportable person (foreign).</p></li></ul></li></ol><hr/><h2 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-CodeReview&amp;Findings">Code Review &amp; Findings</h2><p>Below is the script, <strong>broken into sections</strong>, with commentary on compliance and potential issues.</p><h3 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-1.Step8.1:ExtractNon-ForeignAccountHolders(NFAH)">1. Step 8.1: Extract Non-Foreign Account Holders (NFAH)</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">IF OBJECT_ID(&#39;tempdb..#NFAH&#39;) IS NOT NULL
+    DROP TABLE #NFAH;
+
+SELECT DISTINCT 
+       cpd.AccountID,
+       nfah.IndType COLLATE DATABASE_DEFAULT AS AccountType, 
+       nfah.dsl_tradingentitytype COLLATE DATABASE_DEFAULT AS TradingEntityType, 
+       nfah.IndividualId, 
+       nfah.FullName COLLATE DATABASE_DEFAULT AS IndividualName, 
+       &#39;NA&#39; AS TIN1,
+       &#39;&#39; AS IndividualIDTypeName1,
+       &#39;NZ&#39; AS TaxCountry1,
+       ...
+       nfah.EntityID, 
+       nfah.EntityName COLLATE DATABASE_DEFAULT AS EntityName, 
+       cpd.EntityTIN COLLATE DATABASE_DEFAULT AS EntityTIN,
+       &#39;NZ&#39; AS EntityTaxCodeCountryISOShort,
+       &#39;New Zealand&#39; AS TrustCountry,
+       &#39;New Zealand&#39; AS OrgPrimaryTaxDomicile,
+       ...
+       INTO #NFAH
+FROM FATCA.NonForeignAccHolderData_jf nfah
+LEFT JOIN [SQLUAT].[DataServices].FATCA.CountryReference crf
+    ON UPPER(crf.Country) = UPPER(LTRIM(RTRIM(nfah.ResidentialCountry1 COLLATE DATABASE_DEFAULT)))
+INNER JOIN FATCA.Stage_CRSPivotedData_jf AS cpd 
+    ON cpd.EntityID = nfah.EntityID;
+</pre>
+</div></div><h4 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-AuditorCommentary">Auditor Commentary</h4><ul><li><p><strong>Purpose</strong>: Gathering data for “Non-Foreign Account Holders” that apparently <strong>still</strong> must be reported due to having foreign controlling persons.</p></li><li><p><code>'NA' AS TIN1</code>: In CRS, a TIN is usually mandatory if the country issues TINs, but in the NZ context, some local entities (or individuals) might not have a “tax ID” in the typical sense. The code is forcing <code>'NA'</code> which might be acceptable internally. However, <strong>be aware</strong> that some CRS jurisdictions (like Jersey, Isle of Man, etc.) require placeholders like <code>NOTIN</code> or <code>000000000</code>. As an NZ auditor, <code>'NA'</code> is likely fine for a purely domestic entity that truly lacks a TIN.</p></li><li><p><strong>Potential Risk</strong>: If the <strong>actual</strong> NZ TIN exists but is not captured, forcibly writing <code>'NA'</code> could be incorrect. Ensure that business processes confirm the account truly has no TIN.</p></li><li><p><code>EntityTaxCodeCountryISOShort = 'NZ'</code>: This indicates an NZ-based entity. Fine for a local entity, consistent with “Non-Foreign.”</p></li></ul><h3 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-2.Step8.2:ExtractCRSForeignAccountHolders(Individual&amp;Entity)">2. Step 8.2: Extract CRS Foreign Account Holders (Individual &amp; Entity)</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- #IndividualAccountHolders
+SELECT DISTINCT
+       ah.AccountID,
+       ah.AccountType,
+       ah.TradingEntityType,
+       ...
+       ah.PortfolioServiceLevelName,
+       CASE
+           WHEN ah.PortfolioServiceLevelName = &#39;Cash Management&#39; THEN &#39;CCM&#39;
+           ...
+       END AS [ReportingEntityType]
+INTO #IndividualAccountHolders
+FROM ...
+WHERE ah.TradingEntityType IN (&#39;Individual&#39;,&#39;Joint&#39;,&#39;Minor Under 18 yrs&#39;)
+  AND ah.dsl_RoleTypeIdName IN (&#39;Individual&#39;,&#39;Bank Account Holder&#39;,&#39;Minor&#39;);
+</pre>
+</div></div><h4 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-AuditorCommentary.1">Auditor Commentary</h4><ul><li><p><strong>Logic</strong>: Pulls foreign <strong>individual</strong> account holders into <code>#IndividualAccountHolders</code>. The code includes TINs (TIN1–TIN5), DOB, addresses, etc. This is consistent with the <strong>OECD CRS</strong> approach (one row per individual account holder, including TIN fields).</p></li><li><p><code>COLLATE DATABASE_DEFAULT</code> usage: Typical for preventing collation conflicts. No risk from a CRS perspective, but watch out for data type mismatches or unintended truncation if your DB default differs from staging.</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- #EntityAccountHolders
+SELECT DISTINCT
+       ah.AccountID,
+       ...
+INTO #EntityAccountHolders
+FROM ...
+WHERE ah.TradingEntityType IN (&#39;Trust&#39;,&#39;Company&#39;,&#39;Incorporated Entity&#39;,&#39;Partnership&#39;);
+</pre>
+</div></div><ul><li><p><strong>Logic</strong>: Similar extraction but for <strong>organizational</strong> foreign accounts.</p></li><li><p><strong>Potential Concern</strong>: Ensure that <strong>all</strong> relevant entity types are included (some local definitions of “limited partnership,” “foundation,” “joint venture,” etc. might also need attention).</p></li></ul><hr/><h3 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-3.CombineBothSubsets→#AccountHolders">3. Combine Both Subsets → #AccountHolders</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT
+       ...
+INTO #AccountHolders
+FROM
+(
+    SELECT * FROM #IndividualAccountHolders
+    UNION ALL
+    SELECT
+        AccountID,
+        ...
+        NULL AS FirstName,
+        ...
+        &#39;NZ&#39; AS [Res Country Code],
+        ...
+    FROM #EntityAccountHolders
+) AS CombinedData;
+</pre>
+</div></div><h4 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-AuditorCommentary.2">Auditor Commentary</h4><ul><li><p><strong>Union</strong> of individuals + entities.</p></li><li><p><strong>For Entities</strong>: You set <code>Res Country Code = 'NZ'</code> as a fallback. Make sure that’s truly correct for “foreign” account holders. Typically, if these are foreign entities, their <code>Res Country Code</code> might not be <code>'NZ'</code>. Possibly your code is forcing <code>'NZ'</code> if an entity is missing address data. This might be correct for the data in question or it might create confusion if an entity is truly foreign.</p></li><li><p><strong>Check</strong> that you are not accidentally labeling foreign entities with <code>'NZ'</code>.</p></li></ul><hr/><h3 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-4.Step8.3:Union#NFAHand#AccountHolders→#ALLAH">4. Step 8.3: Union #NFAH and #AccountHolders → #ALLAH</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT
+       nfah.*
+INTO #ALLAH
+FROM #NFAH nfah
+UNION ALL
+SELECT DISTINCT
+       fah.*
+FROM #AccountHolders fah;
+</pre>
+</div></div><h4 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-AuditorCommentary.3">Auditor Commentary</h4><ul><li><p><strong>Combines</strong> non-foreign but foreign-controlling-person accounts (<code>#NFAH</code>) with truly foreign accounts (<code>#AccountHolders</code>).</p></li><li><p>Good approach. <strong>One</strong> risk is potential duplication if you have the same key in both sets. You are using <code>UNION ALL</code>, but you do have <code>SELECT DISTINCT</code> in each part. Probably safe, but keep an eye on performance or unintended merges.</p></li></ul><hr/><h3 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-5.Step8.4:ExtractControllingPersons→#ControllingPersons">5. Step 8.4: Extract Controlling Persons → #ControllingPersons</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT DISTINCT
+    cp.TradingEntityType COLLATE DATABASE_DEFAULT AS CP_TradingEntityType,
+    ...
+INTO #ControllingPersons
+FROM [DataServices].FATCA.Stage_CRSPivotedData_jf cp
+WHERE
+  (
+    cp.AccountType IN (&#39;Foreign Controlling Individual&#39;,&#39;Single TIN Individual&#39;,&#39;Multiple TINs Individual&#39;)
+    AND cp.TradingEntityType IN(&#39;Individual&#39;,&#39;Joint&#39;,&#39;Minor Under 18 yrs&#39;)
+    ...
+  )
+  OR
+  (
+    cp.TradingEntityType IN(&#39;Trust&#39;,&#39;Company&#39;,&#39;Incorporated Entity&#39;,&#39;Partnership&#39;)
+    ...
+  );
+</pre>
+</div></div><h4 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-AuditorCommentary.4">Auditor Commentary</h4><ul><li><p><strong>Purpose</strong>: Identify controlling persons across both individual and entity contexts.</p></li><li><p><strong>Potential Gap</strong>: In CRS, “Controlling Person” logic typically requires you to look at shareholdings, ownership percentages, or trustee relationships. This code references <code>dsl_RoleTypeIdName</code> (like <code>'Shareholder','Settlor (Trust)','Director','Executor'...</code>). That’s correct for <strong>common</strong> controlling person roles, but ensure your organization’s logic <strong>correctly</strong> tags these roles as “controlling” in the CRM or staging table.</p></li></ul><hr/><h3 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-6.Step8.5:BuildFinancialDetails(AD)→##CRSAccountDetails">6. Step 8.5: Build Financial Details (AD) → ##CRSAccountDetails</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">IF OBJECT_ID(&#39;tempdb..##CRSAccountDetails&#39;) IS NOT NULL
+    DROP TABLE ##CRSAccountDetails;
+
+DECLARE @PeriodStartDate   DATETIME = &#39;2024-04-01&#39;;
+DECLARE @PeriodEndDate     DATETIME = &#39;2025-03-31&#39;;
+DECLARE @rptYear           INT      = YEAR(@PeriodEndDate);
+</pre>
+</div></div><ul><li><p><strong>Variables</strong> define the CRS reporting period. Typically the NZ CRS cycle is 1 Jan – 31 Dec, or 1 Apr – 31 Mar for some FIs. This code suggests a fiscal year approach ending 31 Mar. That’s consistent with some NZ institutions.</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">WITH cte_income AS (...)
+SELECT DISTINCT
+       fpd.AccountID AS &#39;ee_uniqueID&#39;,
+       ...
+INTO ##CRSAccountDetails
+FROM [SQLUAT].[DataServices].FATCA.Stage_CRSPivotedData_jf fpd
+LEFT JOIN cte_income i ...
+LEFT JOIN (SELECT PortfolioNo, SUM(balance)...) ai ...
+</pre>
+</div></div><h4 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-AuditorCommentary.5">Auditor Commentary</h4><ul><li><p><strong>Aggregates</strong> interest, balance, dividends, etc. from <code>tmpHoldingsPreload</code>. This is needed for CRS to <strong>report the account balance or value</strong> and certain income amounts (interest, dividends, gross proceeds).</p></li><li><p><strong>Check</strong> that the code properly captures all <strong>reportable</strong> income for CRS. Typically, CRS requires interest, dividends, and “other income” (like gross proceeds) for deposit, custodial, and other relevant accounts. The script lumps certain fields (<code>TotalCSLDivGross</code>, <code>TotalSTARTDivGross</code>, etc.). For an auditor, I’d confirm the <strong>mapping</strong> from your internal fields to the CRS definitions.</p></li><li><p><strong>Potential Concern</strong>: You rely on <code>WHEN portfolio in ('Cash Management', ...) THEN ... ELSE ...</code> to differentiate. Ensure that’s correct. If your business logic changes or new service-level names appear, the code might miss data.</p></li></ul><hr/><h3 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-7.Step8.6:Join#ALLAH,#ControllingPersons,and##CRSAccountDetails">7. Step 8.6: Join #ALLAH, #ControllingPersons, and ##CRSAccountDetails</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    ah.*,
+    cp.*,
+    ad.ReportingEntityType AS AD_ReportingEntityType,
+    ...
+INTO FATCA.[CRS_AH_CP_AD_jf]
+FROM #ALLAH ah
+LEFT JOIN #ControllingPersons cp
+    ON ah.TradingEntityType = cp.CP_TradingEntityType
+   AND ah.EntityName        = cp.CP_EntityName
+   AND ah.PortfolioNo       = cp.CP_PortfolioNo
+   ...
+LEFT JOIN ##CRSAccountDetails ad
+    ON ad.[ee_uniqueID] = ah.[AccountID]
+    AND ad.[Account Number] = ah.[PortfolioNo]
+WHERE ...
+  AND (CAST(ad.balance AS INT) + CAST(ad.interest AS INT) + CAST(ad.dividends AS INT) &lt;&gt; 0);
+</pre>
+</div></div><h4 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-AuditorCommentary.6">Auditor Commentary</h4><ul><li><p><strong>Combines</strong> everything into one “master table.”</p></li><li><p>The <strong>join</strong> on entity name + portfolio # might be fragile if your data has slight naming mismatches. Also, if multiple controlling persons exist, you’ll see repeated rows. That’s typically fine for CRS, as you need one row per controlling person.</p></li><li><p><strong>The final WHERE</strong> excludes accounts with total zero amounts in (balance + interest + dividends). That might be your policy to skip effectively closed or $0 accounts. Possibly correct for your internal “de minimis” threshold, but remember CRS does not necessarily allow ignoring $0 accounts if they are still open and meet other reporting criteria.</p></li></ul><hr/><h3 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-8.Step9.1:FinalSelect(In##crsfinalselect)">8. Step 9.1: Final Select (In <code>##crsfinalselect</code>)</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT 
+    &#39;N&#39; AS &#39;Operation Type&#39;,
+    &#39;NZ&#39; AS &#39;Reporting Jurisdiction&#39;,
+    (CONVERT(VARCHAR(MAX), g.[AccountID]) + CONVERT(VARCHAR(MAX), g.[PortfolioNo])) AS &#39;Recipient ID&#39;,
+    CASE
+        WHEN g.[AccountType] IN (&#39;Layered Entity&#39;,&#39;Normal Entity&#39;) ...
+        WHEN g.[AccountType] IN (&#39;Single TIN Individual&#39;,&#39;Multiple TINs Individual&#39;) ...
+        WHEN g.[AccountType] = &#39;non-Foreign Acc Holder&#39; THEN &#39;1&#39;
+        ELSE &#39;ERROR&#39;
+    END AS &#39;Reportable Account Type&#39;,
+    ...
+INTO ##crsfinalselect
+FROM FATCA.CRS_AH_CP_AD_jf g;
+</pre>
+</div></div><h4 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-AuditorCommentary.7">Auditor Commentary</h4><ul><li><p><strong>CRS101/102/103</strong> determination:</p><ul><li><p><code>'Layered Entity','Normal Entity'</code> → <code>'4'</code> (CRS103)</p></li><li><p><code>'Single TIN Individual','Multiple TINs Individual'</code> → <code>'2'</code> (CRS102)</p></li><li><p><code>'non-Foreign Acc Holder'</code> → <code>'1'</code> (CRS101)</p></li></ul></li><li><p>This is consistent with how some solutions encode CRS classification. <strong>No mention</strong> of <code>'3'</code> (CRS102 for an organization) or <code>'5'</code> (Nil Report), presumably not needed in your scenario.</p></li><li><p><code>'ERROR'</code> case: Good fallback. In production, consider capturing those in an error table or raising a data-quality alert.</p></li><li><p>For TIN logic (<code>CASE WHEN g.[AccountType] IN ('Layered Entity','Normal Entity') THEN EntityTIN ... ELSE TIN1 ...</code>), that is typical. Just ensure you’re not overwriting or ignoring a legitimate TIN for individuals in the <code>'non-Foreign Acc Holder'</code> scenario.</p></li></ul><hr/><h3 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-9.Step9.2:InsertCRSDataintoFinalTable">9. Step 9.2: Insert CRS Data into Final Table</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">IF OBJECT_ID(&#39;FATCA.CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf&#39;,&#39;U&#39;) IS NOT NULL
+BEGIN
+    DROP TABLE ...
+END
+
+SELECT 
+    @rptYear as ReportingYear,
+    GETDATE() as LastUpdated,
+    ...
+INTO [FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf]
+FROM ##crsfinalselect;
+</pre>
+</div></div><h4 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-AuditorCommentary.8">Auditor Commentary</h4><ul><li><p>Final step: persists the data.</p></li><li><p><strong>Notable</strong>: You do not appear to filter out <code>'ERROR'</code> rows. They will appear with <code>[Reportable Account Type] = 'ERROR'</code>. Possibly that is intentional for manual QA.</p></li><li><p>The code <strong>does not</strong> do any “Nil Reporting” logic (CRS101, 102, 103 vs. 5). That’s presumably handled elsewhere or not required for your system.</p></li></ul><hr/><h2 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-OverallComplianceChecks">Overall Compliance Checks</h2><ol start="1"><li><p><strong>CRS v3.19 Fields</strong>: The final table has ~143 columns, which is typical for a broad coverage of the CRS schema.</p></li><li><p><strong>TIN Handling</strong>: For some countries, placeholders like <code>'NA'</code> might <strong>not</strong> be recognized. If you plan to produce a multi-jurisdiction XML, check local rules. NZ on its own might be fine with <code>'NA'</code> or empty if no TIN is truly assigned.</p></li><li><p><strong>Account Balance &amp; Income</strong>: The code only includes interest and dividends (and a “grossprocredem” column if non-zero). That is consistent with typical CRS fields:</p><ul><li><p><code>&lt;crs:CustodialAccount&gt;</code> or <code>&lt;crs:DepositoryAccount&gt;</code> often requires interest and dividends, plus gross proceeds.</p></li><li><p>Make sure the columns handle other relevant income types (e.g., “sale of property” or “other” if required for your institution).</p></li></ul></li><li><p><strong>Multiple Jurisdictions</strong>: You do handle TIN1–TIN5 and TaxCountry1–TaxCountry5. That’s good.</p></li><li><p><strong>Entity vs. Controlling Persons</strong>: The script merges controlling persons. That is required for CRS if it’s a Passive NFE. Ensure your <code>'non-Foreign Acc Holder'</code> logic is truly capturing that scenario.</p></li></ol><hr/><h2 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-RecommendationsforImprovement">Recommendations for Improvement</h2><ol start="1"><li><p><strong>Add Data-Quality Checks</strong>: For rows that end up with <code>'ERROR'</code> in <code>'Reportable Account Type'</code>, log them in a separate table or produce an exception report.</p></li><li><p><strong>Consolidate TIN Placeholder Rules</strong>: Possibly adopt a standard approach (like <code>'NOTIN'</code>, <code>'000000000'</code>, or <code>'NA'</code>) throughout the code to avoid confusion.</p></li><li><p><strong>Verify Addresses for Entities</strong>: The script often defaults <code>'NZ'</code> if unknown. That could misrepresent truly foreign entities. If the business logic is certain, no problem. Otherwise, consider a “missing data” placeholder or “XX.”</p></li><li><p><strong>Ensure Thoroughness on Zero Balances</strong>: CRS requires reporting of closed accounts or $0 balance accounts if they were open at any point in the year. If the institution’s policy is to exclude them from final output, that must align with official IRD guidance.</p></li></ol><hr/><h3 id="id-16.01.2025-USP_03coderedeisgnedforAH_CP_AD-FinalAuditorVerdict">Final Auditor Verdict</h3><p>Overall, the code:</p><ul><li><p><strong>Implements</strong> standard steps to gather CRS data, assign CRS classifications (CRS101, CRS102, CRS103), handle foreign controlling persons, and produce a final table of 140+ fields suitable for <strong>CRS</strong>.</p></li><li><p><strong>Complies</strong> with the fundamentals of v3.19 in that it has multiple TIN/TaxCountry fields, addresses, controlling persons, and account/balance/interest segments.</p></li><li><p><strong>Main Caution</strong>: TIN placeholders, zero-balance logic, and <code>'NZ'</code> defaults for some entity rows are <strong>data risk</strong> areas. As long as the business is 100% sure of these default behaviors, the code is consistent. If not, it could lead to inaccurate or incomplete reporting.</p></li></ul><p>From an <strong>expert tax auditor</strong> perspective, the script is <strong>generally well-structured and aligned</strong> with CRS requirements, subject to the minor points of data validation and local rules for TIN placeholders.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

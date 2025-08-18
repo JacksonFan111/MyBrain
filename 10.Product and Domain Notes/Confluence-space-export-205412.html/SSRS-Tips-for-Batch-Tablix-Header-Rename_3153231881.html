@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : SSRS Tips for Batch Tablix Header Rename</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : SSRS Tips for Batch Tablix Header Rename
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 07-05-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>i am trying to see if any faster ways to rename 127 columns Tablix</p><blockquote><p><strong>Why this matters</strong><br/>When SSRS auto-sanitises special characters ( <code>/</code> <code>'</code> <code>.</code> ) in column headers you can end up with cryptic titles such as <code>Substantial U S Owner s Type</code>. Fixing them directly in the report designer is painful and brittle; editing the report <em>RDL</em> (XML) is faster and fully repeatable.</p></blockquote><hr/><p /><h2 id="SSRSTipsforBatchTablixHeaderRename-1‒One-MinuteOverview">1 ‒ One-Minute Overview</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="491fc217-59bf-4ac3-9010-b00b47ff2baf" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Task</p></th><th class="confluenceTh"><p>What you actually do</p></th><th class="confluenceTh"><p>Where</p></th></tr><tr><td class="confluenceTd"><p><strong>Extract</strong></p></td><td class="confluenceTd"><p>Save the report <strong>RDL</strong> file(s) to disk (or download from the SSRS portal).</p></td><td class="confluenceTd"><p>SSRS Portal ➜ <em>…</em> ➜ <strong>Download</strong></p></td></tr><tr><td class="confluenceTd"><p><strong>Edit</strong></p></td><td class="confluenceTd"><p>Open the RDL as plain XML, locate each <code>&lt;TablixCell&gt;</code> → <code>&lt;TextRuns&gt;</code> → <code>&lt;TextRun&gt;</code> → <code>&lt;Value&gt;</code> node, and add the missing punctuation.</p></td><td class="confluenceTd"><p>Any text editor or Copilot</p></td></tr><tr><td class="confluenceTd"><p><strong>Preserve</strong></p></td><td class="confluenceTd"><p>Leave every dataset field name as-is (the underscores are required).</p></td><td class="confluenceTd"><p><code>&lt;DataSets&gt;</code> section</p></td></tr><tr><td class="confluenceTd"><p><strong>Validate</strong></p></td><td class="confluenceTd"><p>Count <code>&lt;TablixColumn&gt;</code> or <code>&lt;TablixCell&gt;</code> elements — you must still have <strong>127</strong> columns when done.</p></td><td class="confluenceTd"><p>Search / XML linter</p></td></tr><tr><td class="confluenceTd"><p><strong>Upload</strong></p></td><td class="confluenceTd"><p>Re-publish the edited RDL to SSRS; refresh the report.</p></td><td class="confluenceTd"><p>SSRS Portal</p></td></tr></tbody></table></div><hr/><h2 id="SSRSTipsforBatchTablixHeaderRename-2‒DetailedHow-To">2 ‒ Detailed How-To</h2><ol start="1"><li><p>Export the RDL</p><p><em>Open your report ➜ <strong>Download</strong> ➜ Save the </em><code>.rdl</code><em> file.</em></p><ul><li><p>Optional: copy the XML into a <code>.docx</code> if you prefer Copilot’s Word plug-in.</p></li></ul></li><li><p>Keep Dataset Fields Untouched 🔒 </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">&lt;Field Name=&quot;Substantial_US_Owner_s_Type&quot;&gt;
+    &lt;DataField&gt;Substantial_US_Owner_s_Type&lt;/DataField&gt;
+&lt;/Field&gt;
+</pre>
+</div></div><p><em>Do <strong>not</strong> remove the underscores; SSRS binds on these field names.</em></p></li><li><p>Fix Headers in the <code>&lt;TablixBody&gt;</code> </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">&lt;TablixCell&gt;
+    &lt;CellContents&gt;
+        &lt;Textbox Name=&quot;Substantial_US_Owner_s_Type&quot;&gt;
+            &lt;TextRuns&gt;
+                &lt;TextRun&gt;
+                    &lt;!-- Before --&gt;
+                    &lt;Value&gt;Substantial U S Owner s Type&lt;/Value&gt;
+                    &lt;!-- After  --&gt;
+                    &lt;Value&gt;Substantial U.S. Owner&#39;s Type&lt;/Value&gt;
+                &lt;/TextRun&gt;
+            &lt;/TextRuns&gt;
+        &lt;/Textbox&gt;
+    &lt;/CellContents&gt;
+&lt;/TablixCell&gt;
+</pre>
+</div></div><p><strong>Pro-tip:</strong><br/><em>Use a regex replacement:</em></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Find :  ([A-Z])\sU\sS\s
+Replace: $1 U.S. 
+</pre>
+</div></div></li><li><p>Audit Column Count</p><p><em>Quick check</em> → <code>grep -c &quot;&lt;TablixCell&quot;</code> should return <strong>127</strong>.<br/>If not, undo the last edit (you probably deleted a closing tag).</p></li><li><p>Re-deploy &amp; Test</p><p><em>Upload the RDL</em> ➜ Run the report ➜ Confirm the headers display with <strong>U.S. / ' / .</strong> characters intact.</p></li></ol><hr/><h2 id="SSRSTipsforBatchTablixHeaderRename-3‒CommonHeaderFixes">3 ‒ Common Header Fixes</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="765df059-817b-4620-ad56-581060a82839" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Old header</p></th><th class="confluenceTh"><p>New header</p></th></tr><tr><td class="confluenceTd"><p>Substantial U S Owner s Type</p></td><td class="confluenceTd"><p>Substantial U.S. Owner's Type</p></td></tr><tr><td class="confluenceTd"><p>Substantial U S Owner Tax Country Code</p></td><td class="confluenceTd"><p>Substantial U.S. Owner Tax Country Code</p></td></tr><tr><td class="confluenceTd"><p>Substantial U S Owner Controlling Person TIN</p></td><td class="confluenceTd"><p>Substantial U.S. Owner / Controlling Person TIN</p></td></tr></tbody></table></div><p>Copy the <em>left</em> value, paste into <strong>Find</strong>, replace with the <em>right</em> value.</p><hr/><h2 id="SSRSTipsforBatchTablixHeaderRename-4‒AutomationShortcut(Copilot/VSCode)">4 ‒ Automation Shortcut (Copilot / VS Code)</h2><ol start="1"><li><p>Open the XML in <strong>VS Code</strong>.</p></li><li><p>Install the <em>“XML Tools”</em> extension for formatting + XPath search.</p></li><li><p>Use <strong>Ctrl + Shift + L</strong> to multi-cursor every matching <code>&lt;Value&gt;</code> line.</p></li><li><p>Type the corrected header once — it propagates to all cursors.</p></li></ol><hr/><h2 id="SSRSTipsforBatchTablixHeaderRename-5‒Gotchas&amp;SafetyNets">5 ‒ Gotchas &amp; Safety Nets</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="72c3f7bc-63dc-4c93-a3b7-dd86876be4c7" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>🔥 What can go wrong</p></th><th class="confluenceTh"><p>🛠️ Prevent / Fix</p></th></tr><tr><td class="confluenceTd"><p><strong>Broken binding</strong> – header text no longer matches field name</p></td><td class="confluenceTd"><p>Remember: only the <code>&lt;Value&gt;</code> text changes; leave <code>&lt;Field Name&gt;</code> &amp; <code>&lt;DataField&gt;</code> untouched.</p></td></tr><tr><td class="confluenceTd"><p><strong>Malformed XML</strong> – missing <code>&lt;/TablixCell&gt;</code></p></td><td class="confluenceTd"><p>Always pretty-print after bulk edits (<code>Shift + Alt + F</code> in VS Code).</p></td></tr><tr><td class="confluenceTd"><p><strong>Wrong column count</strong></p></td><td class="confluenceTd"><p>Run the <strong>127-column grep</strong> before saving.</p></td></tr><tr><td class="confluenceTd"><p><strong>Report won’t deploy</strong></p></td><td class="confluenceTd"><p>SSRS error details ➜ usually an unescaped <code>&amp;</code>; encode as <code>&amp;amp;</code>.</p></td></tr></tbody></table></div><hr/><h3 id="SSRSTipsforBatchTablixHeaderRename-✨QuickCopyBlock">✨ Quick Copy Block</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">&lt;!-- Template for a corrected cell --&gt;
+&lt;TablixCell&gt;
+  &lt;CellContents&gt;
+    &lt;Textbox Name=&quot;REPLACE_WITH_FIELD_NAME&quot;&gt;
+      &lt;TextRuns&gt;
+        &lt;TextRun&gt;
+          &lt;Value&gt;REPLACE WITH FINAL HEADER TEXT&lt;/Value&gt;
+          &lt;Style&gt;
+            &lt;FontWeight&gt;Normal&lt;/FontWeight&gt;
+            &lt;Color&gt;#333333&lt;/Color&gt;
+          &lt;/Style&gt;
+        &lt;/TextRun&gt;
+      &lt;/TextRuns&gt;
+    &lt;/Textbox&gt;
+  &lt;/CellContents&gt;
+&lt;/TablixCell&gt;
+</pre>
+</div></div><hr/><blockquote><p><strong>Tip</strong><br/>Keep a <em>master</em> RDL with fully-punctuated headers. Clone it each year to avoid repeating this cleanup.</p></blockquote>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

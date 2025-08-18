@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Confiuson of develop and UAT DB state claerly</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Confiuson of develop and UAT DB state claerly
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 30-01-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h3 id="ConfiusonofdevelopandUATDBstateclaerly-ConflictDeepDive:WhyNewUsersGetConfused"><strong>Conflict Deep Dive: Why New Users Get Confused</strong></h3><p>The core conflict—UAT requiring <code>[TGASQLTST01\\CRMUAT]</code> while the <code>develop</code> branch uses <code>[TGASQLPROD\\TGASQLCRM]</code>—creates significant confusion for new team members. Below is a breakdown of how this impacts workflows, data integrity, and user trust, along with real-world examples.</p><hr/><h3 id="ConfiusonofdevelopandUATDBstateclaerly-1.TheRootoftheConfusion"><strong>1. The Root of the Confusion</strong></h3><h4 id="ConfiusonofdevelopandUATDBstateclaerly-Environmentvs.CodebaseMismatch"><strong>Environment vs. Codebase Mismatch</strong></h4><ul><li><p><strong>What New Users Expect</strong>:  </p><ul><li><p>The <code>develop</code> branch (labeled as the &quot;UAT branch&quot;) should align with the UAT environment.  </p></li><li><p>Code in <code>develop</code> should deploy directly to UAT without manual tweaks.  </p></li></ul></li><li><p><strong>Reality</strong>:  </p><ul><li><p><code>develop</code> contains <strong>PROD-linked server references</strong> (<code>[TGASQLPROD\\TGASQLCRM]</code>), which are invalid in UAT.  </p></li><li><p>UAT requires <strong>UAT-linked server references</strong> (<code>[TGASQLTST01\\CRMUAT]</code>), but these exist nowhere in the <code>develop</code> branch.  </p></li></ul></li></ul><h4 id="ConfiusonofdevelopandUATDBstateclaerly-HistoricalContext(The2022Renaming)"><strong>Historical Context (The 2022 Renaming)</strong></h4><ul><li><p><strong>Original Setup</strong>:  </p><ul><li><p>UAT and <code>develop</code> both used <code>[TGASQLTST01\\CRMUAT]</code>.  </p></li></ul></li><li><p><strong>2022 Change</strong>:  </p><ul><li><p>To simplify PROD deployments, <code>develop</code> was reconfigured to use PROD references.  </p></li><li><p><strong>Unintended Consequence</strong>: UAT became a &quot;second-class citizen,&quot; requiring manual hacks to function.  </p></li></ul></li></ul><hr/><h3 id="ConfiusonofdevelopandUATDBstateclaerly-2.HowThisConfusesNewUsers"><strong>2. How This Confuses New Users</strong></h3><h4 id="ConfiusonofdevelopandUATDBstateclaerly-Scenario1:BlindlyDeployingdeveloptoUAT"><strong>Scenario 1: Blindly Deploying </strong><code>develop</code> to UAT</h4><ul><li><p><strong>Action</strong>:  <br/>A new developer deploys the <code>develop</code> branch directly to UAT.  </p></li><li><p><strong>Result</strong>:  <br/>All stored procedures (SPs) reference <code>[TGASQLPROD\\TGASQLCRM]</code>, which <strong>does not exist in UAT</strong>.  </p></li><li><p><strong>Error</strong>:  </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">Msg 7202, Level 11: Could not find server &#39;[TGASQLPROD\\TGASQLCRM]&#39;.  </pre>
+</div></div></li><li><p><strong>Confusion</strong>:  </p><ul><li><p>&quot;Why does the UAT branch reference a PROD server that’s not even set up here?&quot;  </p></li><li><p>&quot;Is UAT supposed to mirror PROD? Why is this broken?&quot;  </p></li></ul></li></ul><h4 id="ConfiusonofdevelopandUATDBstateclaerly-Scenario2:PartialManualFixes"><strong>Scenario 2: Partial Manual Fixes</strong></h4><ul><li><p><strong>Action</strong>:  <br/>A new developer manually updates <em>some</em> SPs in UAT to use <code>[TGASQLTST01\\CRMUAT]</code> but forgets others.  </p></li><li><p><strong>Result</strong>:  <br/>Inconsistent behavior (e.g., some reports work, others fail).  </p></li><li><p><strong>Example</strong>:  </p><ul><li><p><strong>Working</strong>: <code>ReportA</code> uses corrected SPs.  </p></li><li><p><strong>Failing</strong>: <code>ReportB</code> still references <code>[TGASQLPROD\\...]</code>.  </p></li></ul></li><li><p><strong>Confusion</strong>:  </p><ul><li><p>&quot;Why is only part of the system working?&quot;  </p></li><li><p>&quot;How do I ensure all references are fixed?&quot;  </p></li></ul></li></ul><h4 id="ConfiusonofdevelopandUATDBstateclaerly-Scenario3:MergingUntestedCode"><strong>Scenario 3: Merging Untested Code</strong></h4><ul><li><p><strong>Action</strong>:  <br/>A new developer merges UAT-specific code (with <code>[TGASQLTST01\\CRMUAT]</code>) into <code>develop</code> without reverting references.  </p></li><li><p><strong>Result</strong>:  <br/>PROD deployments fail because <code>develop</code> now contains invalid UAT references.  </p></li><li><p><strong>Confusion</strong>:  </p><ul><li><p>&quot;Why did Karl reject my PR? The code works in UAT!&quot;  </p></li><li><p>&quot;How do I keep track of what to change?&quot;  </p></li></ul></li></ul><hr/><h3 id="ConfiusonofdevelopandUATDBstateclaerly-3.ImpactonDataIntegrity"><strong>3. Impact on Data Integrity</strong></h3><h4 id="ConfiusonofdevelopandUATDBstateclaerly-SilentDataCorruption"><strong>Silent Data Corruption</strong></h4><ul><li><p><strong>Example</strong>:  </p><ul><li><p>A UAT SP uses <code>[TGASQLTST01\\CRMUAT]</code> to calculate financial metrics.  </p></li><li><p>The same SP in <code>develop</code> uses <code>[TGASQLPROD\\TGASQLCRM]</code> (PROD data).  </p></li></ul></li><li><p><strong>Risk</strong>:  </p><ul><li><p>Testing in UAT with PROD references could accidentally modify PROD data.  </p></li><li><p>UAT tests may pass with PROD data but fail with actual UAT data.  </p></li></ul></li></ul><h4 id="ConfiusonofdevelopandUATDBstateclaerly-BrokenReconciliationReports"><strong>Broken Reconciliation Reports</strong></h4><ul><li><p><strong>Case</strong>: Cynthia’s report <code>A + B = C</code> fails in UAT.  </p><ul><li><p><strong>Cause</strong>:  </p><ul><li><p><code>A</code> and <code>B</code> pull from UAT (<code>[TGASQLTST01\\CRMUAT]</code>).  </p></li><li><p><code>C</code> uses a stale SP from <code>develop</code> (still referencing PROD).  </p></li></ul></li><li><p><strong>Result</strong>:  </p><ul><li><p><code>C</code> is calculated using PROD logic, creating a mismatch.  </p></li></ul></li></ul></li></ul><hr/><h3 id="ConfiusonofdevelopandUATDBstateclaerly-4.WhyNewUsersStruggle"><strong>4. Why New Users Struggle</strong></h3><h4 id="ConfiusonofdevelopandUATDBstateclaerly-MisleadingBranchNames"><strong>Misleading Branch Names</strong></h4><ul><li><p><strong>Assumption</strong>:  </p><ul><li><p><code>develop</code> = UAT environment.  </p></li></ul></li><li><p><strong>Reality</strong>:  </p><ul><li><p><code>develop</code> = PROD-compatible codebase with UAT mislabeled.  </p></li></ul></li></ul><h4 id="ConfiusonofdevelopandUATDBstateclaerly-LackofClearDocumentation"><strong>Lack of Clear Documentation</strong></h4><ul><li><p><strong>Missing Guidance</strong>:  </p><ul><li><p>No centralized doc explaining the 2022 renaming or manual swap process.  </p></li><li><p>Tribal knowledge: &quot;Ask Karl&quot; is not scalable.  </p></li></ul></li></ul><h4 id="ConfiusonofdevelopandUATDBstateclaerly-ToolingGaps"><strong>Tooling Gaps</strong></h4><ul><li><p><strong>No Schema Comparison</strong>:  </p><ul><li><p>Without tools like Redgate SQL Compare, new users can’t easily spot differences between <code>develop</code> and UAT DB.  </p></li></ul></li><li><p><strong>Manual Processes</strong>:  </p><ul><li><p>Reference swaps are not automated, increasing human error risk.  </p></li></ul></li></ul><hr/><h3 id="ConfiusonofdevelopandUATDBstateclaerly-5.MitigationStrategiesforNewUsers"><strong>5. Mitigation Strategies for New Users</strong></h3><h4 id="ConfiusonofdevelopandUATDBstateclaerly-Step-by-StepGuardrails"><strong>Step-by-Step Guardrails</strong></h4><ol start="1"><li><p><strong>Pre-Deployment Checklist</strong>:  </p><ul><li><p>Verify all linked server references in UAT match <code>[TGASQLTST01\\CRMUAT]</code>.  </p></li><li><p>Use a SQL script to automate replacements:  </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Example: Batch replace PROD → UAT references  
+EXEC sp_configure &#39;show advanced options&#39;, 1;  
+RECONFIGURE;  
+UPDATE [UAT_DB].sys.sql_modules  
+SET definition = REPLACE(definition, &#39;TGASQLPROD\\TGASQLCRM&#39;, &#39;TGASQLTST01\\CRMUAT&#39;)  
+WHERE definition LIKE &#39;%TGASQLPROD\\TGASQLCRM%&#39;;  </pre>
+</div></div></li></ul></li><li><p><strong>Post-Merge Validation</strong>:  </p><ul><li><p>After merging to <code>develop</code>, redeploy code to UAT with PROD references <strong>and aliases</strong>:  </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Map PROD references to UAT resources  
+EXEC sp_addlinkedserver   
+  @server = &#39;TGASQLPROD\\TGASQLCRM&#39;,   
+  @srvproduct = &#39;&#39;,  
+  @provider = &#39;SQLNCLI&#39;,   
+  @datasrc = &#39;TGASQLTST01\\CRMUAT&#39;;  </pre>
+</div></div></li></ul></li></ol><h4 id="ConfiusonofdevelopandUATDBstateclaerly-Training&amp;Documentation"><strong>Training &amp; Documentation</strong></h4><ul><li><p><strong>Onboarding Session</strong>:  </p><ul><li><p>Walk through the 2022 renaming history.  </p></li><li><p>Demo manual reference swaps using real SPs.  </p></li></ul></li><li><p><strong>Confluence Page</strong>:  </p><ul><li><p>Add a &quot;Troubleshooting UAT/PROD Mismatches&quot; section with screenshots and error examples.  </p></li></ul></li></ul><hr/><h3 id="ConfiusonofdevelopandUATDBstateclaerly-6.Long-TermFixestoEliminateConfusion"><strong>6. Long-Term Fixes to Eliminate Confusion</strong></h3><h4 id="ConfiusonofdevelopandUATDBstateclaerly-TokenizationinCode"><strong>Tokenization in Code</strong></h4><ul><li><p>Replace hardcoded servers with tokens (e.g., <code>#LINKED_SERVER#</code>).  </p></li><li><p>Use Azure DevOps to inject <code>[TGASQLTST01\\CRMUAT]</code> for UAT and <code>[TGASQLPROD\\TGASQLCRM]</code> for PROD.  </p></li></ul><h4 id="ConfiusonofdevelopandUATDBstateclaerly-StandardizeUATInfrastructure"><strong>Standardize UAT Infrastructure</strong></h4><ul><li><p>Create a UAT-linked server named <code>[TGASQLPROD\\TGASQLCRM]</code> pointing to UAT resources.  </p></li><li><p><strong>Result</strong>: Code works in both environments without changes.  </p></li></ul><h4 id="ConfiusonofdevelopandUATDBstateclaerly-AutomatedDeploymentPipeline"><strong>Automated Deployment Pipeline</strong></h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence"># Sample Azure DevOps Pipeline  
+- stage: Deploy_UAT  
+  jobs:  
+  - job: Replace_UAT_References  
+    steps:  
+    - task: replacetokens@3  
+      inputs:  
+        targetFiles: &#39;**/*.sql&#39;  
+        tokenPrefix: &#39;#&#39;  
+        tokenSuffix: &#39;#&#39;  
+        linkedServer: &#39;TGASQLTST01\CRMUAT&#39;  </pre>
+</div></div><hr/><h3 id="ConfiusonofdevelopandUATDBstateclaerly-7.KeyTakeawaysforNewUsers"><strong>7. Key Takeaways for New Users</strong></h3><ul><li><p><strong>Always Assume</strong>:  </p><ul><li><p><code>develop</code> branch ≠ UAT environment.  </p></li><li><p>Manual reference swaps are required for UAT testing.  </p></li></ul></li><li><p><strong>Verify Twice</strong>:  </p><ul><li><p>Before merging to <code>develop</code>.  </p></li><li><p>After deploying to UAT.  </p></li></ul></li><li><p><strong>Ask for Help</strong>:  </p><ul><li><p>Karl: PROD reference validation.  </p></li><li><p>Iain: UAT deployment sign-off.  </p></li></ul></li></ul><p>By understanding this conflict, new users can avoid common pitfalls and contribute to smoother UAT/PROD synchronization.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Power BI Dynamic Subscriptions Set Up Guide</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Power BI Dynamic Subscriptions Set Up Guide
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 16-02-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h2 id="PowerBIDynamicSubscriptionsSetUpGuide-Backgroud:"><img class="emoticon emoticon-blue-star" data-emoji-id="1f439" data-emoji-shortname=":hamster:" data-emoji-fallback="🐹" src="images/icons/emoticons/72/1f439.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Backgroud:</h2><p>High Level Step fro set up Power BI Dynamic Subscriptions. We have to have some sort of Power BI Premium or Fabrics Capacity (Trial) to do it, it is reallty similar to SSRS data Driven Subscription.</p><p>You would need to Set up a [Data Set Triggers] and [Main DataSets] to make it works from my testing.</p><p>you could only set the sending out max at 1000 emails at this stage, only the Emaisl Recepientsw and Subject part are dynamic, You would need to set up some On Report pareaterms to help you fitler down the   [Main DataSets].</p><h2 id="PowerBIDynamicSubscriptionsSetUpGuide-Prerequisites"><img class="emoticon emoticon-blue-star" data-emoji-id="1f968" data-emoji-shortname=":pretzel:" data-emoji-fallback="🥨" src="images/icons/emoticons/72/1f968.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Prerequisites</h2><p>To use Dynamic Per Recipient subscriptions, you need the following:</p><ul><li><p>A <strong>Premium or Fabric Capacity</strong> workspace or a Fabric trial capacity.</p></li><li><p><strong>A contact list data (</strong>[Data Set Triggers]<strong>) set that contains recipient emails, filters, and other relevant information</strong>.</p></li><li><p>Build permissions on the contact list data set.</p></li><li><p>Contributor, Member, or Admin access in the workspace where you are setting up the subscription.</p></li></ul><h2 id="PowerBIDynamicSubscriptionsSetUpGuide-Instructions"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4d8" data-emoji-shortname=":blue_book:" data-emoji-fallback="\uD83D\uDCD8" src="images/icons/emoticons/72/1f4d8.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Instructions</h2><p>JF was tasked to explored hpw to send out an Emails remidemnrd t opeople that have npt complated Onlearn Modeules using a Power B idatatsets linekd to an APIS sources. JF was looking at how to set up Dynamic Per Recipient subscriptions Step by Step.</p><ol start="1"><li><p><strong>Prepare a Data Set</strong>&gt;&gt; Connet to the CRM or Intergation data set</p></li></ol><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250216-201919.png" width="760" loading="lazy" src="attachments/3021504564/3021537300.png?width=760" data-image-src="attachments/3021504564/3021537300.png" data-height="568" data-width="1710" data-unresolved-comment-count="0" data-linked-resource-id="3021537300" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250216-201919.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3021504564" data-linked-resource-container-version="3" data-media-id="935955cf-cca6-4712-a1c9-ee1c87d5a317" data-media-type="file"></span><p class="media-group"><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/3021504564/3021504609.txt" data-nice-type="Text File" data-file-src="/wiki/download/attachments/3021504564/M%20Code%20-%20DS_AD_OnLearn.txt?version=1&amp;modificationDate=1739737212353&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="3021504609" data-linked-resource-type="attachment" data-linked-resource-container-id="3021504564" data-linked-resource-default-alias="M Code - DS_AD_OnLearn.txt" data-mime-type="text/plain" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="3f1e4ec3-7a97-4beb-8c70-68bae3edc2a1" data-media-type="file"><img src="attachments/thumbnails/3021504564/3021504609" height="250"/></a></span><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/3021504564/3021210191.txt" data-nice-type="Text File" data-file-src="/wiki/download/attachments/3021504564/M%20Code%20-%20All%20Staff.txt?version=1&amp;modificationDate=1739737261297&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="3021210191" data-linked-resource-type="attachment" data-linked-resource-container-id="3021504564" data-linked-resource-default-alias="M Code - All Staff.txt" data-mime-type="text/plain" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="c8bbc5c1-26d3-4ae9-804a-b80ff1c8c4cd" data-media-type="file"><img src="attachments/thumbnails/3021504564/3021210191" height="250"/></a></span></p><ol start="2"><li><p>Filter the Data set down by join with the main data set and applied soem fiulterd to get the list of people that have not compledted  the coures</p></li><li><p><strong>Deploy the Data Set:</strong>&gt;&gt; Set up some sort of Powerr Bi report Or power BI pagicnated reports, Publised the PBIX report on the that Have <strong>Premium or Fabric Capacity</strong></p></li></ol><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250216-202222.png" width="592" loading="lazy" src="attachments/3021504564/3021210199.png?width=592" data-image-src="attachments/3021504564/3021210199.png" data-height="412" data-width="592" data-unresolved-comment-count="0" data-linked-resource-id="3021210199" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250216-202222.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3021504564" data-linked-resource-container-version="3" data-media-id="e862bcab-ede1-4a69-9bde-3e284967a30a" data-media-type="file"></span><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250216-202439.png" width="760" loading="lazy" src="attachments/3021504564/3021570078.png?width=760" data-image-src="attachments/3021504564/3021570078.png" data-height="1210" data-width="2574" data-unresolved-comment-count="0" data-linked-resource-id="3021570078" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250216-202439.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3021504564" data-linked-resource-container-version="3" data-media-id="782136b0-5870-4d92-9d1b-10300d561fcd" data-media-type="file"></span><p>PBI RS give a similar felelin gto SSRS, you set the parametes at the Fitler Pane, please ntoed at this set yo uare seeting up the [Main DataSets].</p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250216-202627.png" width="760" loading="lazy" src="attachments/3021504564/3021537322.png?width=760" data-image-src="attachments/3021504564/3021537322.png" data-height="1230" data-width="2551" data-unresolved-comment-count="0" data-linked-resource-id="3021537322" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250216-202627.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3021504564" data-linked-resource-container-version="3" data-media-id="9f3a2bcc-f002-4e1a-8329-e9ae223a4352" data-media-type="file"></span><ol start="4"><li><p><strong>Create a Subscription:</strong> &gt;&gt;Go to the Power BI service, select the report, and click <strong>Subscribe</strong>. Choose the <strong>Dynamic Per Recipient</strong> option.</p></li></ol><p>** Please ntoed that thsi step you are seeting up the contact list ([Data Set Triggers]).</p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250216-202709.png" width="760" loading="lazy" src="attachments/3021504564/3021635601.png?width=760" data-image-src="attachments/3021504564/3021635601.png" data-height="1200" data-width="2530" data-unresolved-comment-count="0" data-linked-resource-id="3021635601" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250216-202709.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3021504564" data-linked-resource-container-version="3" data-media-id="fbb5ceb8-bfdc-4bd9-836e-79a69ea6655d" data-media-type="file"></span><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250216-202731.png" width="760" loading="lazy" src="attachments/3021504564/3021635609.png?width=760" data-image-src="attachments/3021504564/3021635609.png" data-height="958" data-width="882" data-unresolved-comment-count="0" data-linked-resource-id="3021635609" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250216-202731.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3021504564" data-linked-resource-container-version="3" data-media-id="ca0834b2-ad8a-4883-846a-f8186285557c" data-media-type="file"></span><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250216-202750.png" width="760" loading="lazy" src="attachments/3021504564/3021210210.png?width=760" data-image-src="attachments/3021504564/3021210210.png" data-height="947" data-width="894" data-unresolved-comment-count="0" data-linked-resource-id="3021210210" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250216-202750.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3021504564" data-linked-resource-container-version="3" data-media-id="27d04aeb-c15d-4d0c-b0bc-4e10674f9db8" data-media-type="file"></span><ol start="5"><li><p><strong><span style="background-color: rgb(211,241,167);">Map the Data:</span></strong><span style="background-color: rgb(211,241,167);"> </span>Select the contact list data set, and map the necessary columns (e.g., email, filters) to the corresponding fields in the subscription wizard. &gt;. this is most important &gt;&gt; similar to the SSRS data driven susb&gt;&gt; we need to defien the dynacmi dataset tha twe want ot send the emaisl to .</p></li></ol><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250216-202833.png" width="760" loading="lazy" src="attachments/3021504564/3021602849.png?width=760" data-image-src="attachments/3021504564/3021602849.png" data-height="1088" data-width="2009" data-unresolved-comment-count="0" data-linked-resource-id="3021602849" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250216-202833.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3021504564" data-linked-resource-container-version="3" data-media-id="3934bc09-5c36-428a-b7f1-2b621c533047" data-media-type="file"></span><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250216-202946.png" width="760" loading="lazy" src="attachments/3021504564/3021537333.png?width=760" data-image-src="attachments/3021504564/3021537333.png" data-height="1086" data-width="2002" data-unresolved-comment-count="0" data-linked-resource-id="3021537333" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250216-202946.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3021504564" data-linked-resource-container-version="3" data-media-id="f436140a-cb2a-4b19-9026-c2f8770bb16a" data-media-type="file"></span><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250216-203009.png" width="760" loading="lazy" src="attachments/3021504564/3021602855.png?width=760" data-image-src="attachments/3021504564/3021602855.png" data-height="1051" data-width="2004" data-unresolved-comment-count="0" data-linked-resource-id="3021602855" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250216-203009.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3021504564" data-linked-resource-container-version="3" data-media-id="1ee25379-3eaf-4297-812e-751ead3bb92a" data-media-type="file"></span><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250216-203035.png" width="760" loading="lazy" src="attachments/3021504564/3021210217.png?width=760" data-image-src="attachments/3021504564/3021210217.png" data-height="1073" data-width="2021" data-unresolved-comment-count="0" data-linked-resource-id="3021210217" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250216-203035.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3021504564" data-linked-resource-container-version="3" data-media-id="425caa94-847a-4875-9e86-a54e4dfd0360" data-media-type="file"></span><p /><ol start="6"><li><p><strong>Define Filters (Or Parameters that they might chanegd the names):</strong> Specify which columns in the report should be filtered  based on the values (<strong>Parameters)</strong>  in the contact list ([Data Set Triggers]).</p></li></ol><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250216-203304.png" width="760" loading="lazy" src="attachments/3021504564/3021210230.png?width=760" data-image-src="attachments/3021504564/3021210230.png" data-height="1078" data-width="2006" data-unresolved-comment-count="0" data-linked-resource-id="3021210230" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250216-203304.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3021504564" data-linked-resource-container-version="3" data-media-id="78a54cd6-28bf-46f3-822a-d5af34270dc9" data-media-type="file"></span><ol start="7"><li><p><strong>Choose Attachments:</strong> Set the format for attachments (e.g., PDF, PowerPoint) and whether they should be included for each recipient.</p></li></ol><p /><ol start="8"><li><p><strong>Save and Schedule:</strong> Schedule the subscription to run daily or on a custom schedule, or trigger it manually. ** Please sent it to your own emails first.</p></li></ol><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250216-203321.png" width="760" loading="lazy" src="attachments/3021504564/3021602862.png?width=760" data-image-src="attachments/3021504564/3021602862.png" data-height="1068" data-width="1965" data-unresolved-comment-count="0" data-linked-resource-id="3021602862" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250216-203321.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3021504564" data-linked-resource-container-version="3" data-media-id="1fce533b-79ef-41af-ba1a-abed99b93d51" data-media-type="file"></span><div class="confluence-information-macro confluence-information-macro-information"><span class="aui-icon aui-icon-small aui-iconfont-info confluence-information-macro-icon"></span><div class="confluence-information-macro-body"><p>[Data Set Triggers] &gt;&gt; control who recevied the emails</p><p>and [Main DataSets] &gt;&gt; Control what people can see in their emails</p></div></div><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250216-203350.png" width="760" loading="lazy" src="attachments/3021504564/3021537362.png?width=760" data-image-src="attachments/3021504564/3021537362.png" data-height="1136" data-width="847" data-unresolved-comment-count="0" data-linked-resource-id="3021537362" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250216-203350.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3021504564" data-linked-resource-container-version="3" data-media-id="b416c3b2-8358-4ee6-96b8-2939ddcdfdbd" data-media-type="file"></span><h2 id="PowerBIDynamicSubscriptionsSetUpGuide-Relatedarticles"><img class="emoticon emoticon-blue-star" data-emoji-id="1f4cb" data-emoji-shortname=":clipboard:" data-emoji-fallback="\uD83D\uDCCB" src="images/icons/emoticons/72/1f4cb.png" width="16" height="16" data-emoticon-name="blue-star" alt="(blue star)"/> Related articles</h2><p></p>
+
+
+
+
+
+
+
+
+
+
+
+    
+    <ul class="content-by-label">
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="3021504564" data-linked-resource-type="page" data-linked-resource-version="3" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/3021504564/Power+BI+Dynamic+Subscriptions+Set+Up+Guide">Power BI Dynamic Subscriptions Set Up Guide</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2698248202" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2698248202/10.+Known+Issues+-+Ace+Holdings+Data+at+Month+End">10. Known Issues - Ace Holdings Data at Month End</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2703098031" data-linked-resource-type="page" data-linked-resource-version="4" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2703098031/12.+Minors+turning+18">12. Minors turning 18</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2702376988" data-linked-resource-type="page" data-linked-resource-version="5" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2702376988/11.+CRM+advisers+and+PWAs+complex+relationships">11. CRM advisers and PWAs complex relationships</a>
+                        
+                        
+                    </div>
+    </li>
+        <li>
+        <div>
+                <span class="icon aui-icon content-type-page" title="Page">Page:</span>        </div>
+
+        <div class="details">
+                                <a data-linked-resource-id="2688352258" data-linked-resource-type="page" data-linked-resource-version="7" href="/wiki/spaces/~712020244e9c4c47d24365b81565be06aae4c6/pages/2688352258/09.+CIP+0209441Cashman+accounts+balance+report+By+Brenden">09. CIP:0209441Cashman accounts balance report By Brenden</a>
+                        
+                        
+                    </div>
+    </li>
+    </ul>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021635594.png">image-20250216-201909.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021537300.png">image-20250216-201919.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021504609.txt">M Code - DS_AD_OnLearn.txt</a> (text/plain)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021210191.txt">M Code - All Staff.txt</a> (text/plain)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021210199.png">image-20250216-202222.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021570078.png">image-20250216-202439.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021537322.png">image-20250216-202627.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021635601.png">image-20250216-202709.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021635609.png">image-20250216-202731.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021210210.png">image-20250216-202750.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021635615.png">image-20250216-202813.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021602849.png">image-20250216-202833.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021537333.png">image-20250216-202946.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021602855.png">image-20250216-203009.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021210217.png">image-20250216-203035.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021210230.png">image-20250216-203304.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021602862.png">image-20250216-203321.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3021504564/3021537362.png">image-20250216-203350.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 09. Learning IRD Automated Reporting Engine</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="1.-Internal_2555216013.html">1. Internal</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 09. Learning IRD Automated Reporting Engine
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 23-06-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h1 id="id-09.LearningIRDAutomatedReportingEngine-Overview">Overview</h1><p>To Automate the IRD income tax requirment. This is par tof the process that Chris develop to reduce manual work , it reduce excessive works.</p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20200720-035849.png" width="802" loading="lazy" src="attachments/2568126587/2572452461.png?width=802" data-image-src="attachments/2568126587/2572452461.png" data-height="692" data-width="1230" data-unresolved-comment-count="0" data-linked-resource-id="2572452461" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20200720-035849.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2568126587" data-linked-resource-container-version="1" data-media-id="d918a46d-672b-456a-8f90-4b1440fd0ae8" data-media-type="file"></span><p>5 separate files:</p><ul><li><p>RWT (Resident Withholding Tax), </p></li><li><p>NRWT (Non-resident Withholding Tax), </p></li><li><p>IPS (Interest), </p></li><li><p>DWT (Dividend Withholding Tax), </p></li><li><p>AIL (Approved Issuer Levy)</p></li></ul><p>A typical month would require as many as 15 files to cover Craig’s numerous reporting entities:</p><p>(A lot of manual work in the past)</p><p>These files are generated out of SSIS, from a package called <strong>IRD File Automation - DataServices - Prod.dtsx</strong></p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="IRD Sol Arch.png" width="1072" loading="lazy" src="attachments/2568126587/2572452467.png?width=1072" data-image-src="attachments/2568126587/2572452467.png" data-height="437" data-width="1103" data-unresolved-comment-count="0" data-linked-resource-id="2572452467" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="IRD Sol Arch.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2568126587" data-linked-resource-container-version="1" data-media-id="a74455f1-d207-48f9-80d9-36ef36c516f7" data-media-type="file"></span><h1 id="id-09.LearningIRDAutomatedReportingEngine-ActualImplementation">Actual Implementation</h1><h2 id="id-09.LearningIRDAutomatedReportingEngine-1.ControlTablesandDataQualityRules">1. Control Tables and Data Quality Rules</h2><p>Entity and Type Mapping &gt;&gt; to Control Type mapping</p><h2 id="id-09.LearningIRDAutomatedReportingEngine-2.DataValidityEngine">2. Data Validity Engine</h2><p>Need to validate certain portions of the data in order to prevent:</p><p style="margin-left: 30.0px;">a) The files from being rejected upon being uploaded to the IRD Tax portal.</p><p style="margin-left: 30.0px;">b) Missing IRD Numbers will result in the need to apply a different tax rate to investment income, which is to be avoided.</p><h2 id="id-09.LearningIRDAutomatedReportingEngine-3.FileDeliveryMechanism(UsingSSISPackages)KeySPused:">3. File Delivery Mechanism (Using SSIS Packages)<br/><br/><strong>Key SP used: </strong></h2><p>EXEC DataServices.dbo.usp_IRDReportingData '2022-10-01', '2022-10-31', '1', '', ''</p><p>---</p><p>eg. to trigger a Sp that do RD_RWTFile 'Custodial Services Limited', 'Paying' out put </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">--exec DataServices.dbo.usp_IRD_RWTFile &#39;Custodial Services Limited&#39;, &#39;Paying&#39;
+
+--SELECT * FROM DataServices.dbo.tax_IRDReportingData_RWTStage_CSL_P</pre>
+</div></div><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240621-013336.png" width="760" loading="lazy" src="attachments/2568126587/2571272193.png?width=760" data-image-src="attachments/2568126587/2571272193.png" data-height="1183" data-width="2484" data-unresolved-comment-count="0" data-linked-resource-id="2571272193" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240621-013336.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2568126587" data-linked-resource-container-version="1" data-media-id="93755d38-5367-4b71-9ed7-eeeadf07ad45" data-media-type="file"></span><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240621-001509.png" width="760" loading="lazy" src="attachments/2568126587/2570584117.png?width=760" data-image-src="attachments/2568126587/2570584117.png" data-height="1075" data-width="1815" data-unresolved-comment-count="0" data-linked-resource-id="2570584117" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240621-001509.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2568126587" data-linked-resource-container-version="1" data-media-id="e35937c5-8277-4c92-b962-7842977cb5f5" data-media-type="file"></span><p>My understand is </p><p>they got control flow to triigered the SP [dbo.usp_IRDReportingData] to get some preaggreagated data.</p><p>The file attached here for study.</p><p class="media-group"><span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/2568126587/2571370498.sql" data-nice-type="null" data-file-src="/wiki/download/attachments/2568126587/IRD%20Final%20View%20v1.5.sql?version=1&amp;modificationDate=1718933759049&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="2571370498" data-linked-resource-type="attachment" data-linked-resource-container-id="2568126587" data-linked-resource-default-alias="IRD Final View v1.5.sql" data-mime-type="binary/octet-stream" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="61dde09c-0707-49a5-b906-ca60da163080" data-media-type="file"><img src="attachments/thumbnails/2568126587/2571370498" height="250"/></a></span></p><p />
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2568126587/2570125420.png">image-20240621-001118.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2568126587/2570584117.png">image-20240621-001509.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2568126587/2571272193.png">image-20240621-013336.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2568126587/2571370498.sql">IRD Final View v1.5.sql</a> (binary/octet-stream)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2568126587/2572452461.png">image-20200720-035849.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2568126587/2572452467.png">IRD Sol Arch.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:52</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

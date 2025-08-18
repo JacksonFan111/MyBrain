@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : &#39;NS&#39; and &#39;WK&#39; New Branch Added and steps tp checks</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : &#39;NS&#39; and &#39;WK&#39; New Branch Added and steps tp checks
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 12-12-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p><strong>Introduction:</strong></p><p>Based on the context you've provided, your goal is to identify any hardcoded branch references in your &quot;Aged Debtors&quot; reporting process to ensure that new branches like 'NS' and 'WK' are correctly included. You're currently performing manual searches through code repositories and reports, which is time-consuming and may not be thorough. You're seeking better, less manual approaches to efficiently check for hardcoded branch references.</p><p><strong>Better, Less Manual Approaches:</strong></p><p>To streamline this process, you can employ a combination of automated code analysis tools, scripting, and data-driven techniques. Below are detailed strategies to help you systematically identify hardcoded branch references across your codebase, databases, and reports.</p><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-1.AutomatedCodeSearchesUsingScripts">1. <strong>Automated Code Searches Using Scripts</strong></h3><p><strong>a. PowerShell Scripting:</strong></p><p>Utilize PowerShell scripts to recursively search through directories for hardcoded branch codes in files like SQL scripts, C# code, and SSRS report files.</p><p><strong>Example Script:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence"># Define the path to your code repository
+$codePath = &quot;C:\Path\To\Your\Code&quot;
+
+# Define the branch codes to search for
+$branchCodes = @(&#39;NS&#39;, &#39;WK&#39;, &#39;OtherBranchCodes&#39;)
+
+# Create a regex pattern for the branch codes
+$pattern = &quot;&#39;&quot; + ($branchCodes -join &#39;|&#39;) + &quot;&#39;&quot;
+
+# Search for hardcoded branch codes in specified file types
+Get-ChildItem -Path $codePath -Recurse -Include *.sql, *.cs, *.rdl | ForEach-Object {
+    $fileContent = Get-Content $_.FullName -Raw
+    if ($fileContent -match $pattern) {
+        Write-Host &quot;Hardcoded branch code found in file: $($_.FullName)&quot;
+    }
+}
+</pre>
+</div></div><p><strong>b. Grep Command (Linux/Unix/MacOS):</strong></p><p>If your code is on a Unix-like system, use the <code>grep</code> command to search for hardcoded branch codes.</p><p><strong>Example Command:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">grep -rnw &#39;/path/to/your/code/&#39; -e &quot;&#39;\(NS\|WK\|OtherBranchCodes\)&#39;&quot;
+</pre>
+</div></div><p><strong>c. Using Findstr on Windows:</strong></p><p>For Windows environments without PowerShell, use <code>findstr</code> to search files.</p><p><strong>Example Command:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">findstr /s /i /n /c:&quot;&#39;NS&#39;&quot; /c:&quot;&#39;WK&#39;&quot; /c:&quot;&#39;OtherBranchCodes&#39;&quot; *.sql *.cs *.rdl
+</pre>
+</div></div><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-2.DatabaseCodeAnalysis">2. <strong>Database Code Analysis</strong></h3><p><strong>a. Search Database Objects for Hardcoded Branches:</strong></p><p>Write SQL scripts to search stored procedures, functions, triggers, and views for hardcoded branch codes.</p><p><strong>Example Script for SQL Server:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT
+    OBJECT_SCHEMA_NAME(object_id) AS SchemaName,
+    OBJECT_NAME(object_id) AS ObjectName,
+    type_desc AS ObjectType,
+    definition AS ObjectDefinition
+FROM sys.sql_modules
+WHERE definition LIKE &#39;%&#39;&#39;NS&#39;&#39;%&#39;
+   OR definition LIKE &#39;%&#39;&#39;WK&#39;&#39;%&#39;
+   OR definition LIKE &#39;%&#39;&#39;OtherBranchCodes&#39;&#39;%&#39;
+ORDER BY SchemaName, ObjectName;
+</pre>
+</div></div><p>This script searches for occurrences of 'NS', 'WK', or other branch codes within database object definitions.</p><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-3.SSRSReports(.rdlFiles)Analysis">3. <strong>SSRS Reports (.rdl Files) Analysis</strong></h3><p><strong>a. Parsing .rdl Files with PowerShell:</strong></p><p>Since .rdl files are XML files, you can parse them to search for hardcoded branch codes.</p><p><strong>Example Script:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">$reportPath = &quot;C:\Path\To\Your\Reports&quot;
+
+$branchCodes = @(&#39;NS&#39;, &#39;WK&#39;, &#39;OtherBranchCodes&#39;)
+$pattern = &quot;&#39;&quot; + ($branchCodes -join &#39;|&#39;) + &quot;&#39;&quot;
+
+Get-ChildItem -Path $reportPath -Recurse -Filter *.rdl | ForEach-Object {
+    [xml]$rdlContent = Get-Content $_.FullName
+    $rdlXmlString = $rdlContent.OuterXml
+    if ($rdlXmlString -match $pattern) {
+        Write-Host &quot;Hardcoded branch code found in report: $($_.FullName)&quot;
+    }
+}
+</pre>
+</div></div><p><strong>b. Using Notepad++ or Text Editors with Regex Support:</strong></p><ul><li><p>Open all .rdl files in a text editor like Notepad++.</p></li><li><p>Use the &quot;Find in Files&quot; feature with a regex pattern to search for hardcoded branch codes.</p></li><li><p>Regex pattern example: <code>'\b(NS|WK|OtherBranchCodes)\b'</code></p></li></ul><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-4.VersionControlSystem(VCS)Searches">4. <strong>Version Control System (VCS) Searches</strong></h3><p><strong>a. Using VCS Search Features:</strong></p><p>If your code is stored in a system like Bitbucket, GitHub, or GitLab, use their built-in code search capabilities.</p><ul><li><p><strong>Bitbucket:</strong> Use the search bar to search for specific strings across repositories.</p></li><li><p><strong>GitHub:</strong> Use the advanced search with parameters like <code>repo:yourrepo 'NS'</code>.</p></li></ul><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-5.StaticCodeAnalysisTools">5. <strong>Static Code Analysis Tools</strong></h3><p><strong>a. SonarQube:</strong></p><p>Implement SonarQube to perform static code analysis across your codebase. You can configure it to detect hardcoded strings and patterns.</p><ul><li><p><strong>Setup Custom Rules:</strong> Create custom rules to flag hardcoded branch codes.</p></li><li><p><strong>Continuous Integration:</strong> Integrate SonarQube with your CI/CD pipeline to automate code scanning.</p></li></ul><p><strong>b. Other Tools:</strong></p><ul><li><p><strong>Checkmarx</strong></p></li><li><p><strong>Fortify Static Code Analyzer</strong></p></li></ul><p>These tools can be configured to scan for specific patterns and hardcoded values.</p><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-6.DatabaseReferenceTableVerification">6. <strong>Database Reference Table Verification</strong></h3><p><strong>a. Ensure Branches Are in Reference Tables:</strong></p><p>Run queries to check that all branches, including new ones, are present in your reference tables.</p><p><strong>Example Query:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT BranchID, BranchName
+FROM BranchReferenceTable
+ORDER BY BranchID;
+</pre>
+</div></div><p><strong>b. Cross-Check Reports with Reference Data:</strong></p><ul><li><p>Verify that reports dynamically pull branch data from reference tables.</p></li><li><p>Ensure no filters exclude the new branches.</p></li></ul><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-7.ReviewandRefactorCodeforData-DrivenLogic">7. <strong>Review and Refactor Code for Data-Driven Logic</strong></h3><p><strong>a. Replace Hardcoded Values with Parameters or Variables:</strong></p><ul><li><p>Modify stored procedures and scripts to accept branch codes as parameters.</p></li><li><p>Use configuration files or settings tables to store branch codes.</p></li></ul><p><strong>b. Use JOINs with Branch Tables:</strong></p><ul><li><p>Ensure that any logic involving branches uses joins with the branch reference table.</p></li><li><p>This approach automatically includes new branches without code changes.</p></li></ul><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-8.AutomateChecksinCI/CDPipeline">8. <strong>Automate Checks in CI/CD Pipeline</strong></h3><p><strong>a. Integrate Code Scanning in CI/CD:</strong></p><ul><li><p>Use your CI/CD tools (e.g., Jenkins, Azure DevOps) to run code scanning scripts as part of the build process.</p></li><li><p>Fail the build if hardcoded branch codes are detected.</p></li></ul><p><strong>b. Scheduled Scans:</strong></p><ul><li><p>Set up scheduled tasks to run scans regularly and report findings.</p></li></ul><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-9.ImplementDataQualityChecks">9. <strong>Implement Data Quality Checks</strong></h3><p><strong>a. Data Completeness Reports:</strong></p><ul><li><p>Create reports that show counts of transactions per branch.</p></li><li><p>Identify branches with zero transactions, which could indicate exclusion.</p></li></ul><p><strong>b. Alerts for Missing Branch Data:</strong></p><ul><li><p>Set up alerts if data from expected branches is missing from reports.</p></li></ul><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-10.DeveloperEducationandCodeReviewProcesses">10. <strong>Developer Education and Code Review Processes</strong></h3><p><strong>a. Conduct Training Sessions:</strong></p><ul><li><p>Educate developers on the importance of avoiding hardcoded values.</p></li><li><p>Share best practices for dynamic data handling.</p></li></ul><p><strong>b. Implement Code Review Checklists:</strong></p><ul><li><p>Include checks for hardcoded values in your code review process.</p></li><li><p>Use peer reviews to catch potential issues.</p></li></ul><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-11.UseAdvancedSearchTools">11. <strong>Use Advanced Search Tools</strong></h3><p><strong>a. Use Specialized Search Software:</strong></p><ul><li><p>Tools like <strong>AstroGrep</strong> or <strong>Agent Ransack</strong> offer advanced search capabilities across files and directories.</p></li></ul><p><strong>b. Leverage IDE Features:</strong></p><ul><li><p>Integrated Development Environments (IDEs) like Visual Studio or JetBrains Rider have powerful search features.</p></li><li><p>Use &quot;Find in Files&quot; with regex patterns.</p></li></ul><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-12.ScriptedAnalysiswithPython">12. <strong>Scripted Analysis with Python</strong></h3><p><strong>a. Write a Python Script for Cross-Platform Searches:</strong></p><p><strong>Example Script:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">import os
+import re
+
+branch_codes = [&#39;NS&#39;, &#39;WK&#39;, &#39;OtherBranchCodes&#39;]
+pattern = re.compile(r&quot;&#39;(&quot; + &#39;|&#39;.join(branch_codes) + r&quot;)&#39;&quot;)
+
+for root, dirs, files in os.walk(&#39;/path/to/your/code&#39;):
+    for file in files:
+        if file.endswith((&#39;.sql&#39;, &#39;.cs&#39;, &#39;.rdl&#39;)):
+            file_path = os.path.join(root, file)
+            with open(file_path, &#39;r&#39;, encoding=&#39;utf-8&#39;, errors=&#39;ignore&#39;) as f:
+                content = f.read()
+                if pattern.search(content):
+                    print(f&quot;Hardcoded branch code found in file: {file_path}&quot;)
+</pre>
+</div></div><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-13.LeverageDatabaseMetadata">13. <strong>Leverage Database Metadata</strong></h3><p><strong>a. Query Information Schema Views:</strong></p><ul><li><p>Use <code>INFORMATION_SCHEMA</code> views to find hardcoded values in views and functions.</p></li></ul><p><strong>Example Query:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT TABLE_SCHEMA, TABLE_NAME, VIEW_DEFINITION
+FROM INFORMATION_SCHEMA.VIEWS
+WHERE VIEW_DEFINITION LIKE &#39;%&#39;&#39;NS&#39;&#39;%&#39; OR VIEW_DEFINITION LIKE &#39;%&#39;&#39;WK&#39;&#39;%&#39;;
+</pre>
+</div></div><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-14.ImplementDynamicReportingTechniques">14. <strong>Implement Dynamic Reporting Techniques</strong></h3><p><strong>a. Parameterized Reports in SSRS:</strong></p><ul><li><p>Modify SSRS reports to use parameters for branch selection.</p></li><li><p>Ensure datasets retrieve branch lists dynamically.</p></li></ul><p><strong>b. Use Expressions for Dynamic Filters:</strong></p><ul><li><p>In SSRS, use expressions to define filters based on data fields rather than hardcoded values.</p></li></ul><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-15.DataWarehouseandETLProcessReview">15. <strong>Data Warehouse and ETL Process Review</strong></h3><p><strong>a. Check SSIS Packages or Other ETL Processes:</strong></p><ul><li><p>Examine ETL processes for hardcoded branch filters.</p></li><li><p>Ensure that data loading and transformation processes are branch-agnostic.</p></li></ul><p><strong>b. Automate ETL Testing:</strong></p><ul><li><p>Implement tests that verify data from all branches is correctly loaded into the warehouse.</p></li></ul><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-16.DocumentationandStandardOperatingProcedures">16. <strong>Documentation and Standard Operating Procedures</strong></h3><p><strong>a. Update Documentation:</strong></p><ul><li><p>Document procedures for adding new branches.</p></li><li><p>Include steps for verifying that branches are included in all relevant systems.</p></li></ul><p><strong>b. Create Checklists:</strong></p><ul><li><p>Develop checklists for developers to follow when making changes involving branches.</p></li></ul><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-17.CollaboratewithBusinessUsers">17. <strong>Collaborate with Business Users</strong></h3><p><strong>a. Gather Branch Information:</strong></p><ul><li><p>Ensure you have the latest list of branches from the business team.</p></li><li><p>Understand any special cases or exceptions.</p></li></ul><p><strong>b. User Acceptance Testing (UAT):</strong></p><ul><li><p>Involve business users in testing reports to confirm branch data is correctly displayed.</p></li></ul><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-18.ImplementLoggingandMonitoring">18. <strong>Implement Logging and Monitoring</strong></h3><p><strong>a. Application Logs:</strong></p><ul><li><p>Add logging to your applications to record which branches are being processed.</p></li><li><p>Analyze logs to detect any anomalies.</p></li></ul><p><strong>b. Monitoring Dashboards:</strong></p><ul><li><p>Create dashboards that display real-time data about branch processing.</p></li><li><p>Use tools like Grafana or Power BI.</p></li></ul><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-19.ReviewSecurityandAccessControls">19. <strong>Review Security and Access Controls</strong></h3><p><strong>a. Ensure New Branches Have Appropriate Permissions:</strong></p><ul><li><p>Check that any security roles or permissions include the new branches.</p></li><li><p>Verify that users can access data for the new branches as expected.</p></li></ul><hr/><h3 id="id-&#39;NS&#39;and&#39;WK&#39;NewBranchAddedandstepstpchecks-20.PlanforFutureScalability">20. <strong>Plan for Future Scalability</strong></h3><p><strong>a. Design for Configurability:</strong></p><ul><li><p>Build systems that can adapt to new branches without code changes.</p></li><li><p>Use configuration files, database tables, or environment variables to manage branch data.</p></li></ul><p><strong>b. Regular Audits:</strong></p><ul><li><p>Schedule periodic audits of code and systems to detect hardcoded values.</p></li><li><p>Keep the process proactive rather than reactive.</p></li></ul><hr/><p><strong>Conclusion:</strong></p><p>By adopting these automated and systematic approaches, you can significantly reduce manual effort and increase the reliability of your checks for hardcoded branch references. This ensures that new branches like 'NS' and 'WK' are seamlessly integrated into your reporting processes without being hindered by hardcoded exclusions.</p><p>Implementing these strategies not only addresses the immediate need but also enhances the overall maintainability and scalability of your systems. It promotes best practices in coding and data management, reducing the likelihood of similar issues arising in the future.</p><p><strong>Next Steps:</strong></p><ul><li><p>Choose the methods that best fit your environment and expertise.</p></li><li><p>Start with automated scripts for quick wins.</p></li><li><p>Gradually incorporate code analysis tools and CI/CD integrations.</p></li><li><p>Update documentation and train your team on these practices.</p></li></ul><p>If you need assistance with any of these steps or have further questions, feel free to ask!</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

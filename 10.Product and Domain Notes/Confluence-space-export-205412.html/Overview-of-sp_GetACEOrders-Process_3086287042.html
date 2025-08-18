@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Overview of sp_GetACEOrders Process</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Overview of sp_GetACEOrders Process
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span> on 18-03-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p><strong>Purpose:</strong><br/>The stored procedure sp_GetACEOrders is responsible for <strong><span style="background-color: rgb(211,241,167);">retrieving orders from the ACE source tables</span></strong> (such as EqOrders, EqSecurities, and related tables) </p><p>and then<strong><span style="background-color: rgb(211,241,167);"> merging these orders into a staging table (ACE.IOSSchedulerOrders)</span></strong>. </p><p>This staging table is used later by the <strong><span style="background-color: rgb(211,241,167);">trade scheduler process </span></strong>to push orders into the IRESS system for further processing (e.g., cancellation or amendments).</p><p><strong>Process Steps:</strong></p><ol start="1"><li><p><strong>Triggering the Procedure:</strong></p><ul><li><p><strong>Automated Invocation:</strong><br/>The trade scheduler automation (or a similar batch process) calls sp_GetACEOrders periodically.</p></li><li><p><strong>Parameters:</strong><br/>It accepts two parameters:</p><ul><li><p><strong>@FullRefresh (bit):</strong> Determines whether to perform a partial merge (incremental updates) or a full refresh (rebuild the staging table).</p></li><li><p><strong>@Markets (varchar):</strong> A list of market codes used to filter the orders returned at the end of the process.</p></li></ul></li></ul></li><li><p><strong>Data Retrieval and Preparation:</strong></p><ul><li><p>A Common Table Expression (CTE) named <code>cteOrders</code> is used to pull order data from various source tables. This query joins order details with security, client, and tax pool information to build a comprehensive view of each order.</p></li><li><p>The logic includes determining fields such as:</p><ul><li><p><strong>Custody</strong> (based on client settle method and safe custody flag),</p></li><li><p><strong>Market</strong> (applying rules to determine correct exchange codes),</p></li><li><p><strong>Price, Quantity, and other order-specific details.</strong></p></li></ul></li></ul></li><li><p><strong>Merge Operation:</strong></p><ul><li><p><strong>Partial Refresh Mode (@FullRefresh = 0):</strong><br/>The procedure uses a MERGE statement to compare the current orders (from the CTE) with those already in the staging table:</p><ul><li><p><strong>When a matching order is found:</strong> It updates the staging record if there’s any change (comparing Price, Quantity, OperatorNotes, status, and—depending on the environment—the ExpiryDate).</p></li><li><p><strong>When there’s no match:</strong> It inserts new orders.</p></li><li><p><strong>When a staging order is no longer in the source:</strong> It deletes the order.</p></li></ul></li><li><p><strong>Full Refresh Mode (@FullRefresh = 1):</strong><br/>The staging table is truncated (or recreated) and repopulated with the current set of orders from the source data.</p></li></ul></li><li><p><strong>Final Data Selection:</strong></p><ul><li><p>After the merge, the procedure executes a SELECT query to return only the “unprocessed” orders.</p></li><li><p>This SELECT filters orders based on the provided market codes (via @Markets) and excludes orders from certain advisors (like the head office).</p></li></ul></li><li><p><strong>Downstream Processing:</strong></p><ul><li><p>The resulting dataset is then used by the trade scheduler automation to trigger further processing steps (e.g., cancellation logic for orders with a specific “D” status, amendments, etc.), ultimately feeding into the IRESS system.</p></li></ul></li></ol><hr/><h2 id="Overviewofsp_GetACEOrdersProcess-ContextualDiagram">Contextual Diagram</h2><p>Below is a simplified diagram that maps out the flow:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">flowchart TD
+    A[Source Data&lt;br/&gt;(EqOrders, EqSecurities, etc.)] --&gt; B[sp_GetACEOrders&lt;br/&gt;(Triggered by Trade Scheduler)]
+    B --&gt; C{Processing Mode}
+    C -- @FullRefresh = 0&lt;br/&gt;(Incremental Merge) --&gt; D[MERGE Operation&lt;br/&gt;Update/Insert/Delete]
+    C -- @FullRefresh = 1&lt;br/&gt;(Full Refresh) --&gt; E[Truncate/Rebuild&lt;br/&gt;ACE.IOSSchedulerOrders]
+    D --&gt; F[ACE.IOSSchedulerOrders&lt;br/&gt;(Staging Table)]
+    E --&gt; F
+    F --&gt; G[SELECT Unprocessed Orders&lt;br/&gt;(Filter by Market, etc.)]
+    G --&gt; H[IRRESS Processing&lt;br/&gt;(Order Cancellation/Amendment)]
+
+</pre>
+</div></div><p><em>Note:</em></p><ul><li><p>The diagram shows how the stored procedure is triggered by the trade scheduler and then processes source orders based on the refresh mode.</p></li><li><p>After merging, a filtered list of orders is produced to drive subsequent automation (like order cancellations and updates).</p></li></ul><hr/><h2 id="Overviewofsp_GetACEOrdersProcess-SummaryforJackson">Summary for Jackson</h2><ol start="1"><li><p><strong>What sp_GetACEOrders Does:</strong></p><ul><li><p>It extracts and consolidates order data from multiple source tables.</p></li><li><p>It uses either an incremental merge or a full refresh to maintain the staging table (ACE.IOSSchedulerOrders).</p></li><li><p>It returns a filtered set of orders (by market and other criteria) that will be picked up by the IRESS automation process.</p></li></ul></li><li><p><strong>How It Is Triggered and Automated:</strong></p><ul><li><p>The stored procedure is executed by an automated scheduler (trade scheduler) which periodically calls it to fetch the latest orders.</p></li><li><p><strong><span style="background-color: rgb(253,208,236);">The output is then used downstream to process orders (for instance, handling cancellations for orders with a “D” status).</span></strong></p></li></ul></li><li><p><strong>The Big Picture:</strong></p><ul><li><p>Even though the procedure contains some environment-specific differences (like the market filter or the expiry date check), the overall process ensures that orders are reliably consolidated and updated.</p></li><li><p>This robust mechanism guarantees that, regardless of the minor differences in logic between UAT and production, the key order data remains consistent and is ready for subsequent processing.</p></li></ul></li></ol><p>By understanding this flow from master (source data) through the sp_GetACEOrders process to downstream automation, you can appreciate both how the procedure works and its critical role in the overall order processing system.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

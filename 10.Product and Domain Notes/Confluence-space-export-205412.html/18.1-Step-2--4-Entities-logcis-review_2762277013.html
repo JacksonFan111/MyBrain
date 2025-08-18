@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 18.1 Step 2 -4 Entities logcis review</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="2762113156.html">18. Rebuild FATCA/CRS step 1 - 10</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 18.1 Step 2 -4 Entities logcis review
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 17-10-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <style type='text/css'>/*<![CDATA[*/
+div.rbtoc1755550406961 {padding: 0px;}
+div.rbtoc1755550406961 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1755550406961 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style><div class='toc-macro rbtoc1755550406961'>
+<ul class='toc-indentation'>
+<li><a href='#id-18.1Step2-4Entitieslogcisreview-Step2:IdentifyEntities(BothLayeredandNormal)forFATCAandCRS'>Step 2: Identify Entities (Both Layered and Normal) for FATCA and CRS</a></li>
+<li><a href='#id-18.1Step2-4Entitieslogcisreview-Step3:RetrieveAccountsfortheIdentifiedEntities'>Step 3: Retrieve Accounts for the Identified Entities</a></li>
+<li><a href='#id-18.1Step2-4Entitieslogcisreview-Step4:ExtractEntityData'>Step 4: Extract Entity Data</a></li>
+<li><a href='#id-18.1Step2-4Entitieslogcisreview-SuggestionsforImprovement'>Suggestions for Improvement</a></li>
+<li><a href='#id-18.1Step2-4Entitieslogcisreview-ExampleScenarioAnalysis'>Example Scenario Analysis</a></li>
+<li><a href='#id-18.1Step2-4Entitieslogcisreview-Conclusion'>Conclusion</a></li>
+<li><a href='#id-18.1Step2-4Entitieslogcisreview-Step2:BuildaRecursiveHierarchyofEntities'>Step 2: Build a Recursive Hierarchy of Entities</a></li>
+<li><a href='#id-18.1Step2-4Entitieslogcisreview-Step3:CollectIndividualsAssociatedwiththeEntitiesintheHierarchy'>Step 3: Collect Individuals Associated with the Entities in the Hierarchy</a></li>
+<li><a href='#id-18.1Step2-4Entitieslogcisreview-Step4:ExtractEntityDatawithControllingIndividuals'>Step 4: Extract Entity Data with Controlling Individuals</a></li>
+</ul>
+</div><p /><p>Step 2- 4 and 5 and 6 they are all in the same workscrtips<span class="confluence-embedded-file-wrapper"><a class="confluence-embedded-file" href="attachments/2762277013/2779676687.sql" data-nice-type="null" data-file-src="/wiki/download/attachments/2762277013/Workscipt%20%235.1%20FATCACRS%2010%20steps%20rebuild%20v2.sql?version=1&amp;modificationDate=1729195321149&amp;cacheVersion=1&amp;api=v2" data-linked-resource-id="2779676687" data-linked-resource-type="attachment" data-linked-resource-container-id="2762277013" data-linked-resource-default-alias="Workscipt #5.1 FATCACRS 10 steps rebuild v2.sql" data-mime-type="binary/octet-stream" data-has-thumbnail="true" data-linked-resource-version="1" data-media-id="c628d83a-74da-4210-80ef-e4a4eef7bf55" data-media-type="file"><img src="attachments/thumbnails/2762277013/2779676687" height="250"/></a></span> </p><p /><p><strong>Review of Steps 2 to 4: Entity Handling for FATCA and CRS Reporting</strong></p><hr/><p><strong>Context and Objective:</strong></p><ul><li><p><strong>Goal:</strong> Accurately identify entities and associated individuals (controlling persons) for FATCA and CRS reporting, considering known data entry errors in the CRM system.</p></li><li><p><strong>Challenges:</strong></p><ul><li><p><strong>Data Errors:</strong> CRM users might incorrectly flag entities or individuals, especially in layered entities.</p></li><li><p><strong>Layered Entities:</strong> Complex structures where controlling persons might not be properly flagged as beneficial owners.</p></li></ul></li><li><p><strong>Task:</strong> Review and improve the code to ensure all relevant individuals are included in the reporting, preventing any omissions due to data inaccuracies.</p></li></ul><hr/><h3 id="id-18.1Step2-4Entitieslogcisreview-Step2:IdentifyEntities(BothLayeredandNormal)forFATCAandCRS"><strong>Step 2: Identify Entities (Both Layered and Normal) for FATCA and CRS</strong></h3><hr/><p><strong>Purpose:</strong></p><ul><li><p><strong>Identify Entities:</strong> Select entities that have FATCA or CRS flags set at the entity level.</p></li><li><p><strong>Exclude Certain Entities:</strong> Exclude specific types of entities that are not relevant for reporting.</p></li><li><p><strong>Determine Entity Type:</strong> Classify entities as 'Layered Entity' or 'Normal Entity' based on the presence of organizations in their roles.</p></li></ul><hr/><p><strong>Code Analysis:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">IF OBJECT_ID(&#39;tempdb..#Entities&#39;) IS NOT NULL DROP TABLE #Entities;
+
+;WITH Entities AS (
+    SELECT DISTINCT
+        a.AccountId AS EntityID,
+        a.Name AS TEName,
+        -- Determine if the entity is a Layered Entity or Normal Entity
+        CASE
+            WHEN EXISTS (
+                SELECT 1
+                FROM [Dynamics].[CRM_MSCRM].dbo.dsl_roles AS r_inner
+                WHERE r_inner.dsl_TradingEntityID = a.AccountId
+                    AND r_inner.statuscode = 1
+                    AND r_inner.dsl_OrganisationName IS NOT NULL
+            ) THEN &#39;Layered Entity&#39;
+            ELSE &#39;Normal Entity&#39;
+        END AS EntityFlag,
+        -- Flags for FATCA and CRS at the entity level
+        CASE WHEN a.dsl_USCitizensforTaxPurposes = 1 THEN 1 ELSE 0 END AS Entity_FATCA_Flag,
+        CASE WHEN a.ots_foreigntaxresident = 1 THEN 1 ELSE 0 END AS Entity_CRS_Flag
+    FROM [Dynamics].[CRM_MSCRM].dbo.Account AS a
+    LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.StringMap AS sm
+        ON sm.AttributeValue = a.dsl_TradingEntityType
+        AND sm.AttributeName = &#39;dsl_tradingentitytype&#39;
+    WHERE
+        sm.Value NOT IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;, &#39;Estate Winding-Up&#39;)
+        AND (
+            a.dsl_USCitizensforTaxPurposes = 1
+            OR a.ots_foreigntaxresident = 1
+        )
+        AND NOT (
+            sm.Value = &#39;Trust&#39;
+            AND a.cip_CharityNumber IS NOT NULL
+        )
+)SELECT * INTO #Entities FROM Entities;</pre>
+</div></div><p><strong>Explanation:</strong></p><ol start="1"><li><p><strong>Identify Entities with FATCA or CRS Flags:</strong></p><ul><li><p><strong>FATCA Flag:</strong> <code>a.dsl_USCitizensforTaxPurposes = 1</code></p></li><li><p><strong>CRS Flag:</strong> <code>a.ots_foreigntaxresident = 1</code></p></li></ul></li><li><p><strong>Exclude Certain Entity Types:</strong></p><ul><li><p><strong>Excluded Types:</strong> <code>'Individual', 'Joint', 'Minor Under 18 yrs', 'Estate Winding-Up'</code></p></li><li><p><strong>Charitable Trusts Exclusion:</strong></p><ul><li><p>Exclude trusts where <code>a.cip_CharityNumber IS NOT NULL</code>.</p></li></ul></li></ul></li><li><p><strong>Determine Entity Type ('Layered' or 'Normal'):</strong></p><ul><li><p><strong>Layered Entity:</strong></p><ul><li><p>Exists if there is at least one role (<code>dsl_roles</code>) associated with the entity where <code>dsl_OrganisationName IS NOT NULL</code>.</p></li></ul></li><li><p><strong>Normal Entity:</strong></p><ul><li><p>If no such role exists, it's considered a 'Normal Entity'.</p></li></ul></li></ul></li></ol><p><strong>Potential Issues and Recommendations:</strong></p><ul><li><p><strong>Data Errors in Flags:</strong></p><ul><li><p><strong>Issue:</strong> Entities might have incorrect FATCA or CRS flags due to data entry errors.</p></li><li><p><strong>Recommendation:</strong> Implement additional checks or data validation to confirm the accuracy of these flags.</p></li><li><p><strong>Suggestion:</strong> Cross-reference with other data points (e.g., country of incorporation) to validate the FATCA and CRS flags.</p></li></ul></li><li><p><strong>Exclusion Criteria Might Miss Relevant Entities:</strong></p><ul><li><p><strong>Issue:</strong> Excluding entities based solely on <code>sm.Value</code> might omit entities incorrectly classified.</p></li><li><p><strong>Recommendation:</strong> Review whether any entities with misclassified <code>TradingEntityType</code> might be relevant and consider including them with appropriate conditions.</p></li></ul></li></ul><hr/><h3 id="id-18.1Step2-4Entitieslogcisreview-Step3:RetrieveAccountsfortheIdentifiedEntities"><strong>Step 3: Retrieve Accounts for the Identified Entities</strong></h3><hr/><p><strong>Purpose:</strong></p><ul><li><p><strong>Fetch Detailed Account Information:</strong> Retrieve accounts for entities identified in Step 2.</p></li><li><p><strong>Enhance Data Set:</strong> Include additional flags and details for use in subsequent processing.</p></li></ul><hr/><p><strong>Code Analysis:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">IF OBJECT_ID(&#39;tempdb..#Entities_a&#39;) IS NOT NULL DROP TABLE #Entities_a;
+
+;WITH Entities_a AS (
+    SELECT
+        a.*,
+        e.EntityFlag,
+        e.Entity_FATCA_Flag,
+        e.Entity_CRS_Flag
+    FROM [Dynamics].[CRM_MSCRM].dbo.Account AS a
+    INNER JOIN #Entities AS e
+        ON a.AccountId = e.EntityID
+)SELECT * INTO #Entities_a FROM Entities_a; </pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Join with Identified Entities:</strong></p><ul><li><p><strong>Purpose:</strong> Attach <code>EntityFlag</code>, <code>Entity_FATCA_Flag</code>, and <code>Entity_CRS_Flag</code> to each account.</p></li><li><p><strong>Method:</strong> Inner join <code>Account</code> table <code>a</code> with temporary table <code>#Entities</code> based on <code>AccountId</code>.</p></li></ul></li></ul><p><strong>Potential Issues and Recommendations:</strong></p><ul><li><p><strong>No Immediate Issues Noted in this Step.</strong></p></li><li><p><strong>Recommendation:</strong> Ensure that the join does not inadvertently exclude any accounts due to mismatches in <code>AccountId</code>.</p></li></ul><hr/><h3 id="id-18.1Step2-4Entitieslogcisreview-Step4:ExtractEntityData"><strong>Step 4: Extract Entity Data</strong></h3><hr/><p><strong>Purpose:</strong></p><ul><li><p><strong>Compile Comprehensive Data Set:</strong></p><ul><li><p>Include entity details, associated individuals, tax identification numbers (TINs), roles, and other relevant information.</p></li></ul></li><li><p><strong>Prepare Data for FATCA and CRS Reporting:</strong></p><ul><li><p>Ensure all required data points are available and accurate.</p></li></ul></li></ul><hr/><p><strong>Code Analysis:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">IF OBJECT_ID(&#39;tempdb..#EntityData &#39;) IS NOT NULL DROP TABLE #EntityData ;
+
+;WITH EntityData  AS (
+    SELECT DISTINCT
+        -- [Various fields selected]
+    FROM #Entities_a AS a
+    INNER JOIN [Dynamics].[CRM_MSCRM].dbo.dsl_roles AS r
+        ON a.AccountId = r.dsl_TradingEntityID
+        AND r.statuscode = 1
+        AND r.dsl_OrganisationName IS NULL
+        AND r.dsl_RoleTypeIdName IN (
+            &#39;Director&#39;,
+            &#39;Trustee&#39;,
+            &#39;Authorised Person&#39;,
+            &#39;Corporate Trustee Agent&#39;,
+            &#39;Shareholder&#39;,
+            &#39;Settlor (Trust)&#39;,
+            &#39;Officer&#39;,
+            &#39;Other&#39;,
+            &#39;Beneficiary&#39;
+        )
+    INNER JOIN [Dynamics].[CRM_MSCRM].dbo.Contact AS i
+        ON i.ContactId = r.dsl_IndividualId
+    -- [Additional joins and conditions]
+    WHERE
+        sm.Value IN (&#39;Trust&#39;, &#39;Company&#39;, &#39;Incorporated Entity&#39;, &#39;Partnership&#39;)
+        AND (
+            a.Entity_FATCA_Flag = 1
+            OR a.Entity_CRS_Flag = 1
+        )
+        -- [Additional conditions]
+        AND trm.TaxRegime NOT IN (&#39;CRS (Individual) &amp; FATCA (Entity)&#39;,&#39;CRS (Entity) &amp; FATCA (Individual)&#39;)
+)SELECT * INTO #EntityData FROM EntityData; </pre>
+</div></div><p><strong>Key Points:</strong></p><ol start="1"><li><p><strong>Filtering Roles:</strong></p><ul><li><p><strong>Role Conditions:</strong></p><ul><li><p><code>r.statuscode = 1</code> (Active roles)</p></li><li><p><code>r.dsl_OrganisationName IS NULL</code> (Exclude organizations)</p></li><li><p><code>r.dsl_RoleTypeIdName</code> in a specified list of roles.</p></li></ul></li></ul></li><li><p><strong>Joining with Individuals:</strong></p><ul><li><p><strong>Join Condition:</strong> <code>i.ContactId = r.dsl_IndividualId</code></p></li><li><p><strong>Purpose:</strong> Retrieve individual details associated with the entity roles.</p></li></ul></li><li><p><strong>Excluding Certain Tax Regimes:</strong></p><ul><li><p><strong>Exclusion:</strong> <code>trm.TaxRegime NOT IN ('CRS (Individual) &amp; FATCA (Entity)','CRS (Entity) &amp; FATCA (Individual)')</code></p></li><li><p><strong>Reason:</strong> These categories are considered data errors and are excluded from reporting.</p></li></ul></li></ol><p><strong>Potential Issues and Recommendations:</strong></p><ul><li><p><strong>Potential Missing Controlling Persons:</strong></p><ul><li><p><strong>Issue:</strong> Controlling persons might not be properly flagged as beneficial owners due to data entry errors.</p></li><li><p><strong>Impact:</strong> Such individuals may be omitted from the reporting data set.</p></li></ul></li><li><p><strong>Exclusion of Organizations:</strong></p><ul><li><p><strong>Condition:</strong> <code>r.dsl_OrganisationName IS NULL</code></p></li><li><p><strong>Purpose:</strong> Exclude roles where the associated role is an organization.</p></li><li><p><strong>Issue:</strong> In layered entities, the controlling person might be associated with an organization role, leading to their exclusion.</p></li><li><p><strong>Recommendation:</strong> Re-evaluate the exclusion of organizations to ensure controlling persons linked via organizations are included.</p></li></ul></li></ul><hr/><h3 id="id-18.1Step2-4Entitieslogcisreview-SuggestionsforImprovement"><strong>Suggestions for Improvement</strong></h3><hr/><ol start="1"><li><p><strong>Include Organizations to Capture Layered Entities:</strong></p><ul><li><p><strong>Rationale:</strong></p><ul><li><p>In layered entities, controlling persons might be associated through organizations.</p></li><li><p>Excluding <code>r.dsl_OrganisationName IS NOT NULL</code> might omit relevant controlling persons.</p></li></ul></li><li><p><strong>Action:</strong></p><ul><li><p>Modify the join conditions to include organizations and then traverse to individuals associated with those organizations.</p></li><li><p><strong>Example:</strong></p><ul><li><p>Join <code>dsl_roles</code> where <code>r.dsl_OrganisationName IS NOT NULL</code>.</p></li><li><p>Then, join with the organization's roles to find individuals.</p></li></ul></li></ul></li></ul></li><li><p><strong>Enhance Role Identification for Controlling Persons:</strong></p><ul><li><p><strong>Issue:</strong></p><ul><li><p>Roles like 'Other' might not accurately reflect a controlling person's status.</p></li></ul></li><li><p><strong>Recommendation:</strong></p><ul><li><p>Implement logic to infer controlling persons based on ownership percentages, role types, and other available data.</p></li><li><p><strong>Modify the </strong><code>SubstantialControllingInterest</code> Calculation:</p><ul><li><p>Include additional conditions to capture controlling persons who are not flagged properly.</p></li></ul></li></ul></li></ul></li><li><p><strong>Implement Data Cleansing Steps:</strong></p><ul><li><p><strong>Rationale:</strong></p><ul><li><p>Data errors can lead to incorrect exclusions.</p></li></ul></li><li><p><strong>Action:</strong></p><ul><li><p>Before the main query, perform data cleansing to correct common errors.</p></li><li><p>Identify records where key fields are missing or inconsistent and correct them if possible.</p></li></ul></li></ul></li><li><p><strong>Use Recursive Queries for Layered Entities:</strong></p><ul><li><p><strong>Rationale:</strong></p><ul><li><p>Layered entities may have multiple levels of ownership.</p></li></ul></li><li><p><strong>Action:</strong></p><ul><li><p>Utilize Common Table Expressions (CTEs) with recursion to traverse ownership hierarchies and identify ultimate beneficial owners.</p></li></ul></li><li><p><strong>Example:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">;WITH RecursiveRoles AS (
+    -- Anchor member: roles directly linked to the entity
+    SELECT
+        r.dsl_TradingEntityID,
+        r.dsl_IndividualId,
+        r.dsl_OrganisationName,
+        Level = 1
+    FROM [Dynamics].[CRM_MSCRM].dbo.dsl_roles AS r
+    WHERE r.dsl_TradingEntityID = @EntityID
+    
+    UNION ALL
+    
+    -- Recursive member: roles linked through organizations
+    SELECT
+        r.dsl_TradingEntityID,
+        r.dsl_IndividualId,
+        r.dsl_OrganisationName,
+        Level = rr.Level + 1
+    FROM [Dynamics].[CRM_MSCRM].dbo.dsl_roles AS r
+    INNER JOIN RecursiveRoles AS rr
+        ON r.dsl_TradingEntityID = rr.dsl_OrganisationName
+)
+SELECT *
+FROM RecursiveRoles
+WHERE dsl_IndividualId IS NOT NULL;</pre>
+</div></div><ul><li><p><strong>Note:</strong> Adjust the query to fit the actual schema and data.</p></li></ul></li></ul></li><li><p><strong>Improve Role Type Filtering:</strong></p><ul><li><p><strong>Issue:</strong></p><ul><li><p>The list of role types might not cover all scenarios where a controlling person is involved.</p></li></ul></li><li><p><strong>Recommendation:</strong></p><ul><li><p>Review and possibly expand the list of <code>dsl_RoleTypeIdName</code> to include any additional roles that might represent controlling persons.</p></li><li><p>Consider roles like 'Beneficial Owner' if available.</p></li></ul></li></ul></li><li><p><strong>Flag Potential Data Errors for Review:</strong></p><ul><li><p><strong>Rationale:</strong></p><ul><li><p>Highlight records that might be affected by data errors for manual review.</p></li></ul></li><li><p><strong>Action:</strong></p><ul><li><p>Add an additional field in the output to indicate potential data issues.</p></li><li><p>Use conditions where expected data is missing or inconsistent.</p></li></ul></li></ul></li><li><p><strong>Cross-Validation with External Data Sources:</strong></p><ul><li><p><strong>Rationale:</strong></p><ul><li><p>Enhance data accuracy by validating against external reliable data sources.</p></li></ul></li><li><p><strong>Action:</strong></p><ul><li><p>Implement processes to compare CRM data with official registries or databases where possible.</p></li></ul></li></ul></li><li><p><strong>Enhance Logging and Auditing:</strong></p><ul><li><p><strong>Rationale:</strong></p><ul><li><p>Keep track of data anomalies and decisions made during processing.</p></li></ul></li><li><p><strong>Action:</strong></p><ul><li><p>Create logs for records excluded due to data errors.</p></li><li><p>Document any assumptions or corrections made during processing.</p></li></ul></li></ul></li></ol><hr/><h3 id="id-18.1Step2-4Entitieslogcisreview-ExampleScenarioAnalysis"><strong>Example Scenario Analysis</strong></h3><hr/><p><strong>Scenario 1: Controlling Person Not Flagged as Beneficial Owner</strong></p><ul><li><p><strong>Issue:</strong></p><ul><li><p>An individual is a controlling person of a layered entity but is not flagged as a beneficial owner in the CRM.</p></li></ul></li><li><p><strong>Impact:</strong></p><ul><li><p>The current code might exclude this individual due to the condition <code>r.dsl_BeneficialOwner = 1</code>.</p></li></ul></li><li><p><strong>Solution:</strong></p><ul><li><p>Modify the calculation of <code>SubstantialControllingInterest</code> to include individuals based on role types and ownership percentages, even if <code>dsl_BeneficialOwner</code> is not set.</p></li></ul></li></ul><p><strong>Adjusted Calculation:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">CASE
+    WHEN
+        a.Entity_FATCA_Flag = 1 AND
+        (
+            (r.dsl_BeneficiaryOwnership &gt; 25 AND sm.Value = &#39;Company&#39;)
+            OR
+            (sm.Value NOT IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;, &#39;Company&#39;))
+        )
+    THEN 1
+    WHEN
+        a.Entity_CRS_Flag = 1 AND
+        (
+            (r.dsl_BeneficiaryOwnership &gt; 10 AND sm.Value = &#39;Company&#39;)
+            OR
+            (sm.Value NOT IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;, &#39;Company&#39;))
+        )
+    THEN 1
+    ELSE 0
+END AS SubstantialControllingInterest</pre>
+</div></div><ul><li><p><strong>Explanation:</strong></p><ul><li><p>Remove dependency on <code>r.dsl_BeneficialOwner</code> being <code>1</code>.</p></li><li><p>Use <code>dsl_BeneficiaryOwnership</code> and entity type to determine controlling interest.</p></li></ul></li></ul><p><strong>Scenario 2: Layered Entity with Organizations in Roles</strong></p><ul><li><p><strong>Issue:</strong></p><ul><li><p>An entity has organizations listed in roles, and the ultimate controlling persons are associated with these organizations.</p></li></ul></li><li><p><strong>Impact:</strong></p><ul><li><p>The current code excludes roles where <code>r.dsl_OrganisationName IS NOT NULL</code>, potentially missing these individuals.</p></li></ul></li><li><p><strong>Solution:</strong></p><ul><li><p>Include organizations in the roles and recursively find associated individuals.</p></li></ul></li></ul><p><strong>Adjusted Join:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Include roles where OrganisationName is not null
+INNER JOIN [Dynamics].[CRM_MSCRM].dbo.dsl_roles AS r
+    ON a.AccountId = r.dsl_TradingEntityID
+    AND r.statuscode = 1
+    AND r.dsl_RoleTypeIdName IN (
+        &#39;Director&#39;,
+        &#39;Trustee&#39;,
+        &#39;Authorised Person&#39;,
+        &#39;Corporate Trustee Agent&#39;,
+        &#39;Shareholder&#39;,
+        &#39;Settlor (Trust)&#39;,
+        &#39;Officer&#39;,
+        &#39;Other&#39;,
+        &#39;Beneficiary&#39;
+    )
+-- Recursively find individuals associated with these organizations
+-- [Implement recursive CTE as shown earlier]</pre>
+</div></div><hr/><h3 id="id-18.1Step2-4Entitieslogcisreview-Conclusion"><strong>Conclusion</strong></h3><hr/><p><strong>Summary:</strong></p><ul><li><p><strong>Data Accuracy is Critical:</strong> Due to potential data errors in the CRM system, the code must be robust enough to account for inaccuracies.</p></li><li><p><strong>Layered Entities Require Special Attention:</strong> To ensure all controlling persons are identified, especially in complex ownership structures.</p></li><li><p><strong>Improvements Suggested:</strong></p><ul><li><p>Modify join conditions to include organizations and traverse to associated individuals.</p></li><li><p>Adjust calculations and conditions to not rely solely on flags that might be incorrectly set.</p></li><li><p>Implement recursive queries to navigate through layered entities.</p></li><li><p>Enhance data validation and cleansing steps to correct common errors.</p></li></ul></li></ul><p><strong>Next Steps:</strong></p><ul><li><p><strong>Test the Adjusted Code:</strong></p><ul><li><p>Apply the suggested changes in a test environment.</p></li><li><p>Verify that all relevant individuals are included in the output.</p></li></ul></li><li><p><strong>Analyze Results:</strong></p><ul><li><p>Compare the results with known cases to ensure accuracy.</p></li><li><p>Check if the number of records aligns with expectations (e.g., around 222 rows).</p></li></ul></li><li><p><strong>Refine Based on Feedback:</strong></p><ul><li><p>Make further adjustments based on testing outcomes and stakeholder input.</p></li></ul></li></ul><hr/><p><strong>Final Note:</strong></p><ul><li><p><strong>Collaboration is Key:</strong> Work with CRM data entry teams to address data quality issues at the source.</p></li><li><p><strong>Documentation and Training:</strong></p><ul><li><p>Provide clear guidelines for CRM users on accurate data entry.</p></li><li><p>Document any code changes and the reasoning behind them for future reference.</p></li></ul></li></ul><hr/><p>Feel free to reach out if you need further assistance or clarification on any of the points discussed.</p><p /><hr/><p><strong>Rewriting Steps 2 to 4 Using Recursive Techniques</strong></p><hr/><p><strong>Context and Objective:</strong></p><ul><li><p><strong>Goal:</strong> Modify Steps 2 to 4 to incorporate recursive techniques for identifying controlling individuals in layered entities for FATCA and CRS reporting.</p></li><li><p><strong>Requirement:</strong> Ensure that the column structure of the rewritten code matches the original <code>#EntityData</code> table, as it will be used in a <code>UNION</code> operation in later steps.</p></li><li><p><strong>Approach:</strong> Use a recursive Common Table Expression (CTE) to traverse the hierarchy of entities and extract the controlling individuals, including those in layered structures.</p></li></ul><hr/><h3 id="id-18.1Step2-4Entitieslogcisreview-Step2:BuildaRecursiveHierarchyofEntities"><strong>Step 2: Build a Recursive Hierarchy of Entities</strong></h3><hr/><p><strong>Purpose:</strong></p><ul><li><p><strong>Identify Layered Entities:</strong> Use recursive techniques to navigate through layered entities and reach the actual controlling individuals.</p></li><li><p><strong>Handle Data Errors:</strong> Account for potential data entry errors in the CRM system by using ownership percentages and role types to infer controlling persons.</p></li><li><p><strong>Prepare Data for Extraction:</strong> Create a recursive hierarchy that will be used to extract relevant data in the subsequent steps.</p></li></ul><hr/><p><strong>Rewritten Code for Step 2:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Step 2: Build a recursive hierarchy of entities
+IF OBJECT_ID(&#39;tempdb..#RecursiveHierarchy&#39;) IS NOT NULL DROP TABLE #RecursiveHierarchy;
+
+;WITH RecursiveHierarchy AS (
+    -- Anchor member: Start with entities that are flagged for CRS or FATCA and are not individuals
+    SELECT
+        a.AccountId AS EntityId,
+        a.Name AS EntityName,
+        0 AS Level,
+        CAST(a.Name AS VARCHAR(MAX)) AS Path,
+        a.AccountId AS RootEntityId
+    FROM
+        #Entities_a AS a
+    LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.StringMap AS sm
+        ON sm.AttributeValue = a.dsl_TradingEntityType
+        AND sm.AttributeName = &#39;dsl_tradingentitytype&#39;
+    WHERE
+        sm.Value IN (&#39;Trust&#39;, &#39;Company&#39;, &#39;Incorporated Entity&#39;, &#39;Partnership&#39;)
+        AND (
+            a.Entity_FATCA_Flag = 1
+            OR a.Entity_CRS_Flag = 1
+        )
+    UNION ALL
+    -- Recursive member: Traverse to child entities
+    SELECT
+        c.AccountId AS EntityId,
+        c.Name AS EntityName,
+        rh.Level + 1 AS Level,
+        rh.Path + &#39; -&gt; &#39; + c.Name AS Path,
+        rh.RootEntityId
+    FROM
+        RecursiveHierarchy rh
+    INNER JOIN [Dynamics].[CRM_MSCRM].dbo.dsl_roles AS r
+        ON rh.EntityId = r.dsl_TradingEntityID
+        AND r.statuscode = 1
+        AND r.dsl_OrganisationName IS NOT NULL
+    INNER JOIN [Dynamics].[CRM_MSCRM].dbo.Account AS c
+        ON r.dsl_Organisation = c.AccountId
+    WHERE
+        rh.Level &lt; 5 -- Limit recursion depth to prevent infinite loops
+)
+
+SELECT * INTO #RecursiveHierarchy FROM RecursiveHierarchy;</pre>
+</div></div><hr/><h3 id="id-18.1Step2-4Entitieslogcisreview-Step3:CollectIndividualsAssociatedwiththeEntitiesintheHierarchy"><strong>Step 3: Collect Individuals Associated with the Entities in the Hierarchy</strong></h3><hr/><p><strong>Purpose:</strong></p><ul><li><p><strong>Identify Controlling Individuals:</strong> Extract individuals who are associated with the entities in the recursive hierarchy.</p></li><li><p><strong>Include All Relevant Individuals:</strong> Ensure that individuals associated with layered entities are included, even if they are not directly linked to the root entity.</p></li></ul><hr/><p><strong>Rewritten Code for Step 3:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Step 3: Collect individuals associated with the entities in the hierarchy
+IF OBJECT_ID(&#39;tempdb..#HierarchyIndividuals&#39;) IS NOT NULL DROP TABLE #HierarchyIndividuals;
+
+;WITH HierarchyIndividuals AS (
+    SELECT DISTINCT
+        rh.RootEntityId,
+        rh.EntityId,
+        rh.Level,
+        i.ContactId AS IndividualId,
+        i.FullName AS IndividualName,
+        rh.Path
+    FROM
+        #RecursiveHierarchy rh
+    INNER JOIN [Dynamics].[CRM_MSCRM].dbo.dsl_roles AS r
+        ON rh.EntityId = r.dsl_TradingEntityID
+        AND r.statuscode = 1
+        AND r.dsl_IndividualId IS NOT NULL
+        AND r.dsl_RoleTypeIdName IN (
+            &#39;Director&#39;,
+            &#39;Trustee&#39;,
+            &#39;Authorised Person&#39;,
+            &#39;Corporate Trustee Agent&#39;,
+            &#39;Shareholder&#39;,
+            &#39;Settlor (Trust)&#39;,
+            &#39;Officer&#39;,
+            &#39;Other&#39;,
+            &#39;Beneficiary&#39;
+        )
+    INNER JOIN [Dynamics].[CRM_MSCRM].dbo.Contact AS i
+        ON r.dsl_IndividualId = i.ContactId
+)
+
+SELECT * INTO #HierarchyIndividuals FROM HierarchyIndividuals;</pre>
+</div></div><hr/><h3 id="id-18.1Step2-4Entitieslogcisreview-Step4:ExtractEntityDatawithControllingIndividuals"><strong>Step 4: Extract Entity Data with Controlling Individuals</strong></h3><hr/><p><strong>Purpose:</strong></p><ul><li><p><strong>Compile Data Set:</strong> Retrieve all necessary data for entities and associated controlling individuals, including TINs, roles, and other relevant information.</p></li><li><p><strong>Ensure Column Structure Conformity:</strong> Match the column structure with the original <code>#EntityData</code> table for compatibility in later <code>UNION</code> operations.</p></li></ul><hr/><p><strong>Rewritten Code for Step 4:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Step 4: Extract Entity Data with Controlling Individuals
+IF OBJECT_ID(&#39;tempdb..#EntityData&#39;) IS NOT NULL DROP TABLE #EntityData;
+
+;WITH EntityData AS (
+    SELECT DISTINCT
+        -- Account Type: &#39;Layered Entity&#39; or &#39;Normal Entity&#39;
+        CASE WHEN e.EntityFlag = &#39;Layered Entity&#39; THEN &#39;Layered Entity&#39; ELSE &#39;Normal Entity&#39; END AS AccountType,
+        -- Account ID
+        e.AccountId AS AccountID,
+        -- Individual Details
+        hi.IndividualId,
+        hi.IndividualName,
+        i.FirstName,
+        i.MiddleName,
+        i.LastName,
+        i.Telephone1 AS Tel1,
+        i.Telephone2 AS Tel2,
+        i.Telephone3 AS Tel3,
+        ISNULL(i.Address1_Line1, &#39;&#39;) AS ResidentialAddressLine1,
+        ISNULL(i.Address1_Line2, &#39;&#39;) AS ResidentialAddressLine2,
+        ISNULL(i.Address1_Line3, &#39;&#39;) AS ResidentialAddressLine3,
+        ISNULL(i.Address1_City, &#39;&#39;) AS ResidentialCity,
+        ISNULL(i.Address1_PostalCode, &#39;&#39;) AS ResidentialPostalCode,
+        ISNULL(i.Address2_Line1, &#39;&#39;) AS PostalAddressLine1,
+        ISNULL(i.Address2_Line2, &#39;&#39;) AS PostalAddressLine2,
+        ISNULL(i.Address2_Line3, &#39;&#39;) AS PostalAddressLine3,
+        ISNULL(i.Address2_City, &#39;&#39;) AS PostalCity,
+        ISNULL(i.Address2_PostalCode, &#39;&#39;) AS PostalPostCode,
+        -- Country Information
+        e.dsl_CountryTrustEstablishedIdName AS TrustCountry,
+        e.dsl_PrimaryTaxDomicileName AS OrgPrimaryTaxDomicile,
+        i.dsl_Address1CountryLookupIdName AS ResidentialCountry1,
+        i.dsl_Address2CountryLookupIdName AS PostalCountry2,
+        i.dsl_Address3CountryLookupIdName AS RegisteredOfficeCountry3,
+        i.dsl_countryofresidenceidname AS ResidentialCountry2,
+        e.dsl_Address1CountryLookupIdName AS CountryofResidence,
+        e.dsl_Address2CountryLookupIdName AS Country2ofResidence,
+        e.dsl_Address3CountryLookupIdName AS Country3ofResidence,
+        i.dsl_CountryofCitizenshipIdName AS CountryofCitizenship,
+        i.dsl_CountryofTaxResidencyName AS CountryofTaxResidency,
+        -- Entity Information
+        e.Name AS EntityName,
+        e.AccountId AS EntityID,
+        trm.TaxRegime,
+        -- Entity Tax Identification Number (TIN)
+        ft1.cip_identification AS EntityTIN,
+        ft1.cip_IDTypeName AS EntityIDTypeName,
+        ft1.cip_CountryJurisdictionName AS EntityCountryJurisdictionName,
+        cc1.cip_ISOcode COLLATE DATABASE_DEFAULT AS EntityTaxCodeCountryISO,
+        cc1.dsl_countryname COLLATE DATABASE_DEFAULT AS EntityTaxCodeCountryName,
+        -- Individual Tax Identification Number (TIN)
+        ft2.cip_identification AS cip_Identification,
+        ft2.cip_IDTypeName AS IndividualIDTypeName,
+        ft2.cip_CountryJurisdictionName AS IndividualCountryJurisdictionName,
+        cc2.cip_ISOcode COLLATE DATABASE_DEFAULT AS Ind_TaxCodeCountryISO,
+        cc2.dsl_countryname COLLATE DATABASE_DEFAULT AS Ind_TaxCodeCountryName,
+        -- Portfolio Information
+        ps.dsl_portfolioid,
+        ps.dsl_PortfolioIdName AS PortfolioNo,
+        ps.dsl_PortfolioServiceLevelName,
+        -- Role Information
+        r.dsl_RoleTypeIdName,
+        r.dsl_BeneficialOwner,
+        r.dsl_BeneficiaryOwnership,
+        -- Determine Substantial Controlling Interest
+        CASE
+            WHEN
+                e.Entity_FATCA_Flag = 1 AND
+                (
+                    (r.dsl_BeneficiaryOwnership &gt; 25 AND sm.Value = &#39;Company&#39;)
+                    OR
+                    (sm.Value NOT IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;, &#39;Company&#39;))
+                )
+            THEN 1
+            WHEN
+                e.Entity_CRS_Flag = 1 AND
+                (
+                    (r.dsl_BeneficiaryOwnership &gt; 10 AND sm.Value = &#39;Company&#39;)
+                    OR
+                    (sm.Value NOT IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;, &#39;Company&#39;))
+                )
+            THEN 1
+            ELSE 0
+        END AS SubstantialControllingInterest,
+        r.dsl_applicant,
+        r.dsl_Authorised,
+        -- Trading Entity Type
+        sm.Value AS TradingEntityType,
+        smPS.Value AS PortfolioServiceStatus,
+        -- Self-Certification and Passive/Active Status
+        sm1.Value AS CRSCert,
+        sm2.Value AS PassiveActive,
+        -- Portfolio Dates
+        ps.dsl_inceptiondate,
+        ps.dsl_CloseDate,
+        -- Additional Individual Information
+        i.dsl_CountryOfBirthIdName COLLATE DATABASE_DEFAULT AS CountryofBirthIdName,
+        e.dsl_USCitizensforTaxPurposes AS USCitizensforTaxPurposes_acc,
+        i.dsl_USCitizensforTaxPurposes AS USCitizensforTaxPurposes_ind,
+        CONVERT(VARCHAR(19), DATEADD(HOUR, 13, i.BirthDate), 101) COLLATE DATABASE_DEFAULT AS DOB,
+        ps.dsl_CloseDate AS ClosureDate,
+        i.cip_TownCityofBirth COLLATE DATABASE_DEFAULT AS TownCityofBirth,
+        -- Determine Reporting Regime
+        trm.Regime
+    FROM
+        #HierarchyIndividuals hi
+    INNER JOIN #Entities_a AS e
+        ON hi.RootEntityId = e.AccountId
+    INNER JOIN [Dynamics].[CRM_MSCRM].dbo.Contact AS i
+        ON hi.IndividualId = i.ContactId
+    INNER JOIN [Dynamics].[CRM_MSCRM].dbo.dsl_roles AS r
+        ON hi.EntityId = r.dsl_TradingEntityID
+        AND r.dsl_IndividualId = hi.IndividualId
+        AND r.statuscode = 1
+    LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.dsl_portfolioservice AS ps
+        ON ps.dsl_TradingEntityId = e.AccountId
+    LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.StringMap AS sm
+        ON sm.AttributeValue = e.dsl_TradingEntityType
+        AND sm.AttributeName = &#39;dsl_tradingentitytype&#39;
+    LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.StringMap AS sm1
+        ON sm1.objecttypecode = 2
+        AND sm1.AttributeName = &#39;cip_SelfCertification&#39;
+        AND sm1.AttributeValue = i.cip_SelfCertification
+    LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.StringMap AS sm2
+        ON sm2.AttributeName = &#39;dsl_passiveoractive&#39;
+        AND sm2.AttributeValue = e.dsl_PassiveorActive
+    LEFT JOIN [Dynamics].[CRM_MSCRM].dbo.StringMap AS smPS
+        ON smPS.AttributeName = &#39;dsl_PortfolioServiceStatus&#39;
+        AND smPS.AttributeValue = ps.dsl_PortfolioServiceStatus
+    LEFT JOIN [Dynamics].[CRM_MSCRM].[dbo].[cip_foreigntaxrecord] AS ft1
+        ON e.AccountId = ft1.cip_Entity
+    LEFT JOIN [Dynamics].[CRM_MSCRM].[dbo].[cip_foreigntaxrecord] AS ft2
+        ON ft2.cip_Individual = i.ContactId
+    LEFT JOIN [Dynamics].[CRM_MSCRM].[dbo].[dsl_countryBase] AS cc1
+        ON cc1.dsl_countryid = ft1.cip_CountryJurisdiction
+        AND cc1.statuscode = 1
+    LEFT JOIN [Dynamics].[CRM_MSCRM].[dbo].[dsl_countryBase] AS cc2
+        ON cc2.dsl_countryid = ft2.cip_CountryJurisdiction
+        AND cc2.statuscode = 1
+    LEFT JOIN #TaxRegimeMapping AS trm
+        ON trm.ReportCode = (
+            (e.Entity_CRS_Flag * 8) +
+            (e.Entity_FATCA_Flag * 4) +
+            (CASE WHEN i.ots_foreigntaxresident = 1 THEN 1 ELSE 0 END * 2) +
+            (CASE WHEN i.dsl_USCitizensforTaxPurposes = 1 THEN 1 ELSE 0 END)
+        )
+    WHERE
+        sm.Value IN (&#39;Trust&#39;, &#39;Company&#39;, &#39;Incorporated Entity&#39;, &#39;Partnership&#39;)
+        AND (
+            e.Entity_FATCA_Flag = 1
+            OR e.Entity_CRS_Flag = 1
+        )
+        AND ft1.cip_CountryJurisdiction IS NOT NULL
+        AND ft1.cip_Identification IS NOT NULL
+        AND ISNULL(cc1.cip_ISOCode, &#39;&#39;) &lt;&gt; &#39;NZL&#39;
+        AND NOT (
+            sm.Value = &#39;Trust&#39;
+            AND ISNULL(sm2.Value, &#39;&#39;) = &#39;Passive&#39;
+            AND e.cip_CharityNumber IS NOT NULL
+        )
+        AND (
+            -- FATCA Individuals for FATCA Entities Reporting
+            (i.dsl_USCitizensforTaxPurposes = 1
+                AND ft2.cip_IDTypeName = &#39;Social Security Number&#39;
+                AND ft2.cip_CountryJurisdictionName = &#39;United States of America&#39;)
+            OR
+            -- CRS Individuals
+            (i.ots_foreigntaxresident = 1
+                AND NOT (
+                    ft2.cip_IDTypeName = &#39;Social Security Number&#39;
+                    AND ft2.cip_CountryJurisdictionName = &#39;United States of America&#39;
+                ))
+        )
+        AND ISNULL(cc2.cip_ISOCode, &#39;&#39;) &lt;&gt; &#39;NZL&#39;
+        -- Exclude data errors
+        AND trm.TaxRegime NOT IN (&#39;CRS (Individual) &amp; FATCA (Entity)&#39;, &#39;CRS (Entity) &amp; FATCA (Individual)&#39;)
+)
+
+SELECT * INTO #EntityData FROM EntityData;</pre>
+</div></div><hr/><p><strong>Explanation of Changes:</strong></p><ul><li><p><strong>Recursive Hierarchy Construction:</strong></p><ul><li><p>Created a recursive CTE <code>RecursiveHierarchy</code> to traverse layered entities and reach all associated entities.</p></li><li><p>Limited recursion depth to prevent infinite loops.</p></li></ul></li><li><p><strong>Collecting Individuals:</strong></p><ul><li><p>In <code>HierarchyIndividuals</code>, collected individuals associated with all entities in the hierarchy, ensuring that no controlling person is missed.</p></li></ul></li><li><p><strong>Entity Data Extraction:</strong></p><ul><li><p>Used the data from <code>#HierarchyIndividuals</code> to extract individual details.</p></li><li><p>Ensured that the joins and conditions match those in the original code to maintain the column structure.</p></li></ul></li><li><p><strong>Substantial Controlling Interest Calculation:</strong></p><ul><li><p>Adjusted the calculation to not rely solely on the <code>dsl_BeneficialOwner</code> flag, which might be incorrectly set.</p></li><li><p>Considered <code>dsl_BeneficiaryOwnership</code> and entity type to determine controlling interest.</p></li></ul></li><li><p><strong>Column Structure:</strong></p><ul><li><p>Matched the columns exactly as in the original <code>#EntityData</code> table to ensure compatibility for <code>UNION</code> operations.</p></li></ul></li><li><p><strong>Data Filtering:</strong></p><ul><li><p>Applied the same filters and conditions to exclude data errors and ensure accurate reporting.</p></li></ul></li></ul><hr/><p><strong>Conclusion:</strong></p><ul><li><p><strong>Enhanced Data Accuracy:</strong></p><ul><li><p>The use of recursive techniques ensures that all relevant controlling individuals are identified, even in complex layered entities.</p></li></ul></li><li><p><strong>Maintained Column Structure:</strong></p><ul><li><p>By matching the column structure, the data can be seamlessly combined with other data sets in later steps.</p></li></ul></li><li><p><strong>Improved Compliance:</strong></p><ul><li><p>The revised code accounts for potential data entry errors and adheres to FATCA and CRS reporting requirements.</p></li></ul></li></ul><hr/><p><strong>Next Steps:</strong></p><ul><li><p><strong>Testing:</strong></p><ul><li><p>Run the revised code in a test environment to verify that it produces the expected results.</p></li></ul></li><li><p><strong>Validation:</strong></p><ul><li><p>Compare the output with known cases to ensure that all controlling individuals are correctly identified.</p></li></ul></li><li><p><strong>Integration:</strong></p><ul><li><p>Proceed with the subsequent steps, using the <code>#EntityData</code> table as input for further processing.</p></li></ul></li></ul><hr/><p>Feel free to let me know if you need further assistance or any adjustments to the code.</p>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2762277013/2779676687.sql">Workscipt #5.1 FATCACRS 10 steps rebuild v2.sql</a> (binary/octet-stream)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 05. Learning APEX/MMC Quarterly recon with CRM</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="1.-Internal_2555216013.html">1. Internal</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 05. Learning APEX/MMC Quarterly recon with CRM
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 20-06-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Original confluence link <a data-card-appearance="inline" href="https://craigsip.atlassian.net/wiki/spaces/DAC/pages/1914339335/APEX+MMC+New+Client+File+Functional+System+Specification#Quarterly-Reconciliation-to-CRM" rel="nofollow">https://craigsip.atlassian.net/wiki/spaces/DAC/pages/1914339335/APEX+MMC+New+Client+File+Functional+System+Specification#Quarterly-Reconciliation-to-CRM</a> </p><h1 id="id-05.LearningAPEX/MMCQuarterlyreconwithCRM-Overview">Overview</h1><p> Chris explained there are processes in place to do the recon. he draws a diagram to highlight the process.</p><p>APEX/MMC (CIP’s registry) = </p><p>Chelmer/Ace = Transactional System</p><p>Table name = [PIE].[MMCFileFunds]</p><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240619-024350.png" width="760" loading="lazy" src="attachments/2565046273/2565603336.png?width=760" data-image-src="attachments/2565046273/2565603336.png" data-height="2312" data-width="3083" data-unresolved-comment-count="0" data-linked-resource-id="2565603336" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240619-024350.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2565046273" data-linked-resource-container-version="3" data-media-id="13338d4e-77d8-4923-8186-dbc44c12e66c" data-media-type="file"></span><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="processflow-20220616-014001.png" width="760" loading="lazy" src="attachments/2565046273/2565767206.png?width=760" data-image-src="attachments/2565046273/2565767206.png" data-height="2296" data-width="2147" data-unresolved-comment-count="0" data-linked-resource-id="2565767206" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="processflow-20220616-014001.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2565046273" data-linked-resource-container-version="3" data-media-id="12c3eb6b-0240-4843-aec2-7453d133d74f" data-media-type="file"></span><p /><h1 id="id-05.LearningAPEX/MMCQuarterlyreconwithCRM-ImportantPoints">Important Points</h1><h2 id="id-05.LearningAPEX/MMCQuarterlyreconwithCRM-BackgroudofwhyweneedtodoReconStepsQuarterly:">Backgroud of why we need to do Recon Steps Quarterly:</h2><p>Apex/MMC initially thought they wouldn't need to update MMC Client data after new client files were created. However, they later had to manually update records by comparing lists of account data sent from Apex to CIP, which was a very tedious process for on-boearding team, so we help them create these steps to speed up process.</p><h3 id="id-05.LearningAPEX/MMCQuarterlyreconwithCRM-ImplementationStepsforQuarterlyReconciliationtoCRM">Implementation Steps for Quarterly Reconciliation to CRM</h3><h4 id="id-05.LearningAPEX/MMCQuarterlyreconwithCRM-Step1:ObtainFilesfromOnboardingTeam">Step 1: Obtain Files from Onboarding Team</h4><ol start="1"><li><p><strong>Request Files:</strong> Contact the onboarding team to request the necessary Excel files.</p></li><li><p><strong>Password Protection:</strong> Ensure that you receive the password for the files if they are password-protected.</p></li></ol><h4 id="id-05.LearningAPEX/MMCQuarterlyreconwithCRM-Step2:VerifyColumnMatching">Step 2: Verify Column Matching</h4><ol start="1"><li><p><strong>Compare Columns:</strong></p><ul><li><p>Ensure that the columns in the Excel files match the columns in the <code>dbo.MMCCRMReconcile</code> table.</p></li><li><p>Columns to check might include &quot;Register&quot; and &quot;UnitHolder Detail&quot; or any schema-matched sheet with the <code>MMCCRMReconcile</code> table.</p></li></ul></li><li><p><strong>Truncate Table:</strong></p><ul><li><p>Before loading new data, truncate the <code>dbo.MMCCRMReconcile</code> table to remove old data.</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">TRUNCATE TABLE [dbo].[MMCCRMReconcile];</pre>
+</div></div></li></ol><h4 id="id-05.LearningAPEX/MMCQuarterlyreconwithCRM-Step3:LoadDataintothedbo.MMCCRMReconcileTable">Step 3: Load Data into the <code>dbo.MMCCRMReconcile</code> Table</h4><ol start="1"><li><p><strong>Load Data:</strong></p><ul><li><p>Load the data from the Excel files into the <code>dbo.MMCCRMReconcile</code> table.</p></li><li><p>This can be done using SQL Server Import and Export Wizard or via a custom script if needed.</p></li></ul></li></ol><h4 id="id-05.LearningAPEX/MMCQuarterlyreconwithCRM-Step4:RunStoredProcedure">Step 4: Run Stored Procedure</h4><ol start="1"><li><p><strong>Execute Stored Procedure:</strong></p><ul><li><p>Run the stored procedure <code>dbo.rptMMCtoCRMRecon</code> to perform the reconciliation.</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">EXEC dbo.rptMMCtoCRMRecon;</pre>
+</div></div></li></ol><h4 id="id-05.LearningAPEX/MMCQuarterlyreconwithCRM-Step5:SendOutputTabletoOnboardingTeam">Step 5: Send Output Table to Onboarding Team</h4><ol start="1"><li><p><strong>Generate Output:</strong></p><ul><li><p>Generate the output from the stored procedure in a format that can be sent to the onboarding team.</p></li><li><p>Ensure there are separate files for [Emails] and [Addresses].</p></li></ul></li><li><p><strong>Send Output:</strong></p><ul><li><p>Send the generated files to the onboarding team so they can hand them over to Apex for system updates.</p></li></ul></li></ol><h3 id="id-05.LearningAPEX/MMCQuarterlyreconwithCRM-FutureImprovementPlan">Future Improvement Plan</h3><ol start="1"><li><p><strong>Automate File Drop:</strong></p><ul><li><p>Request MMC/Apex to drop the required files into an SFTP folder on your end.</p></li></ul></li><li><p><strong>JAMS Job:</strong></p><ul><li><p>Set up a JAMS job to pick up the files from the SFTP folder.</p></li></ul></li><li><p><strong>SQL Job Execution:</strong></p><ul><li><p>Configure the JAMS job to trigger a SQL Agent Job that:</p><ul><li><p>Loads the file into the <code>dbo.MMCCRMReconcile</code> table.</p></li><li><p>Runs the necessary comparison stored procedures.</p></li></ul></li></ul></li><li><p><strong>SSIS Package:</strong></p><ul><li><p>Develop an SSIS package to:</p><ul><li><p>Generate the output files (Emails and Addresses) in Excel format.</p></li><li><p>Drop the generated files into another SFTP folder for Apex to pick up.</p></li></ul></li></ul></li></ol><h3 id="id-05.LearningAPEX/MMCQuarterlyreconwithCRM-ProcessFlow">Process Flow</h3><ol start="1"><li><p><strong>Apex</strong> drops the file into SFTP.</p></li><li><p><strong>JAMS Job</strong> picks up the file.</p></li><li><p><strong>SQL Agent Job</strong> loads the data and runs comparison procedures.</p></li><li><p><strong>SSIS Package</strong> generates output files and drops them into SFTP for Apex.</p></li></ol><h3 id="id-05.LearningAPEX/MMCQuarterlyreconwithCRM-ExampleSQLCommands">Example SQL Commands</h3><p><strong>Truncate Table:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">TRUNCATE TABLE [dbo].[MMCCRMReconcile];</pre>
+</div></div><p><strong>Load Data (Example using OPENROWSET):</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">INSERT INTO [dbo].[MMCCRMReconcile] (Column1, Column2, ...)
+SELECT Column1, Column2, ...
+FROM OPENROWSET(&#39;Microsoft.ACE.OLEDB.12.0&#39;, &#39;Excel 12.0;Database=\\path\to\file.xlsx;HDR=YES&#39;, &#39;SELECT * FROM [Sheet1$]&#39;);</pre>
+</div></div><p><strong>Run Stored Procedure:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">EXEC dbo.rptMMCtoCRMRecon;</pre>
+</div></div><p><strong>Output Data to Excel (using SSIS or SQL Server Export Wizard):</strong></p><ul><li><p>Ensure the output files are saved in the desired format and location.</p></li></ul><p>This process ensures that the quarterly reconciliation is automated, reducing manual effort and increasing accuracy.</p><p /><p /><p /><hr/><p /><h1 id="id-05.LearningAPEX/MMCQuarterlyreconwithCRM-06.19.2024ImportantMeetingWalk-throughwithChris">06.19.2024 Important Meeting Walk-through with Chris</h1><p /><p />
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2565046273/2565046282.png">image-20240618-210029.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2565046273/2565046285.png">image-20240618-205820.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2565046273/2565767206.png">processflow-20220616-014001.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2565046273/2565603336.png">image-20240619-024350.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:52</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

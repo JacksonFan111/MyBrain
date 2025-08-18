@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Learning: Market Identifiers — End-to-End Technical Handover (SSIS + SQL + Synapse + SSRS)</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Learning: Market Identifiers — End-to-End Technical Handover (SSIS + SQL + Synapse + SSRS)
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 13-08-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <style type='text/css'>/*<![CDATA[*/
+div.rbtoc1755550452011 {padding: 0px;}
+div.rbtoc1755550452011 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1755550452011 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style><div class='toc-macro rbtoc1755550452011'>
+<ul class='toc-indentation'>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-1)Whythisexists(licensing+reporting)'>1) Why this exists (licensing + reporting)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-2)Whatthesystemdoes(bird’s-eyeflow)'>2) What the system does (bird’s-eye flow)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-3)Physicallayout&amp;deployment'>3) Physical layout &amp; deployment</a>
+<ul class='toc-indentation'>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-3.1Packages&amp;code'>3.1 Packages &amp; code</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-3.2Job&amp;schedule'>3.2 Job &amp; schedule</a></li>
+</ul>
+</li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-4)Controltables,landing,andtargets(datamodel)'>4) Control tables, landing, and targets (data model)</a>
+<ul class='toc-indentation'>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-4.1Control/configuration'>4.1 Control / configuration</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-4.2Logging'>4.2 Logging</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-4.3Landing(staging)'>4.3 Landing (staging)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-4.4Targets(reportingshape)'>4.4 Targets (reporting shape)</a></li>
+</ul>
+</li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-5)Packageinternals(howeachSSISpackageruns)'>5) Package internals (how each SSIS package runs)</a>
+<ul class='toc-indentation'>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-5.1Sharedpatterns'>5.1 Shared patterns</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-5.2DataFlow(discovery)'>5.2 Data Flow (discovery)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-5.3Load&amp;log(perserver/term)'>5.3 Load &amp; log (per server/term)</a></li>
+</ul>
+</li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-6)Fusioncross-checks(availability&amp;mapping)'>6) Fusion cross-checks (availability &amp; mapping)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-7)In-scopeservers&amp;exclusions'>7) In-scope servers &amp; exclusions</a>
+<ul class='toc-indentation'>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-7.1Included'>7.1 Included</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-7.2Excluded(withreasons)'>7.2 Excluded (with reasons)</a></li>
+</ul>
+</li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-8)Security&amp;connectivity'>8) Security &amp; connectivity</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-9)SSRSreports(howtheyinterpretdata)'>9) SSRS reports (how they interpret data)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-10)Cleanup&amp;rollbackutilities'>10) Cleanup &amp; rollback utilities</a>
+<ul class='toc-indentation'>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-10.1Per-serverrefresh/cleanup(idempotent)'>10.1 Per-server refresh/cleanup (idempotent)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-10.2Rollingback'>10.2 Rolling back</a></li>
+</ul>
+</li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-11)Onboarding&amp;changeoperations'>11) Onboarding &amp; change operations</a>
+<ul class='toc-indentation'>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-11.1Addanewserver'>11.1 Add a new server</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-11.2Exclude/retireaserver'>11.2 Exclude/retire a server</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-11.3Addanewidentifier/searchfield'>11.3 Add a new identifier/search field</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-11.4Synapsepoolispaused'>11.4 Synapse pool is paused</a></li>
+</ul>
+</li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-12)Performance,limits,andcosts'>12) Performance, limits, and costs</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-13)Validationqueries(usefulsnippets)'>13) Validation queries (useful snippets)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-14)Knownnuances&amp;operationalnotes'>14) Known nuances &amp; operational notes</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-15)“Cleanup”vs“sourcecorrections”(important)'>15) “Cleanup” vs “source corrections” (important)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-16)Extensibilitychecklist(beforeyouchangeanything)'>16) Extensibility checklist (before you change anything)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-17)Suggestedhardening(backlog)'>17) Suggested hardening (backlog)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-18)Quickrunbook(TL;DRops)'>18) Quick runbook (TL;DR ops)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-19)Appendix—samplestoredprocwrappers'>19) Appendix — sample stored proc wrappers</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-20)Glossary'>20) Glossary</a></li>
+</ul>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-MarketIdentifiersScan—Top-to-BottomTechnicalMap(SSIS+SQL+Synapse+SSRS)'>Market Identifiers Scan — Top-to-Bottom Technical Map (SSIS + SQL + Synapse + SSRS)</a>
+<ul class='toc-indentation'>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-A)At-a-glance'>A) At-a-glance</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-B)End-to-endflow(swimlane,top→bottom)'>B) End-to-end flow (swimlane, top→bottom)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-C)WhateachSSISpackagedoes(control&amp;dataflows)'>C) What each SSIS package does (control &amp; data flows)</a>
+<ul class='toc-indentation'>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-1)1MarketIdentifiersAnalysisWindows.dtsx(Windowssources+2008R2)'>1) 1MarketIdentifiersAnalysisWindows.dtsx (Windows sources + 2008R2)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-2)2MarketIdentifiersAnalysisSQL.dtsx(SQL-authsystems)'>2) 2MarketIdentifiersAnalysisSQL.dtsx (SQL-auth systems)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-3)3MarketIdentifiersAnalysisSynapse.dtsx(SynapseSQLPool)'>3) 3MarketIdentifiersAnalysisSynapse.dtsx (Synapse SQL Pool)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-4)MarketIdentifiersAnalysisDBAccessCheck.dtsx(accesssanity)'>4) MarketIdentifiersAnalysisDBAccessCheck.dtsx (access sanity)</a></li>
+</ul>
+</li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-D)Sharedpackagemechanics(allscanners)'>D) Shared package mechanics (all scanners)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-E)Run-control&amp;configuration(wherescanscomefrom)'>E) Run-control &amp; configuration (where scans come from)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-F)Reporting&amp;licensinglayer(whatthejobfeeds)'>F) Reporting &amp; licensing layer (what the job feeds)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-G)Keyobjectstoknow(Integration/MKTschema)'>G) Key objects to know (Integration/MKT schema)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-H)Designchoices(whyit’sbuiltthisway)'>H) Design choices (why it’s built this way)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-I)Operate/extend(quickrunbook)'>I) Operate / extend (quick runbook)</a></li>
+<li><a href='#Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-J)Packageexplorercues(tofindthingsfast)'>J) Package explorer cues (to find things fast)</a></li>
+</ul>
+</div><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Scope. This document consolidates the solution design, runbook, and developer notes for scanning 
+all CIP data platforms to discover and report unique third-party market identifiers (SEDOL, CUSIP, CGS ISIN, etc.) 
+for licensing compliance and operational monitoring. 
+It merges the raw meeting notes with the developer write-up so an engineer can maintain, extend, or troubleshoot the system without additional context.
+
+[Integration.mkt.ServersRunControl]        [Integration.mkt.MarketIdentifiers]
+        status=1 -&gt; to-scan list              status=1 -&gt; term list (IsMarketIdentifier? flag)
+                     │                                          │
+                     └──────────┐                          ┌────┘
+                                ▼                          ▼
+                      SSIS Job: Market Identifiers Analysis (kapsqldat-prd01)
+                       ┌──────────────────────────────────────────────────────┐
+                       │  Step 1: Windows package (2008/R2-friendly)         │
+                       │  Step 2: Synapse package (resume if paused)         │
+                       │  Step 3: SQL-auth package (vendor systems)          │
+                       │  Step 4: Summaries + email                          │
+                       └──────────────┬───────────────────────────────────────┘
+                                      ▼
+                         [Integration.MKT.LandingMarketIdentifiersDetails]
+                                      │  (per server + term, dynamic scan)
+                                      ▼
+                ┌───────────────────────────────────────────────────────────┐
+                │  Loader (delete+insert per @ServerName, @SearchTerm)     │
+                │   → MKT.MarketIdentifiersDetails (true IDs)              │
+                │   → MKT.MarketIdentifiersDetailsBySearchField (leaks)    │
+                └───────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼ (enrichment / lookups)
+                    [Fusion availability, securityStatusIdName, IS_CGS_ISIN]
+                                      │
+                                      ▼
+                             SSRS (Summary, Detailed, Fusion)
+                                      │
+                                      ▼
+                          Weekly mail → marketdata@craigsip.com</pre>
+</div></div><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-1)Whythisexists(licensing+reporting)">1) Why this exists (licensing + reporting)</h2><ul><li><p>CIP holds data-use licenses (e.g., <strong>LSEG/SEDOL</strong>, <strong>CGS/ISIN</strong>). We must:</p><ul><li><p>Track <strong>how many identifiers</strong> we store/use (by vendor).</p></li><li><p>Prove <strong>where</strong> they live across systems.</p></li><li><p><strong>Report</strong> counts and details on demand and ensure we <strong>stay below license caps</strong>.</p></li></ul></li><li><p><strong>CGS ISIN scope</strong>: Only <strong>CGS</strong> ISINs (country prefixes advised by CGS) are counted. Current include-list:<br/><code>US, CA, KY, BM, VI, VG, UM, TT, SR, GS, SX, VC, MF, LC, KN, BL, PR, PW, MP, FM, YT, MH, HT, GY, GU, GD, DM, BZ, BS, AW, AG, AI, AS</code>.<br/>(Map managed inside the solution; update when CGS updates.)</p></li><li><p><strong>SEDOL reporting nuance</strong>: Add SEDOLs from the <strong>LSEG DataScope Select “FlexTrade Output”</strong> to ensure FlexTrade usage is captured even when not seen by the scanners.</p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-2)Whatthesystemdoes(bird’s-eyeflow)">2) What the system does (bird’s-eye flow)</h2><ol start="1"><li><p><strong>Enumerate servers to scan</strong> from <code>Integration.mkt.ServersRunControl</code> where <code>status=1</code>.<br/>– Servers include Windows-auth sources, vendor systems (SQL-auth), Synapse SQL Pools, etc.<br/>– Some categories are <strong>excluded</strong> (see §7).</p></li><li><p><strong>For each server + each configured search term (identifier “name” or field):</strong></p><ul><li><p>Dynamically query databases/tables/columns to <strong>find values that look like SEDOL, CUSIP, ISIN, or “search fields”</strong> (identifiers hiding in non-identifier columns).</p></li><li><p>Land results in <code>Integration.MKT.LandingMarketIdentifiersDetails</code>.</p></li></ul></li><li><p><strong>Transform + load (per server, per term):</strong></p><ul><li><p><strong>Delete</strong> previous rows for that <code>@ServerName</code> + <code>@SearchTerm</code>.</p></li><li><p><strong>Insert</strong> fresh rows into:</p><ul><li><p><code>MKT.MarketIdentifiersDetails</code> (for <em>true</em> identifier columns)</p></li><li><p><code>MKT.MarketIdentifiersDetailsBySearchField</code> (for <em>search field</em> matches)</p></li></ul></li><li><p><strong>Log</strong> success/failure in <code>Integration.MKT.ServerStatusLogs</code>.</p></li><li><p><strong>Purge</strong> status logs older than 90 days.</p></li></ul></li><li><p><strong>Enrich</strong> (during/after loads):</p><ul><li><p>Flag <strong>IsAvailableInProdFusion?</strong>, <strong>SecurityName(Fusion)</strong>, <strong>securityStatusIdName</strong>, <strong>FullFieldName</strong>, <strong>IS_CGS_ISIN</strong> (prefix-filtered).</p></li><li><p>Derive <strong>Asset/Listing/Reporting Status</strong> for downstream reports (see §9).</p></li></ul></li><li><p><strong>Publish</strong>: SSRS reports (Summary &amp; Detailed, + Fusion-based validation) and a <strong>weekly email</strong> to <code>marketdata@craigsip.com</code>.</p></li></ol><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-3)Physicallayout&amp;deployment">3) Physical layout &amp; deployment</h2><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-3.1Packages&amp;code">3.1 Packages &amp; code</h3><ul><li><p><strong>SSIS project</strong>: <code>MarketIdentifiersAnalysis</code></p><ul><li><p><code>MarketIdentifiersAnalysisWindows.dtsx</code> — scan Windows-auth sources (incl. legacy SQL 2008/R2).</p></li><li><p><code>MarketIdentifiersAnalysisSQL.dtsx</code> — scan vendor systems via SQL authentication.</p></li><li><p><code>MarketIdentifiersAnalysisSynapse.dtsx</code> — scan Synapse SQL Pool (may require pool resume).</p></li><li><p><em>(A fourth package may exist per the notes; the three above are the active, named entry points.)</em></p></li></ul></li><li><p><strong>Location (deployed)</strong>: <code>\\kapsqldat-prd01\SSIS\MarketIdentifiersAnalysis\*.dtsx</code></p></li><li><p><strong>Source control</strong>: Bitbucket repo <code>craigs.bi.marketidentifiers</code> (solution is password-protected).<br/><em>Action:</em> store creds/password in a secure secret store and <strong>rotate</strong> (do not commit plaintext secrets).</p></li></ul><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-3.2Job&amp;schedule">3.2 Job &amp; schedule</h3><ul><li><p><strong>SQL Server Agent</strong> on <code>kapsqldat-prd01</code>: <strong>Job </strong><code>Market Identifiers Analysis</code></p><ul><li><p>Steps:</p><ol start="1"><li><p>Windows scan</p></li><li><p>Synapse scan <em>(skipped if pool paused; see §7)</em></p></li><li><p>SQL-auth scan</p></li><li><p>Consolidate/enrich &amp; send <strong>summary email</strong> (weekly, Friday evening).</p></li></ol></li></ul></li><li><p><strong>Success email</strong> sample: “Market Identifiers Analysis” → status, counts, exceptions.</p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-4)Controltables,landing,andtargets(datamodel)">4) Control tables, landing, and targets (data model)</h2><blockquote><p>All persistent objects use <strong>schema </strong><code>MKT</code> (or <code>Integration.MKT</code> for staging/control).</p></blockquote><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-4.1Control/configuration">4.1 Control / configuration</h3><ul><li><p><code>Integration.mkt.MarketIdentifiers</code> <strong>([Name], [Status], [IsMarketIdentifier?])</strong></p><ul><li><p><code>Status=1</code> → scan term is active.</p></li><li><p><code>IsMarketIdentifier?=1</code> → true identifier columns (e.g., <code>SEDOL</code>, <code>CUSIP</code>, <code>ISIN</code>).</p></li><li><p><code>IsMarketIdentifier?=0</code> → <em>search field</em> terms (identifiers found inside non-ID fields, e.g., <code>Axys_SecNotes</code>).</p></li></ul></li><li><p><code>Integration.mkt.ServersRunControl</code> <strong>([ServerOrgName], [ServerAliasName], [status])</strong></p><ul><li><p>Populates the <strong>ForEach</strong> loop in SSIS. <code>status=1</code> → included.</p></li><li><p><code>ServerAliasName</code> is what the packages connect to (can be a linked server).</p></li></ul></li></ul><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-4.2Logging">4.2 Logging</h3><ul><li><p><code>Integration.mkt.ServerStatusLogs</code> <strong>([ServerDetails], [SearchTerm], [Comments], [ErrorDetails], [CreatedAt])</strong></p><ul><li><p>Write one row per server/term execution.</p></li><li><p>90-day retention (job purges older).</p></li></ul></li></ul><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-4.3Landing(staging)">4.3 Landing (staging)</h3><ul><li><p><code>Integration.MKT.LandingMarketIdentifiersDetails</code> (ephemeral per run)</p><ul><li><p>Captures <strong>ServerName, DatabaseName, TableName, FieldValue (column name), ColumnValue (found value), NumOfRows, query, MarketIdentifierName</strong> (the “term” scanned).</p></li><li><p>Built by <strong>Data Flow</strong> from sources (may use <code>system.object</code> data type in SSIS to shuttle dynamic resultsets).</p></li></ul></li></ul><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-4.4Targets(reportingshape)">4.4 Targets (reporting shape)</h3><ul><li><p><code>MKT.MarketIdentifiersDetails</code><br/>**([ServerName], [ColumnValue], [NumOfRows], [FieldValue], [TableName], [DatabaseName], [query], [MarketIdentifierName], [CreatedAt], [IsAvailableInProdFusion?], [SecurityName(Fusion)], [FullFieldName], [securityStatusIdName], [IS_CGS_ISIN])`<br/>– True identifier columns.</p></li><li><p><code>MKT.MarketIdentifiersDetailsBySearchField</code><br/><strong>(same core columns + [MarketIdentifierName_org], [MarketIdentifierValue_org])</strong><br/>– For <em>search-field</em> hits (identifiers discovered in non-ID columns); keeps original label/value for analysis.</p></li></ul><blockquote><p><strong>Indexes (recommended)</strong></p><ul><li><p>On both targets: <code>(MarketIdentifierName, ColumnValue, ServerName)</code> (include: <code>DatabaseName, TableName, FieldValue, CreatedAt</code>)</p></li><li><p>For CGS filters: computed persisted <code>CGS_Prefix = LEFT(ColumnValue,2)</code> + index on <code>(MarketIdentifierName, CGS_Prefix)</code>.</p></li></ul></blockquote><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-5)Packageinternals(howeachSSISpackageruns)">5) Package internals (how each SSIS package runs)</h2><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-5.1Sharedpatterns">5.1 Shared patterns</h3><ul><li><p><strong>Variables at package scope</strong>: <code>User::ServerName</code>, <code>User::SearchTerm</code>, connection strings, etc.</p></li><li><p><strong>Control Flow</strong> (high-level):</p><ol start="1"><li><p><code>Execute SQL Task</code>: fetch active terms from <code>Integration.mkt.MarketIdentifiers</code> (status=1).</p></li><li><p><code>Execute SQL Task</code>: fetch servers from <code>Integration.mkt.ServersRunControl</code> (status=1).</p></li><li><p><code>Foreach Loop</code> (servers × terms):</p><ul><li><p><code>Truncate</code> landing (or filter-delete by server/term).</p></li><li><p><code>Data Flow</code> → dynamic query against the current server to find matches.</p></li><li><p><code>Execute SQL Task</code> → <strong>Upsert</strong> to target(s) with the <em>delete-then-insert</em> pattern.</p></li><li><p><code>Execute SQL Task</code> → Write <code>ServerStatusLogs</code> row (Success/Failure).</p></li></ul></li><li><p><code>Execute SQL Task</code> → purge old logs.</p></li></ol></li></ul><blockquote><p><strong>Why delete-then-insert?</strong> We deliberately replace the set <strong>per server + term</strong> to keep targets idempotent and auditable by run timestamp.</p></blockquote><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-5.2DataFlow(discovery)">5.2 Data Flow (discovery)</h3><ul><li><p><strong>Source</strong>: dynamic SQL built from schema metadata (loop databases/tables/columns; apply per-term patterns).<br/>– Windows &amp; SQL packages connect via <a class="external-link" data-card-appearance="inline" href="http://ADO.NET" rel="nofollow">http://ADO.NET</a> ; Synapse via Linked Server/ODBC as required.</p></li><li><p><strong>Identifier rules</strong> (examples used in discovery queries):</p><ul><li><p><strong>SEDOL</strong>: 7 chars, typically alphanum with checksum; report coloring (SSRS) uses heuristics:</p><ul><li><p><em>Red</em> → starts <code>N.A</code>/<code>N/A</code> → <strong>Invalid</strong></p></li><li><p><em>Blue</em> → invalid format (not 7 chars, starts with a digit, ends with a letter, etc.)</p></li><li><p><em>Black</em> → otherwise <strong>Valid</strong> (heuristic)</p></li></ul></li><li><p><strong>CUSIP</strong>: 9 chars alphanum + checksum (discovery may be looser; validation applied later).</p></li><li><p><strong>ISIN</strong>: 12 chars; <strong>CGS Only</strong> flagged via prefix list (see §1).</p></li></ul></li><li><p><strong>Outputs</strong>: batched to <code>Integration.MKT.LandingMarketIdentifiersDetails</code>.</p></li></ul><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-5.3Load&amp;log(perserver/term)">5.3 Load &amp; log (per server/term)</h3><p>The packages execute a parameterized SQL block (pattern below) to move rows from <strong>Landing → Targets</strong> and log status:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- Inputs: @ServerName sysname, @SearchTerm nvarchar(100)
+-- @SearchTerm is a value from Integration.mkt.MarketIdentifiers.[Name]
+
+/* 1) True Identifiers → MKT.MarketIdentifiersDetails */
+DELETE tgt
+FROM MKT.MarketIdentifiersDetails AS tgt
+WHERE tgt.ServerName = @ServerName
+  AND tgt.MarketIdentifierName = @SearchTerm;
+
+INSERT INTO MKT.MarketIdentifiersDetails
+( ServerName, ColumnValue, NumOfRows, FieldValue, TableName, DatabaseName, query, MarketIdentifierName )
+SELECT
+    @ServerName,
+    src.ColumnValue, src.NumOfRows, src.FieldValue, src.TableName, src.DatabaseName, src.query,
+    @SearchTerm
+FROM Integration.MKT.LandingMarketIdentifiersDetails AS src
+JOIN Integration.mkt.MarketIdentifiers mi
+  ON mi.Name = src.MarketIdentifierName
+WHERE ISNULL(mi.[IsMarketIdentifier?],0) = 1
+  AND src.ServerName = @ServerName
+  AND src.MarketIdentifierName = @SearchTerm;
+
+/* 2) Search Fields → MKT.MarketIdentifiersDetailsBySearchField */
+DELETE tgt
+FROM MKT.MarketIdentifiersDetailsBySearchField AS tgt
+WHERE tgt.ServerName = @ServerName
+  AND tgt.SearchFieldName = @SearchTerm;
+
+INSERT INTO MKT.MarketIdentifiersDetailsBySearchField
+( ServerName, ColumnValue, NumOfRows, FieldValue, TableName, DatabaseName, query, SearchFieldName )
+SELECT
+    @ServerName, src.ColumnValue, src.NumOfRows, src.FieldValue, src.TableName, src.DatabaseName, src.query,
+    @SearchTerm
+FROM Integration.MKT.LandingMarketIdentifiersDetails AS src
+JOIN Integration.mkt.MarketIdentifiers mi
+  ON mi.Name = src.MarketIdentifierName
+WHERE ISNULL(mi.[IsMarketIdentifier?],0) = 0
+  AND src.ServerName = @ServerName
+  AND src.MarketIdentifierName = @SearchTerm;
+
+/* 3) Success Log + 4) Log retention */
+INSERT INTO Integration.MKT.ServerStatusLogs (ServerDetails, SearchTerm, Comments)
+VALUES (CONCAT(RIGHT(CONCAT(&#39;0&#39;, (SELECT TOP 1 1)), 2), @ServerName), @SearchTerm, &#39;Success&#39;);
+
+DELETE FROM Integration.MKT.ServerStatusLogs
+WHERE CreatedAt &lt;= DATEADD(MONTH, -3, GETDATE());
+</pre>
+</div></div><blockquote><p>The actual package also enriches Fusion availability and CGS flags downstream (see §6 &amp; §9).</p></blockquote><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-6)Fusioncross-checks(availability&amp;mapping)">6) Fusion cross-checks (availability &amp; mapping)</h2><p>During or post-load, we reconcile identifiers to <strong>Fusion</strong> to mark:</p><ul><li><p><strong>IsAvailableInProdFusion?</strong> (Y/N)</p></li><li><p><strong>SecurityName(Fusion)</strong></p></li><li><p><strong>securityStatusIdName</strong> (A=Active, I=Inactive, others = “Other”)</p></li><li><p><strong>FullFieldName</strong> (schema.table.column for traceability)</p></li></ul><p>This provides the <strong>“Reporting Status”</strong> selection logic used by SSRS (see §9) and supports ad-hoc validation via the <strong>“Market Identifiers Analysis – Fusion”</strong> report.</p><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-7)In-scopeservers&amp;exclusions">7) In-scope servers &amp; exclusions</h2><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-7.1Included">7.1 Included</h3><p>All servers in <code>Integration.mkt.ServersRunControl</code> with <code>status=1</code>. Keep the <strong>“Full/Updated Servers List”</strong> Excel up to date (<code>CIP SQL Servers.xlsx</code>).</p><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-7.2Excluded(withreasons)">7.2 Excluded (with reasons)</h3><ul><li><p><strong>Genesis</strong> (not directly accessible). We use the <strong>local replica</strong> in <code>KAPSQLDAT-DEV01 → PinnacleMigration</code> (includes Genesis Market Identifiers).</p></li><li><p><strong>Tabular Models</strong> (Dev/UAT/PreProd/Prod): data already present upstream (notably <strong>Synapse DW</strong>).</p><ul><li><p>Dev: <code>kapsqldat-dev01 -&gt; Tabular Models</code></p></li><li><p>UAT: <code>KAPSQLDAT-UAT01 -&gt; Tabular Models</code></p></li><li><p>PreProd: <code>KAPSQLDAT-PREP0 -&gt; Tabular Models</code></p></li><li><p>Prod: <code>kapsqldat-prd01 -&gt; Tabular Models</code></p></li></ul></li><li><p><strong>Synapse pool paused</strong>: Step 2 is skipped if the dedicated SQL Pool is paused.</p><ul><li><p>If <strong>last refresh</strong> is stale (&gt; ~1 month): <strong>raise a Halo ticket</strong> to start the pool and re-run <strong>Job Step 2 (Synapse)</strong>.</p></li></ul></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-8)Security&amp;connectivity">8) Security &amp; connectivity</h2><ul><li><p><strong>Auth modes</strong></p><ul><li><p>Windows package: <strong>Integrated security</strong> to Windows-joined SQL Servers (incl. legacy 2008/R2).</p></li><li><p>SQL package: <strong>SQL auth</strong> for vendor systems (store creds securely; use SSIS configurations/SSM/Key Vault).</p></li><li><p>Synapse package: Linked Server/ODBC with service principal or SQL auth; may require <strong>proxy</strong>/credential for the Agent step.</p></li></ul></li><li><p><strong>Linked servers</strong> are used where direct access is constrained (e.g., Synapse).</p></li><li><p><strong>Encryption</strong>: enforce encrypted connections; do not embed credentials in scripts; rotate secrets.</p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-9)SSRSreports(howtheyinterpretdata)">9) SSRS reports (how they interpret data)</h2><ol start="1"><li><p><strong>Market Identifiers Analysis — Summary</strong></p></li><li><p><strong>Market Identifiers Analysis — Detailed</strong></p></li><li><p><strong>Market Identifiers Analysis — Fusion</strong> <em>(validation/colouring logic over Fusion ThirdPartyIdentifier)</em></p></li><li><p><strong>Fusion base third party market identifiers — Report</strong> <em>(format validity coloring)</em></p></li></ol><p><strong>Colour/validity rules (Fusion report heuristics):</strong></p><ul><li><p><strong>Red</strong>: value starts with <code>N.A</code> or <code>N/A</code> → <strong>Invalid</strong></p></li><li><p><strong>Blue</strong>: format invalid (e.g., SEDOL not 7 chars, starts with a number, ends with a letter)</p></li><li><p><strong>Black</strong>: otherwise treated as <strong>Valid</strong> (heuristic/default)</p></li></ul><p><strong>Status mapping used by the reports:</strong></p><ul><li><p><strong>Asset Status</strong> (when <code>MarketIdentifierName = 'CGS ISIN'</code>)</p><ul><li><p><code>A</code> → Active, <code>I</code> → Inactive, else → Other</p></li></ul></li><li><p><strong>Market Listing Status</strong> (for <code>SEDOL</code> or <code>CUSIP</code>)</p><ul><li><p><code>0</code> → Inactive, <code>1</code> → Active, <code>2</code> → Suspended, else → Other</p></li></ul></li><li><p><strong>Reporting Status</strong></p><ul><li><p>If <strong>CGS ISIN</strong> → use <strong>Asset Status</strong></p></li><li><p>If <strong>SEDOL/CUSIP</strong> → use <strong>Market Listing Status</strong></p></li></ul></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-10)Cleanup&amp;rollbackutilities">10) Cleanup &amp; rollback utilities</h2><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-10.1Per-serverrefresh/cleanup(idempotent)">10.1 Per-server refresh/cleanup (idempotent)</h3><p>Use the built-in <strong>delete-then-insert</strong> pattern (see §5.3). To run it manually for a single server/term:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">DECLARE @ServerName sysname       = N&#39;KAPSQLDAT-PRD01&#39;;
+DECLARE @SearchTerm nvarchar(100) = N&#39;SEDOL&#39;;  -- or &#39;CUSIP&#39; / &#39;CGS ISIN&#39; / search-field name
+
+-- 1) Prepare Landing (populate Landing for this server/term first, via package or ad hoc)
+-- 2) Apply the standard loader (same as §5.3)
+EXEC dbo.usp_MKT_ApplyLandingToTargets @ServerName, @SearchTerm;  -- if you wrap §5.3 pattern in a proc
+</pre>
+</div></div><blockquote><p><strong>Important:</strong> “Cleanup” means <strong>replace</strong> the set in the targets with the <strong>current</strong> Landing result for that server/term. It <strong>does not null out source systems</strong>; it refreshes the <em>reporting store</em>.</p></blockquote><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-10.2Rollingback">10.2 Rolling back</h3><ul><li><p>Targets are <strong>append-only by run</strong> from a logical perspective because each run replaces the set <strong>per (server, term)</strong>.</p></li><li><p>If you must “roll back,” re-run the previous scan (e.g., by restoring the Landing snapshot if you persist it; by default Landing is transient).</p></li><li><p>Consider adding an <strong>audit watermark</strong> (<code>RunId</code>) to Landing and Targets to enable point-in-time rewind (optional enhancement).</p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-11)Onboarding&amp;changeoperations">11) Onboarding &amp; change operations</h2><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-11.1Addanewserver">11.1 Add a new server</h3><ol start="1"><li><p>Add to <code>Integration.mkt.ServersRunControl</code> with <code>status=1</code>.</p></li><li><p>Ensure networking/credentials/linked server are in place.</p></li><li><p>Deploy SSIS connection updates if needed; verify with a <strong>one-off package run</strong> (DTExec).</p></li><li><p>Confirm it appears in the next job run and in <strong>ServerStatusLogs</strong>.</p></li></ol><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-11.2Exclude/retireaserver">11.2 Exclude/retire a server</h3><ul><li><p>Set <code>status=0</code> in <code>Integration.mkt.ServersRunControl</code>.</p></li><li><p>Optionally, delete residual rows in targets for neatness.</p></li></ul><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-11.3Addanewidentifier/searchfield">11.3 Add a new identifier/search field</h3><ol start="1"><li><p>Insert into <code>Integration.mkt.MarketIdentifiers ([Name],[Status],[IsMarketIdentifier?])</code>.</p></li><li><p>If <strong>IsMarketIdentifier?=1</strong>, it will load to <code>MKT.MarketIdentifiersDetails</code>; else to <code>...BySearchField</code>.</p></li><li><p>Update validation patterns (regex/LIKE) in discovery SQL if the format is novel.</p></li><li><p>Update SSRS to include new term, and extend CGS prefix list if the term is ISIN-like.</p></li></ol><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-11.4Synapsepoolispaused">11.4 Synapse pool is paused</h3><ul><li><p>Raise <strong>Halo</strong> to <strong>start the Synapse SQL Pool</strong>.</p></li><li><p>Re-run <strong>Agent Job → Step 2 (Synapse)</strong>.</p></li><li><p>Expect <strong>Windows/SQL</strong> steps to run regardless.</p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-12)Performance,limits,andcosts">12) Performance, limits, and costs</h2><ul><li><p>The scanner is designed to run <strong>weekly</strong> and complete in <strong>~minutes per server</strong>, but total time scales with:</p><ul><li><p>number of servers/databases/tables/columns scanned,</p></li><li><p>liberal LIKE/regex patterns,</p></li><li><p>resultset size (e.g., “TOTAL DISTINCT VALUE” can be expensive).</p></li></ul></li><li><p><strong>License exposure</strong>: <strong>SEDOL</strong> is a significant cost center (<em>historically ~£140k/yr</em>). The solution’s counts help keep usage under contract.</p></li><li><p><strong>10,000-item cap</strong> (notional threshold from notes): If you exceed a vendor threshold, your license tier may trigger <strong>additional fees</strong>; use reports to watch headroom.</p></li></ul><blockquote><p><strong>Tip:</strong> Add <strong>persisted distinct counts</strong> per (identifier type, server) with deltas per run to spot growth “build-ups” early (e.g., after upstream process changes like mandatory ISIN loads).</p></blockquote><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-13)Validationqueries(usefulsnippets)">13) Validation queries (useful snippets)</h2><p><strong>A) What ran last week?</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT TOP 200 *
+FROM Integration.MKT.ServerStatusLogs
+ORDER BY CreatedAt DESC;
+</pre>
+</div></div><p><strong>B) Active servers</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT ServerOrgName, ServerAliasName
+FROM Integration.mkt.ServersRunControl
+WHERE status = 1
+ORDER BY 1;
+</pre>
+</div></div><p><strong>C) Distinct counts by identifier (CGS scope only for ISIN)</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT MarketIdentifierName,
+       COUNT(DISTINCT ColumnValue) AS DistinctIdentifiers
+FROM MKT.MarketIdentifiersDetails
+WHERE MarketIdentifierName IN (&#39;SEDOL&#39;,&#39;CUSIP&#39;,&#39;CGS ISIN&#39;)
+  AND (MarketIdentifierName &lt;&gt; &#39;CGS ISIN&#39;
+       OR IS_CGS_ISIN = 1)   -- enforce CGS list
+GROUP BY MarketIdentifierName
+ORDER BY 1;
+</pre>
+</div></div><p><strong>D) Suspect SEDOLs (Fusion heuristic)</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT *
+FROM MKT.MarketIdentifiersDetails
+WHERE MarketIdentifierName = &#39;SEDOL&#39;
+  AND (ColumnValue LIKE &#39;N.A%&#39; OR ColumnValue LIKE &#39;N/A%&#39;        -- red
+       OR LEN(ColumnValue) &lt;&gt; 7                                  -- blue
+       OR ColumnValue LIKE &#39;[0-9]%&#39; OR ColumnValue LIKE &#39;%[A-Z]&#39;) -- blue, example
+ORDER BY DatabaseName, TableName, FieldValue;
+</pre>
+</div></div><p><strong>E) Identifiers not mapped to Fusion</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT *
+FROM MKT.MarketIdentifiersDetails
+WHERE IsAvailableInProdFusion? = 0
+ORDER BY MarketIdentifierName, ColumnValue;
+</pre>
+</div></div><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-14)Knownnuances&amp;operationalnotes">14) Known nuances &amp; operational notes</h2><ul><li><p><strong>Legacy servers (SQL 2008/R2)</strong> require the <strong>Windows package</strong>. Some modern schema discovery SQL won’t run there—hence <strong>separate package logic</strong>.</p></li><li><p><strong>SSIS system.object</strong> buffers are used to marshal arbitrary resultsets; be careful when editing data flow metadata.</p></li><li><p><strong>Username/password bypass</strong> was needed for some systems due to naming/quoting differences and provider limitations; prefer <strong>linked servers</strong> or <strong>parameterized OPENQUERY</strong> with proper quoting.</p></li><li><p><strong>Not all sources support the same schema APIs</strong>; scanner uses <strong>dynamic SQL</strong> per platform.</p></li><li><p><strong>Assets as SCD</strong>: We treat Asset <strong>status</strong> as a time-varying attribute but <strong>do not</strong> mutate source ODS/Fusion. The scanner <strong>reads</strong> and <strong>reports</strong>; it doesn’t “fix” source data.</p></li><li><p><strong>Manual scans</strong> are sometimes used for decommissioned or one-off systems; if you do this, ensure Landing → Targets steps run so reports stay consistent.</p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-15)“Cleanup”vs“sourcecorrections”(important)">15) “Cleanup” vs “source corrections” (important)</h2><ul><li><p><strong>Cleanup here = target refresh</strong>, not source mutation.</p><ul><li><p>e.g., “Removed” means <strong>we no longer </strong><em><strong>count</strong></em><strong> or </strong><em><strong>report</strong></em> a given identifier; we often <strong>set NULLs</strong> or stop scanning the field in our reporting store, <strong>not</strong> rewrite source rows.</p></li></ul></li><li><p><strong>Business rules</strong> example (from notes):</p><ul><li><p>For <strong>Microsoft</strong> or any asset where <strong>CUSIP</strong> should be removed under licensing policy, the reporting store <strong>nulls/omits</strong> CUSIP while keeping <strong>CGS ISIN</strong> as the single authoritative identifier and reflects <strong>Active/Inactive</strong> as appropriate.</p></li></ul></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-16)Extensibilitychecklist(beforeyouchangeanything)">16) Extensibility checklist (before you change anything)</h2><ol start="1"><li><p><strong>Do we need a new term?</strong> → Add to <code>Integration.mkt.MarketIdentifiers</code>.</p></li><li><p><strong>Will that term be a true ID or a search field?</strong> → set <code>IsMarketIdentifier?</code> correctly.</p></li><li><p><strong>Format validation</strong> → extend discovery/validation SQL.</p></li><li><p><strong>Server coverage</strong> → update <code>ServersRunControl</code> if needed.</p></li><li><p><strong>Synapse</strong> → ensure pool running for Step 2.</p></li><li><p><strong>SSRS</strong> → update datasets &amp; visuals (Summary/Detailed/Fusion).</p></li><li><p><strong>Email</strong> → confirm the summary template includes the new term.</p></li><li><p><strong>Indexes</strong> → add/selectivity for any new high-volume queries.</p></li></ol><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-17)Suggestedhardening(backlog)">17) Suggested hardening (backlog)</h2><ul><li><p>Add <strong>RunId</strong> across Landing &amp; Targets (GUID + start/end time) for time-travel.</p></li><li><p>Build a <strong>validation stored proc</strong> to recompute <strong>IS_CGS_ISIN</strong> from the maintained prefix table (instead of inline logic).</p></li><li><p>Maintain <strong>prefix tables</strong> (<code>MKT.CGS_ISIN_Prefixes</code>) with <code>ValidFrom/ValidTo</code> to track CGS updates.</p></li><li><p>Add <strong>row-level lineage</strong> (source server/db/table/column + query hash).</p></li><li><p>Implement <strong>retry policies</strong> per server in Agent steps with backoff (network flakiness).</p></li><li><p>Add <strong>data-quality dashboards</strong> (invalid format %, Fusion mapping %, growth trend).</p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-18)Quickrunbook(TL;DRops)">18) Quick runbook (TL;DR ops)</h2><ul><li><p><strong>Where is it?</strong> <code>kapsqldat-prd01</code> → Job <strong>Market Identifiers Analysis</strong><br/>Packages on <code>\\kapsqldat-prd01\SSIS\MarketIdentifiersAnalysis\</code></p></li><li><p><strong>How often?</strong> Weekly (Fri evening).</p></li><li><p><strong>What if Synapse is stale?</strong> Raise <strong>Halo</strong> to start the SQL Pool; re-run <strong>Step 2</strong>.</p></li><li><p><strong>Add server?</strong> <code>ServersRunControl.status=1</code> + credentials + test package.</p></li><li><p><strong>Add identifier term?</strong> Insert into <code>Integration.mkt.MarketIdentifiers</code> with correct flags.</p></li><li><p><strong>Cleanup a server?</strong> Re-run the package for that server/term or execute the loader block after repopulating Landing.</p></li><li><p><strong>Reports:</strong></p><ul><li><p><em>Summary</em> / <em>Detailed</em> for counts and detail lines</p></li><li><p><em>Fusion</em> / <em>Fusion base third-party</em> to validate identifiers and highlight invalid formats</p></li></ul></li><li><p><strong>Escalations:</strong> If last scan for a system is older than expected, check <strong>ServerStatusLogs</strong> and connection/auth; for Synapse, <strong>pool paused</strong> is common.</p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-19)Appendix—samplestoredprocwrappers">19) Appendix — sample stored proc wrappers</h2><p><strong>A) Apply Landing → Targets (per server/term)</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">CREATE OR ALTER PROC dbo.usp_MKT_ApplyLandingToTargets
+  @ServerName   sysname,
+  @SearchTerm   nvarchar(100)
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  BEGIN TRY
+    -- (1) True IDs
+    DELETE FROM MKT.MarketIdentifiersDetails
+    WHERE ServerName=@ServerName AND MarketIdentifierName=@SearchTerm;
+
+    INSERT INTO MKT.MarketIdentifiersDetails
+    (ServerName, ColumnValue, NumOfRows, FieldValue, TableName, DatabaseName, query, MarketIdentifierName)
+    SELECT @ServerName, ColumnValue, NumOfRows, FieldValue, TableName, DatabaseName, query, @SearchTerm
+    FROM Integration.MKT.LandingMarketIdentifiersDetails src
+    JOIN Integration.mkt.MarketIdentifiers mi ON mi.Name=src.MarketIdentifierName
+    WHERE isnull(mi.[IsMarketIdentifier?],0)=1
+      AND src.ServerName=@ServerName AND src.MarketIdentifierName=@SearchTerm;
+
+    -- (2) Search fields
+    DELETE FROM MKT.MarketIdentifiersDetailsBySearchField
+    WHERE ServerName=@ServerName AND SearchFieldName=@SearchTerm;
+
+    INSERT INTO MKT.MarketIdentifiersDetailsBySearchField
+    (ServerName, ColumnValue, NumOfRows, FieldValue, TableName, DatabaseName, query, SearchFieldName)
+    SELECT @ServerName, ColumnValue, NumOfRows, FieldValue, TableName, DatabaseName, query, @SearchTerm
+    FROM Integration.MKT.LandingMarketIdentifiersDetails src
+    JOIN Integration.mkt.MarketIdentifiers mi ON mi.Name=src.MarketIdentifierName
+    WHERE isnull(mi.[IsMarketIdentifier?],0)=0
+      AND src.ServerName=@ServerName AND src.MarketIdentifierName=@SearchTerm;
+
+    INSERT INTO Integration.MKT.ServerStatusLogs (ServerDetails, SearchTerm, Comments)
+    VALUES (CONCAT(@ServerName, &#39; / &#39;, @SearchTerm), @SearchTerm, &#39;Success&#39;);
+
+    DELETE FROM Integration.MKT.ServerStatusLogs
+    WHERE CreatedAt &lt;= DATEADD(MONTH, -3, GETDATE());
+  END TRY
+  BEGIN CATCH
+    INSERT INTO Integration.MKT.ServerStatusLogs (ServerDetails, SearchTerm, Comments, ErrorDetails)
+    VALUES (CONCAT(@ServerName, &#39; / &#39;, @SearchTerm), @SearchTerm, &#39;Failure&#39;,
+            ERROR_MESSAGE());
+    THROW;
+  END CATCH
+END
+</pre>
+</div></div><p><strong>B) CGS prefix maintenance (optional)</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- Suggested table
+CREATE TABLE MKT.CGS_ISIN_Prefixes(
+  Prefix char(2) NOT NULL PRIMARY KEY,
+  Source  varchar(200) NULL,
+  ValidFrom date NULL,
+  ValidTo   date NULL
+);
+</pre>
+</div></div><p>Then compute <code>IS_CGS_ISIN = CASE WHEN LEFT(ColumnValue,2) IN (SELECT Prefix FROM MKT.CGS_ISIN_Prefixes) AND LEN(ColumnValue)=12 THEN 1 ELSE 0 END</code>.</p><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-20)Glossary">20) Glossary</h2><ul><li><p><strong>Identifier (true)</strong>: A column whose semantics are “this is the third-party code” (e.g., <code>SEDOL</code>, <code>CUSIP</code>, <code>ISIN</code>).</p></li><li><p><strong>Search field</strong>: A non-identifier column that may contain an identifier somewhere inside (e.g., notes/memo fields).</p></li><li><p><strong>Landing</strong>: Per-run staging table (<code>Integration.MKT.LandingMarketIdentifiersDetails</code>).</p></li><li><p><strong>Targets</strong>: Final reporting tables under <code>MKT</code> schema.</p></li><li><p><strong>Fusion</strong>: Production security master (used to validate availability + status).</p></li><li><p><strong>CGS ISIN</strong>: Subset of ISINs under CGS jurisdiction (prefix list).</p></li><li><p><strong>Reporting Status</strong>: Status logic that the SSRS reports show (Asset vs. Listing status depending on identifier type).</p></li></ul><hr/><p>Here’s the <strong>single-page, diagrammatic handover</strong> you asked for—condensed but <em>technical</em>, and aligned to your screenshots + raw notes. I’ve kept SQL out (you already have it), and focused on <strong>sequence</strong>, <strong>control/data flows</strong>, <strong>variables/params</strong>, <strong>job steps</strong>, <strong>design choices</strong>, and <strong>key objects</strong>.</p><hr/><h1 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-MarketIdentifiersScan—Top-to-BottomTechnicalMap(SSIS+SQL+Synapse+SSRS)">Market Identifiers Scan — Top-to-Bottom Technical Map (SSIS + SQL + Synapse + SSRS)</h1><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-A)At-a-glance">A) At-a-glance</h2><ul><li><p><strong>Purpose:</strong> discover &amp; report unique <strong>SEDOL, CUSIP, CGS-ISIN</strong> (plus “search-field” leaks) across <strong>all CIP platforms</strong> for licensing.</p></li><li><p><strong>Engine:</strong> 1 SQL Agent job on <code>kapsqldat-prd01</code> runs <strong>3 scanners (Windows / SQL / Synapse)</strong> → lands → loads → enriches → reports → emails.</p></li><li><p><strong>Cadence:</strong> <strong>Weekly, Fri 4:00 pm</strong> (job: <strong>“Market Identifiers Analysis – scan all CIP Servers”</strong>).</p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-B)End-to-endflow(swimlane,top→bottom)">B) End-to-end flow (swimlane, top→bottom)</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">[Agent Job: Market Identifiers Analysis – scan all CIP Servers]  (Fri 16:00)
+   │
+   ├─ Step 1  SSIS  1.MarketIdentifiersAnalysisWindows Sources Refresh
+   │       (Windows-auth; covers legacy like SQL 2008R2)
+   │
+   ├─ Step 2  SSIS  2.MarketIdentifiersAnalysisSQL Sources Refresh
+   │       (SQL-auth vendor/other systems)
+   │
+   ├─ Step 3  SSIS  3.MarketIdentifiersAnalysisSynapse Sources Refresh
+   │       (Synapse SQL Pool; skip/alert if paused)
+   │
+   ├─ Step 4  T-SQL  Market Identifier Details – Map to Fusion Data
+   │       (availability/status/name mapping; CGS flags)
+   │
+   ├─ Step 5  T-SQL  Completion Mail
+   │       (summary email → marketdata@craigsip.com)
+   │
+   ├─ Step 6  SSIS  Account – Database and Table Select access check
+   │       (sanity: permissions/coverage check)
+   │
+   └─ Step 7  T-SQL  SET Default to All Scan
+           (resets any temp flags/run-control defaults)
+</pre>
+</div></div><p><strong>Failure routing (per your job UI):</strong> most steps → <strong>Go to next step</strong>; some failures jump to <strong>Step 5: Completion Mail</strong> or <strong>Quit with failure</strong> (visible in Job History).</p><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-C)WhateachSSISpackagedoes(control&amp;dataflows)">C) What each SSIS package does (control &amp; data flows)</h2><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-1)1MarketIdentifiersAnalysisWindows.dtsx(Windowssources+2008R2)">1) <code>1MarketIdentifiersAnalysisWindows.dtsx</code> <em>(Windows sources + 2008R2)</em></h3><p><strong>Control Flow</strong></p><ul><li><p><strong>Execute SQL:</strong> <code>mkt.vw_ServerRunControlQueryProcessActive</code><br/>→ returns rows like <em>(ServerOrgName, Query, MKTSearchTerm, ID)</em> filtered by <code>IsSQLServer2008R2=1</code> and <code>Authentication='Windows'</code>.</p></li><li><p><strong>Sequence Container (2008R2 &amp; later)</strong> → <strong>Foreach Loop</strong> over returned rows:</p><ul><li><p><code>Truncate - migration-MarketIdentifiersDetails</code> <em>(landing clean for server/term)</em>.</p></li><li><p><strong>DFT: DFT-1source_read</strong> <em>(see Data Flow below)</em>.</p></li><li><p><code>Success and Load Data into Target Table</code> <em>(delete+insert per server/term + log success + 90-day log trim).</em></p></li></ul></li></ul><p><strong>Data Flow (DFT-1source_read)</strong></p><ul><li><p><strong>OLE DB Source</strong> → <em>SQL command from variable</em> (<code>User::SQLQuery</code> built from metadata)<br/>returns columns: <code>ServerName, ColumnValue, NumOfRows, FieldValue, TableName, DatabaseName, Query, MarketIdentifierName</code>.</p></li><li><p><strong>ADO NET Destination</strong> → <code>Integration.MKT.LandingMarketIdentifiersDetails</code>.</p></li></ul><p><strong>Why separate Windows package?</strong> Legacy servers &amp; drivers (SQL 2008R2) need different schema discovery + auth.</p><hr/><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-2)2MarketIdentifiersAnalysisSQL.dtsx(SQL-authsystems)">2) <code>2MarketIdentifiersAnalysisSQL.dtsx</code> <em>(SQL-auth systems)</em></h3><ul><li><p>Same pattern as Windows package, but filters <code>Authentication='SQL'</code> in the view; uses SQL creds/linked servers as needed.</p></li><li><p>Handles vendor systems where integrated auth is not available.</p></li></ul><hr/><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-3)3MarketIdentifiersAnalysisSynapse.dtsx(SynapseSQLPool)">3) <code>3MarketIdentifiersAnalysisSynapse.dtsx</code> <em>(Synapse SQL Pool)</em></h3><ul><li><p>Same orchestration, but metadata reads via <strong>Linked Server/ODBC</strong> into Synapse.</p></li><li><p><strong>Pre-check:</strong> if pool <strong>paused</strong>, short-circuit with a clear status (job history) and <strong>skip</strong>; operators raise <strong>Halo</strong> to start pool and <strong>re-run Step 3</strong>.</p></li></ul><hr/><h3 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-4)MarketIdentifiersAnalysisDBAccessCheck.dtsx(accesssanity)">4) <code>MarketIdentifiersAnalysisDBAccessCheck.dtsx</code> <em>(access sanity)</em></h3><ul><li><p>Verifies account/database/table <strong>SELECT</strong> access; writes findings (Step 6 in job).</p></li><li><p>Early warning for permission drift.</p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-D)Sharedpackagemechanics(allscanners)">D) Shared package mechanics (all scanners)</h2><p><strong>Package-level variables (common)</strong></p><ul><li><p><code>User::ServerName</code> – current alias from run-control.</p></li><li><p><code>User::MKTSearchTerm</code> – current identifier/search field (e.g., SEDOL, CUSIP, CGS ISIN, Axys_SecNotes).</p></li><li><p><code>User::SQLQuery</code> – dynamic discovery SQL (per DB/table/column rules).</p></li><li><p>Optional throttles: <code>User::BatchSize</code>, <code>User::TopPerColumn</code>.</p></li></ul><p><strong>Sequence (per server × term)</strong></p><ol start="1"><li><p><strong>Landing prep</strong> – truncate or targeted delete for <code>(ServerName, MKTSearchTerm)</code>.</p></li><li><p><strong>Discovery</strong> – dynamic scan across DBs/tables/columns; push rows to <strong>Landing</strong>.</p></li><li><p><strong>Load</strong> – apply <strong>delete+insert</strong> into:</p><ul><li><p><code>MKT.MarketIdentifiersDetails</code> <em>(true ID columns; </em><code>IsMarketIdentifier?=1</code><em>)</em></p></li><li><p><code>MKT.MarketIdentifiersDetailsBySearchField</code> <em>(leaks in non-ID columns; </em><code>IsMarketIdentifier?=0</code><em>)</em></p></li></ul></li><li><p><strong>Log</strong> – <code>Integration.MKT.ServerStatusLogs</code> (“Success”/“Failure”), then purge &gt;90d.</p></li></ol><p><strong>Validation/enrichment</strong></p><ul><li><p>Later step maps to <strong>Fusion</strong> and flags <strong>IS_CGS_ISIN</strong>, <strong>securityStatusIdName</strong> (A/I/Other), <strong>IsAvailableInProdFusion?</strong>, <strong>SecurityName(Fusion)</strong>, <strong>FullFieldName</strong>.</p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-E)Run-control&amp;configuration(wherescanscomefrom)">E) Run-control &amp; configuration (where scans come from)</h2><ul><li><p><strong>Active terms:</strong> <code>Integration.mkt.MarketIdentifiers</code> → <code>[Name]</code>, <code>[Status]=1</code>, <code>[IsMarketIdentifier?]</code><br/>(true ID vs search-field).</p></li><li><p><strong>Which servers:</strong> <code>Integration.mkt.ServersRunControl</code> → <code>ServerAliasName</code>, <code>Status=1</code> (include).</p></li><li><p><strong>Package input view:</strong> <code>mkt.vw_ServerRunControlQueryProcessActive</code><br/>(joins server list + term list + routing flags like <code>IsSQLServer2008R2</code>, <code>Authentication</code>, and the <strong>per-term/per-server discovery SQL</strong>).</p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-F)Reporting&amp;licensinglayer(whatthejobfeeds)">F) Reporting &amp; licensing layer (what the job feeds)</h2><ul><li><p><strong>SSRS</strong></p><ul><li><p><strong>Market Identifiers Analysis – Summary</strong></p></li><li><p><strong>Market Identifiers Analysis – Detailed</strong></p></li><li><p><strong>Market Identifiers Analysis – Fusion</strong></p></li><li><p><strong>Fusion base third party market identifiers – Report</strong> (format color rules)</p></li></ul></li><li><p><strong>Status semantics (in reports)</strong></p><ul><li><p><strong>CGS ISIN</strong> → <strong>Asset Status</strong>: <code>A=Active</code>, <code>I=Inactive</code>, else <code>Other</code>.</p></li><li><p><strong>SEDOL/CUSIP</strong> → <strong>Market Listing Status</strong>: <code>0=Inactive</code>, <code>1=Active</code>, <code>2=Suspended</code>, else <code>Other</code>.</p></li></ul></li><li><p><strong>CGS scope:</strong> only count <strong>ISIN</strong> with <strong>CGS prefixes</strong> (ISIN length 12; prefix list from CGS).</p></li><li><p><strong>Weekly mail</strong> (Step 5) → <code>marketdata@craigsip.com</code>.</p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-G)Keyobjectstoknow(Integration/MKTschema)">G) Key objects to know (Integration/MKT schema)</h2><p><strong>Tables</strong></p><ul><li><p><code>Integration.MKT.LandingMarketIdentifiersDetails</code> <em>(staging/landing per run)</em></p></li><li><p><code>MKT.MarketIdentifiersDetails</code> <em>(true IDs)</em></p></li><li><p><code>MKT.MarketIdentifiersDetailsBySearchField</code> <em>(search-field leaks)</em></p></li><li><p><code>Integration.mkt.MarketIdentifiers</code> <em>(term catalog; active flag; ID vs search-field)</em></p></li><li><p><code>Integration.mkt.ServersRunControl</code> <em>(which servers to scan)</em></p></li><li><p><code>Integration.mkt.ServerStatusLogs</code> <em>(per server/term status; 90-day retention)</em></p></li><li><p>(also visible in UI) <code>mkt.AssetsHoldings</code>, <code>mkt.ServerDBAccessDetails</code>, <code>mkt.CGS_ISIN_ISOCodes</code> (prefix map).</p></li></ul><p><strong>Views (filtered list from your screenshot)</strong></p><ul><li><p><code>mkt.vw_ServerRunControlQueryProcessActive</code></p></li><li><p><code>mkt.vw_MarketIdentifiersDetails_combined</code></p></li><li><p><code>mkt.vw_MarketIdentifiersDetailsBySearchField</code></p></li><li><p><code>mkt.vw_MarketIdentifiersOverAll*</code> (by server / by DB / by table)</p></li><li><p><code>mkt.vw_SecurityMaster(Fusion)</code></p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-H)Designchoices(whyit’sbuiltthisway)">H) Design choices (why it’s built this way)</h2><ul><li><p><strong>Three scanners</strong> instead of one:</p><ul><li><p>Different <strong>auth</strong> (Windows vs SQL), <strong>metadata</strong> quirks (SQL 2008R2), <strong>platform</strong> specifics (Synapse).</p></li></ul></li><li><p><strong>Delete+Insert per (Server, Term)</strong>:</p><ul><li><p>Makes runs <strong>idempotent</strong>, easy to <strong>re-run</strong> or <strong>manually refresh</strong> a single slice.</p></li></ul></li><li><p><strong>Landing → Targets</strong>:</p><ul><li><p>Landing isolates discovery variability; Targets keep <strong>stable, reportable</strong> shape.</p></li></ul></li><li><p><strong>Fusion mapping after scan</strong>:</p><ul><li><p>Keeps discovery packages thin; business status logic centralized.</p></li></ul></li><li><p><strong>Exclusions</strong>:</p><ul><li><p>Direct <strong>Genesis</strong> (use local replica), <strong>Tabular Models</strong> (covered upstream), <strong>paused Synapse</strong> (manual resume).</p></li></ul></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-I)Operate/extend(quickrunbook)">I) Operate / extend (quick runbook)</h2><ul><li><p><strong>Check schedule:</strong> Job is <strong>Enabled</strong>, <strong>Weekly at 4 pm Fri</strong>.</p></li><li><p><strong>Health:</strong> use <strong>Job History</strong> and <code>Integration.mkt.ServerStatusLogs</code> for last run &amp; failures.</p></li><li><p><strong>Synapse stale?</strong> Start SQL Pool (Halo) → re-run <strong>Step 3</strong>.</p></li><li><p><strong>Add a server:</strong> insert into <code>ServersRunControl (status=1)</code> + ensure connectivity/linked server → next run picks it up.</p></li><li><p><strong>Add a term:</strong> insert into <code>MarketIdentifiers</code> with proper <code>[IsMarketIdentifier?]</code> → reports will include it.</p></li><li><p><strong>Manual refresh (“cleanup”) for one server/term:</strong> run the relevant package (or execute the loader block) after re-populating <strong>Landing</strong>.</p></li><li><p><strong>Reports:</strong> validate Summary/Detailed/Fusion updated post-run; email confirms.</p></li></ul><hr/><h2 id="Learning:MarketIdentifiers—End-to-EndTechnicalHandover(SSIS+SQL+Synapse+SSRS)-J)Packageexplorercues(tofindthingsfast)">J) Package explorer cues (to find things fast)</h2><ul><li><p><strong>Control Flow</strong> nodes to look for:</p><ul><li><p><strong>“Load SQL Statements for Servers Version SQL Server 2008R2”</strong></p></li><li><p><strong>“Load SQL Statements to Process SQL Table Data”</strong></p></li><li><p><strong>Foreach Loop Container 1</strong> → <strong>DFT-1source_read</strong> → <strong>Success and Load Data into Target Table</strong></p></li><li><p><strong>Truncate – migration-MarketIdentifiersDetails</strong></p></li></ul></li><li><p><strong>Data Flow</strong>:</p><ul><li><p><strong>OLE DB Source</strong> (SQL from <code>User::SQLQuery</code>) → <strong>ADO NET Destination</strong> (Landing).</p></li></ul></li><li><p><strong>Connection Managers</strong>:</p><ul><li><p><code>SourceConnection</code> (varies by package), <code>SQLDBConnTarget</code> (Integration/MKT).</p></li></ul></li></ul><hr/><p>That’s the compact “one-pager” you can hand to any developer to <strong>run, extend, or troubleshoot</strong> the solution without digging through SQL. If you want this formatted as a <strong>PDF/Word cheat sheet with the ASCII diagram</strong>, say the word and I’ll export it.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:54</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

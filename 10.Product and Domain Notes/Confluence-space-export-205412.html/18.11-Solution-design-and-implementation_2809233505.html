@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 18.11 Solution design and implementation</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="2762113156.html">18. Rebuild FATCA/CRS step 1 - 10</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 18.11 Solution design and implementation
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 30-10-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h1 id="id-18.11Solutiondesignandimplementation-ProjectOverview"><strong>Project Overview</strong></h1><p>Jackson Fan developing a set of reusable stored procedures for CRM system. These procedures are designed to generate reports compliant with various regulatory standards, including IDES2.0 FATCA, and OECD v3.19 CRS. </p><p>The objective is to streamline data extraction, transformation, and reporting processes, ensuring accuracy, maintainability, and ease of use, especially for new team members.</p><h1 id="id-18.11Solutiondesignandimplementation-KeyRequirements"><strong>Key Requirements</strong></h1><ol start="1"><li><p><strong>Modular Stored Procedure Design</strong></p><ul><li><p><strong>Separation of Concerns</strong>: Divide the data processing workflow into distinct, manageable stored procedures, each responsible for a specific task.</p></li><li><p><strong>Reusability</strong>: Ensure each procedure can be independently reused or modified without affecting the entire workflow.</p></li><li><p><strong>Maintainability</strong>: Facilitate easy updates and maintenance by organizing code logically.</p></li></ul></li><li><p><strong>Workflow Mapping to Workscripts</strong></p><ul><li><p><strong>Workscript 5.1</strong>: </p><ul><li><p><strong>Purpose</strong>: Extract data from CRM, perform basic data quality checks, and assign tax regimes and reporting requirements.</p></li><li><p><strong>Output</strong>: Temporary table <code>#fatcacrsdata</code> containing combined FATCA and CRS data.</p></li><li><p><strong>Corresponding Procedure</strong>: <code>USP_FATCA_CRS_ExtractAndPrepareData</code></p></li></ul></li><li><p><strong>Workscript 5.4</strong>: </p><ul><li><p><strong>Purpose</strong>: Transform FATCA and CRS data by restructuring TIN-based rows into multiple TIN columns (TIN1, TIN2, TIN3) and separate the datasets to eliminate ambiguity.</p></li><li><p><strong>Output</strong>: Distinct FATCA and CRS datasets.</p></li><li><p><strong>Corresponding Procedure</strong>: <code>SP_TransformFATCAAndCRSData</code></p></li></ul></li><li><p><strong>Workscript 6</strong>: </p><ul><li><p><strong>Purpose</strong>: Integrate CRS income details and ensure the dataset conforms to the 144-column CRS XML submission format, with most columns intentionally left empty.</p></li><li><p><strong>Output</strong>: Final CRS dataset.</p></li><li><p><strong>Corresponding Procedure</strong>: <code>SP_FinalCRSOutput</code></p></li></ul></li><li><p><strong>Workscript 7</strong>: </p><ul><li><p><strong>Purpose</strong>: Finalize FATCA reporting by preparing 12 specific columns required for compliance, with only about 40 columns containing actual data.</p></li><li><p><strong>Output</strong>: Final FATCA dataset.</p></li><li><p><strong>Corresponding Procedure</strong>: <code>SP_FinalizeFATCAOutput</code></p></li></ul></li></ul></li><li><p><strong>Master Stored Procedure for Orchestration</strong></p><ul><li><p><strong>Purpose</strong>: Coordinate the execution of the four main stored procedures in the correct sequence, ensuring smooth data flow and comprehensive error handling.</p></li><li><p><strong>Procedure Name</strong>: <code>SP_RunAllReportingProcesses</code></p></li><li><p><strong>Parameters</strong>:</p><ul><li><p><code>@PeriodStart DATE</code></p></li><li><p><code>@PeriodEnd DATE</code></p></li><li><p><code>@IncludeZeroIncome BIT</code></p></li><li><p><code>@ReportingCategory VARCHAR(50)</code></p></li></ul></li></ul></li><li><p><strong>Parameterization and Flexibility</strong></p><ul><li><p><strong>Input Parameters</strong>: Allow dynamic input for reporting periods, inclusion of zero-income records, and reporting categories to cater to various reporting needs.</p></li><li><p><strong>SSRS Integration</strong>: Configure SQL Server Reporting Services (SSRS) to pass user-defined parameters to the master stored procedure, enabling flexible and dynamic report generation.</p></li></ul></li><li><p><strong>Error Handling and Logging</strong></p><ul><li><p>Implement robust <code>TRY...CATCH</code> blocks in each stored procedure to capture and handle errors gracefully.</p></li><li><p>Ensure meaningful error messages are logged or raised to facilitate troubleshooting and maintenance.</p></li></ul></li><li><p><strong>Documentation and Testing</strong></p><ul><li><p><strong>Comprehensive Documentation</strong>: Provide clear comments and documentation within each stored procedure to aid understanding and maintenance, especially for new team members.</p></li><li><p><strong>Thorough Testing</strong>: Validate each stored procedure individually and the entire workflow in a User Acceptance Testing (UAT) environment to ensure reliability and correctness.</p></li></ul></li></ol><h4 id="id-18.11Solutiondesignandimplementation-RecommendedDesignApproach"><strong>Recommended Design Approach</strong></h4><p>Based on the outlined requirements, the following design approach is recommended:</p><ol start="1"><li><p><strong>Maintain Modular Stored Procedures</strong></p><ul><li><p><strong>Advantages</strong>:</p><ul><li><p><strong>Clarity</strong>: Each procedure handles a distinct part of the process, making the workflow easier to understand.</p></li><li><p><strong>Maintainability</strong>: Isolating functionalities simplifies debugging and updates.</p></li><li><p><strong>Reusability</strong>: Procedures can be reused in different contexts or reports as needed.</p></li></ul></li></ul></li><li><p><strong>Implement a Master Stored Procedure</strong></p><ul><li><p><strong>Functionality</strong>:</p><ul><li><p>Sequentially execute the four main stored procedures.</p></li><li><p>Pass necessary parameters from SSRS to the relevant procedures.</p></li><li><p>Handle errors centrally to maintain workflow integrity.</p></li></ul></li><li><p><strong>Structure</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">CREATE PROCEDURE SP_RunAllReportingProcesses
+    @PeriodStart DATE,
+    @PeriodEnd DATE,
+    @IncludeZeroIncome BIT,
+    @ReportingCategory VARCHAR(50)
+AS
+BEGIN
+    BEGIN TRY
+        -- Step 1: Extract and Prepare Data
+        EXEC SP_ExtractAndPrepareData 
+            @PeriodStart, 
+            @PeriodEnd, 
+            @IncludeZeroIncome, 
+            @ReportingCategory;
+        
+        -- Step 2: Transform FATCA and CRS Data
+        EXEC SP_TransformFATCAAndCRSData;
+        
+        -- Step 3: Finalize CRS Output
+        EXEC SP_FinalCRSOutput;
+        
+        -- Step 4: Finalize FATCA Output
+        EXEC SP_FinalizeFATCAOutput;
+    END TRY
+    BEGIN CATCH
+        -- Error Handling
+        DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
+        DECLARE @ErrorSeverity INT = ERROR_SEVERITY();
+        DECLARE @ErrorState INT = ERROR_STATE();
+        
+        -- Log or handle the error as needed
+        RAISERROR(@ErrorMessage, @ErrorSeverity, @ErrorState);
+    END CATCH
+END</pre>
+</div></div></li></ul></li></ol><p /><h3 id="id-18.11Solutiondesignandimplementation-TemplateforWrappingComplexCodeinSmallerStoredProcedures"><strong>Template for Wrapping Complex Code in Smaller Stored Procedures</strong></h3><p>Creating well-structured and maintainable stored procedures is crucial, especially when dealing with complex business logic. Below is a comprehensive template for the <code>SP_ExtractAndPrepareData</code> stored procedure. This template includes placeholders and comments to guide you in inserting your specific logic for data extraction, quality handling, tax regime assignment, and more.</p><h4 id="id-18.11Solutiondesignandimplementation-StoredProcedureTemplate:USP_FATCA_CRS_ExtractAndPrepareData"><strong>Stored Procedure Template: USP_FATCA_CRS_ExtractAndPrepareData</strong></h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- =============================================
+-- Author:        [Your Name]
+-- Create date:   [Creation Date]
+-- Description:   Extracts data from CRM, performs data quality checks,
+--                assigns tax regimes and reporting requirements.
+-- =============================================
+
+CREATE PROCEDURE USP_FATCA_CRS_ExtractAndPrepareData
+    @PeriodStart DATE,
+    @PeriodEnd DATE,
+    @IncludeZeroIncome BIT,
+    @ReportingCategory VARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        -- =============================================
+        -- Step 1: Data Extraction from CRM
+        -- =============================================
+        -- Insert your data extraction logic here.
+        -- Example: Extracting relevant records based on the reporting period.
+        
+        -- Temporary table to hold extracted data
+        IF OBJECT_ID(&#39;tempdb..#ExtractedData&#39;) IS NOT NULL
+            DROP TABLE #ExtractedData;
+
+        CREATE TABLE #ExtractedData (
+            -- Define columns based on CRM data structure
+            CustomerID INT,
+            Name NVARCHAR(100),
+            TIN NVARCHAR(50),
+            Income DECIMAL(18, 2),
+            -- Add additional columns as needed
+            ReportingCategory VARCHAR(50)
+        );
+
+        INSERT INTO #ExtractedData (CustomerID, Name, TIN, Income, ReportingCategory)
+        SELECT 
+            CustomerID,
+            Name,
+            TIN,
+            Income,
+            @ReportingCategory
+        FROM 
+            CRM.dbo.Customers
+        WHERE 
+            TransactionDate BETWEEN @PeriodStart AND @PeriodEnd
+            -- Add additional filtering criteria as needed
+
+        -- =============================================
+        -- Step 2: Data Quality Handling
+        -- =============================================
+        -- Perform necessary data quality checks and transformations.
+        -- Example: Removing duplicates, handling NULLs, standardizing formats.
+
+        -- Example: Remove duplicate records based on CustomerID and TIN
+        ;WITH CTE_Duplicates AS (
+            SELECT 
+                CustomerID,
+                TIN,
+                ROW_NUMBER() OVER (PARTITION BY CustomerID, TIN ORDER BY TransactionDate DESC) AS rn
+            FROM 
+                #ExtractedData
+        )
+        DELETE FROM CTE_Duplicates WHERE rn &gt; 1;
+
+        -- Example: Handle NULL or invalid TINs
+        UPDATE #ExtractedData
+        SET TIN = &#39;UNKNOWN&#39;
+        WHERE TIN IS NULL OR LEN(TIN) &lt; 5; -- Adjust the condition as per requirements
+
+        -- =============================================
+        -- Step 3: Assign Tax Regime and Reporting Requirements
+        -- =============================================
+        -- Assign tax regimes based on business logic.
+        -- Example: Determining FATCA or CRS based on income thresholds or other criteria.
+
+        ALTER TABLE #ExtractedData
+        ADD TaxRegime VARCHAR(50),
+            ReportingRequirement VARCHAR(50);
+
+        UPDATE #ExtractedData
+        SET 
+            TaxRegime = CASE 
+                            WHEN Income &gt; 100000 THEN &#39;FATCA&#39;
+                            ELSE &#39;CRS&#39;
+                        END,
+            ReportingRequirement = CASE 
+                                      WHEN Income &gt; 100000 THEN &#39;FATCA Reporting&#39;
+                                      ELSE &#39;CRS Reporting&#39;
+                                  END
+        WHERE 
+            1 = 1; -- Adjust conditions as necessary
+
+        -- =============================================
+        -- Step 4: Filter Based on IncludeZeroIncome
+        -- =============================================
+        -- Optionally include or exclude records with zero income.
+
+        IF @IncludeZeroIncome = 0
+        BEGIN
+            DELETE FROM #ExtractedData
+            WHERE Income = 0;
+        END
+
+        -- =============================================
+        -- Step 5: Output Preparation
+        -- =============================================
+        -- Prepare the final temporary table for subsequent procedures.
+
+        -- Create or replace the main temporary table #fatcacrsdata
+        IF OBJECT_ID(&#39;tempdb..#fatcacrsdata&#39;) IS NOT NULL
+            DROP TABLE #fatcacrsdata;
+
+        SELECT 
+            CustomerID,
+            Name,
+            TIN,
+            Income,
+            TaxRegime,
+            ReportingRequirement,
+            ReportingCategory
+            -- Include additional processed columns as needed
+        INTO #fatcacrsdata
+        FROM #ExtractedData;
+
+        -- Optional: Indexes on temporary tables for performance
+        CREATE INDEX IDX_fatcacrsdata_CustomerID ON #fatcacrsdata(CustomerID);
+        CREATE INDEX IDX_fatcacrsdata_TIN ON #fatcacrsdata(TIN);
+
+        -- =============================================
+        -- Step 6: Cleanup (Optional)
+        -- =============================================
+        -- Drop intermediate temporary tables if no longer needed.
+        DROP TABLE IF EXISTS #ExtractedData;
+
+        -- =============================================
+        -- End of SP_ExtractAndPrepareData
+        -- =============================================
+    END TRY
+    BEGIN CATCH
+        -- =============================================
+        -- Error Handling
+        -- =============================================
+        DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
+        DECLARE @ErrorSeverity INT = ERROR_SEVERITY();
+        DECLARE @ErrorState INT = ERROR_STATE();
+
+        -- Log the error details to an error logging table (optional)
+        INSERT INTO dbo.ErrorLog (ErrorMessage, ErrorSeverity, ErrorState, ErrorDate)
+        VALUES (@ErrorMessage, @ErrorSeverity, @ErrorState, GETDATE());
+
+        -- Rethrow the error to the calling procedure
+        RAISERROR (@ErrorMessage, @ErrorSeverity, @ErrorState);
+    END CATCH
+END
+GO</pre>
+</div></div><hr/><h3 id="id-18.11Solutiondesignandimplementation-ExplanationoftheTemplate"><strong>Explanation of the Template</strong></h3><ol start="1"><li><p><strong>Procedure Header and Metadata</strong></p><ul><li><p><strong>Author, Creation Date, Description</strong>: Provides context about the stored procedure, which is essential for maintenance and onboarding new team members.</p></li></ul></li><li><p><strong>Procedure Definition</strong></p><ul><li><p><strong>Parameters</strong>: </p><ul><li><p><code>@PeriodStart</code> and <code>@PeriodEnd</code>: Define the reporting period.</p></li><li><p><code>@IncludeZeroIncome</code>: Determines whether to include records with zero income.</p></li><li><p><code>@ReportingCategory</code>: Specifies the category of reporting (e.g., IDES20, FATCA, CRS).</p></li></ul></li></ul></li><li><p><strong>SET NOCOUNT ON</strong></p><ul><li><p>Improves performance by stopping the message that shows the count of the number of rows affected by a T-SQL statement.</p></li></ul></li><li><p><strong>BEGIN TRY...END TRY and BEGIN CATCH...END CATCH</strong></p><ul><li><p><strong>Error Handling</strong>: Ensures that any errors within the <code>TRY</code> block are caught and handled gracefully in the <code>CATCH</code> block.</p></li></ul></li><li><p><strong>Step-by-Step Logic with Comments and Placeholders</strong></p><ul><li><p><strong>Step 1: Data Extraction from CRM</strong></p><ul><li><p><strong>Temporary Table </strong><code>#ExtractedData</code>: Stores raw extracted data.</p></li><li><p><strong>INSERT INTO</strong>: Replace the example <code>SELECT</code> statement with your actual data extraction logic from the CRM system.</p></li></ul></li><li><p><strong>Step 2: Data Quality Handling</strong></p><ul><li><p><strong>Removing Duplicates</strong>: Example provided using <code>ROW_NUMBER()</code>. Modify based on your specific criteria.</p></li><li><p><strong>Handling NULLs or Invalid Data</strong>: Example of updating <code>TIN</code> values. Adjust conditions as per your data quality rules.</p></li></ul></li><li><p><strong>Step 3: Assign Tax Regime and Reporting Requirements</strong></p><ul><li><p><strong>Adding Columns</strong>: <code>TaxRegime</code> and <code>ReportingRequirement</code> are added to categorize the data.</p></li><li><p><strong>UPDATE Statement</strong>: Implement your business logic for assigning tax regimes.</p></li></ul></li><li><p><strong>Step 4: Filter Based on </strong><code>@IncludeZeroIncome</code></p><ul><li><p><strong>Conditional Deletion</strong>: Excludes records with zero income if the parameter is set to <code>0</code>.</p></li></ul></li><li><p><strong>Step 5: Output Preparation</strong></p><ul><li><p><strong>Main Temporary Table </strong><code>#fatcacrsdata</code>: Consolidates processed data for downstream procedures.</p></li><li><p><strong>Indexes</strong>: Optional but recommended for performance optimization, especially with large datasets.</p></li></ul></li><li><p><strong>Step 6: Cleanup</strong></p><ul><li><p><strong>Dropping Intermediate Tables</strong>: Frees up resources by removing temporary tables that are no longer needed.</p></li></ul></li></ul></li><li><p><strong>Error Handling in the CATCH Block</strong></p><ul><li><p><strong>Error Variables</strong>: Captures error details.</p></li><li><p><strong>Logging Errors</strong>: Optional insertion into an <code>ErrorLog</code> table. Ensure this table exists or modify as needed.</p></li><li><p><strong>Rethrowing Errors</strong>: Uses <code>RAISERROR</code> to propagate the error to the calling procedure, allowing centralized error handling.</p></li></ul></li><li><p><strong>GO Statement</strong></p><ul><li><p>Marks the end of the stored procedure definition.</p></li></ul></li></ol><hr/><h3 id="id-18.11Solutiondesignandimplementation-BestPracticesImplementedintheTemplate"><strong>Best Practices Implemented in the Template</strong></h3><ul><li><p><strong>Modular Design</strong>: Each logical step is compartmentalized, making the procedure easier to read and maintain.</p></li><li><p><strong>Temporary Tables</strong>: Utilizes temporary tables (<code>#ExtractedData</code> and <code>#fatcacrsdata</code>) to manage intermediate data without affecting the main database.</p></li><li><p><strong>Error Handling</strong>: Comprehensive error handling ensures that any issues are logged and propagated appropriately, preventing silent failures.</p></li><li><p><strong>Comments and Documentation</strong>: Clear comments guide developers on where to insert specific logic, enhancing readability and maintainability.</p></li><li><p><strong>Performance Optimization</strong>: Indexes on temporary tables can significantly improve query performance, especially with large datasets.</p></li><li><p><strong>Parameterization</strong>: Accepts parameters to make the procedure reusable and flexible for different reporting scenarios.</p></li></ul><hr/><h3 id="id-18.11Solutiondesignandimplementation-AdaptingtheTemplateforOtherStoredProcedures"><strong>Adapting the Template for Other Stored Procedures</strong></h3><p>You can use a similar structure for the other stored procedures (<code>SP_TransformFATCAAndCRSData</code>, <code>SP_FinalCRSOutput</code>, <code>SP_FinalizeFATCAOutput</code>). Here's a brief outline on how to adapt the template:</p><ol start="1"><li><p><strong>Procedure Header and Metadata</strong></p><ul><li><p>Update the <code>Description</code> to reflect the specific purpose of the stored procedure.</p></li></ul></li><li><p><strong>Parameters</strong></p><ul><li><p>Define any additional parameters required for the specific logic.</p></li></ul></li><li><p><strong>BEGIN TRY...END TRY and BEGIN CATCH...END CATCH</strong></p><ul><li><p>Maintain robust error handling across all procedures.</p></li></ul></li><li><p><strong>Step-by-Step Logic</strong></p><ul><li><p>Replace the placeholder comments with actual business logic relevant to each procedure.</p></li></ul></li><li><p><strong>Temporary Tables and Outputs</strong></p><ul><li><p>Ensure that each procedure outputs data in a format expected by the downstream procedures or the master procedure.</p></li></ul></li><li><p><strong>Cleanup and Optimization</strong></p><ul><li><p>Manage temporary tables and indexes as needed for optimal performance.</p></li></ul></li></ol><hr/><h3 id="id-18.11Solutiondesignandimplementation-Example:TemplateforSP_TransformFATCAAndCRSData"><strong>Example: Template for SP_TransformFATCAAndCRSData</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- =============================================
+-- Author:        [Your Name]
+-- Create date:   [Creation Date]
+-- Description:   Transforms FATCA and CRS data by restructuring TIN-based rows 
+--                into multiple TIN columns and separates the datasets.
+-- =============================================
+
+CREATE PROCEDURE SP_TransformFATCAAndCRSData
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        -- =============================================
+        -- Step 1: Check for Existence of #fatcacrsdata
+        -- =============================================
+        IF OBJECT_ID(&#39;tempdb..#fatcacrsdata&#39;) IS NULL
+        BEGIN
+            RAISERROR(&#39;Temporary table #fatcacrsdata does not exist.&#39;, 16, 1);
+            RETURN;
+        END
+
+        -- =============================================
+        -- Step 2: Restructure TIN-based Rows into Columns
+        -- =============================================
+        -- Example: Pivoting TINs from rows to columns (TIN1, TIN2, TIN3)
+        -- Adjust the logic based on your actual data structure and requirements.
+
+        IF OBJECT_ID(&#39;tempdb..#TransformedData&#39;) IS NOT NULL
+            DROP TABLE #TransformedData;
+
+        SELECT 
+            CustomerID,
+            Name,
+            MAX(CASE WHEN TIN_Number = 1 THEN TIN END) AS TIN1,
+            MAX(CASE WHEN TIN_Number = 2 THEN TIN END) AS TIN2,
+            MAX(CASE WHEN TIN_Number = 3 THEN TIN END) AS TIN3,
+            Income,
+            TaxRegime,
+            ReportingRequirement,
+            ReportingCategory
+            -- Add additional columns as needed
+        INTO #TransformedData
+        FROM (
+            SELECT 
+                CustomerID,
+                Name,
+                TIN,
+                ROW_NUMBER() OVER (PARTITION BY CustomerID ORDER BY TIN) AS TIN_Number,
+                Income,
+                TaxRegime,
+                ReportingRequirement,
+                ReportingCategory
+            FROM #fatcacrsdata
+        ) AS SourceData
+        GROUP BY 
+            CustomerID,
+            Name,
+            Income,
+            TaxRegime,
+            ReportingRequirement,
+            ReportingCategory;
+
+        -- =============================================
+        -- Step 3: Separate FATCA and CRS Datasets
+        -- =============================================
+        -- Create separate temporary tables for FATCA and CRS to avoid ambiguity.
+
+        -- Temporary table for FATCA data
+        IF OBJECT_ID(&#39;tempdb..#FATCAData&#39;) IS NOT NULL
+            DROP TABLE #FATCAData;
+
+        SELECT 
+            *
+        INTO #FATCAData
+        FROM #TransformedData
+        WHERE TaxRegime = &#39;FATCA&#39;;
+
+        -- Temporary table for CRS data
+        IF OBJECT_ID(&#39;tempdb..#CRSData&#39;) IS NOT NULL
+            DROP TABLE #CRSData;
+
+        SELECT 
+            *
+        INTO #CRSData
+        FROM #TransformedData
+        WHERE TaxRegime = &#39;CRS&#39;;
+
+        -- =============================================
+        -- Step 4: Cleanup (Optional)
+        -- =============================================
+        DROP TABLE IF EXISTS #fatcacrsdata;
+        DROP TABLE IF EXISTS #TransformedData;
+
+        -- =============================================
+        -- End of SP_TransformFATCAAndCRSData
+        -- =============================================
+    END TRY
+    BEGIN CATCH
+        -- =============================================
+        -- Error Handling
+        -- =============================================
+        DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
+        DECLARE @ErrorSeverity INT = ERROR_SEVERITY();
+        DECLARE @ErrorState INT = ERROR_STATE();
+
+        -- Log the error details to an error logging table (optional)
+        INSERT INTO dbo.ErrorLog (ErrorMessage, ErrorSeverity, ErrorState, ErrorDate)
+        VALUES (@ErrorMessage, @ErrorSeverity, @ErrorState, GETDATE());
+
+        -- Rethrow the error to the calling procedure
+        RAISERROR (@ErrorMessage, @ErrorSeverity, @ErrorState);
+    END CATCH
+END
+GO</pre>
+</div></div><hr/><h3 id="id-18.11Solutiondesignandimplementation-Conclusion"><strong>Conclusion</strong></h3><p>By utilizing the provided templates and following best practices, you can effectively manage complex logic within smaller, modular stored procedures. This approach enhances readability, maintainability, and scalability of your database operations. Remember to replace the placeholder comments and example logic with your actual business rules and data processing requirements.</p><p>If you have further questions or need assistance with specific sections of your stored procedures, feel free to ask!</p><ol start="3"><li><p><strong>Parameter Passing and SSRS Integration</strong></p><ul><li><p><strong>Stored Procedures</strong>: Ensure <code>SP_ExtractAndPrepareData</code> accepts necessary parameters for dynamic filtering.</p></li><li><p><strong>Master Procedure</strong>: Modify <code>SP_RunAllReportingProcesses</code> to accept and pass these parameters accordingly.</p></li><li><p><strong>SSRS Configuration</strong>:</p><ul><li><p><strong>Define Parameters</strong>: Create corresponding parameters in SSRS (e.g., PeriodStart, PeriodEnd).</p></li><li><p><strong>Map Parameters</strong>: Link SSRS report parameters to the stored procedure parameters to ensure user inputs are correctly passed.</p></li></ul></li></ul></li></ol><p /><hr/><h4 id="id-18.11Solutiondesignandimplementation-ToimplementthesetwoSSRSreports,&quot;FATCAReports&quot;and&quot;CRSReports,&quot;followthesestepsforsettingupdatasources,datasets,andreportconfigurations.Eachreportwillusethemasterstoredproceduretoretrieveitsrelevantdata,passingthenece">To implement these two SSRS reports, &quot;FATCA Reports&quot; and &quot;CRS Reports,&quot; follow these steps for setting up data sources, datasets, and report configurations. Each report will use the master stored procedure to retrieve its relevant data, passing the necessary parameters from SSRS.</h4><h3 id="id-18.11Solutiondesignandimplementation-Step1:SetUptheDataSourcesinSSRS">Step 1: Set Up the Data Sources in SSRS</h3><ol start="1"><li><p><strong>Create a Shared Data Source</strong>:</p><ul><li><p>Open SQL Server Data Tools (SSDT) or Report Builder.</p></li><li><p>In the Solution Explorer, right-click on &quot;Data Sources&quot; and select <strong>Add New Data Source</strong>.</p></li><li><p>Name the data source (e.g., <code>FATCA_CRS_DataSource</code>).</p></li><li><p>Choose <code>Use a connection embedded in my report</code> and select <code>Microsoft SQL Server</code> as the type.</p></li><li><p>Click on <strong>Edit</strong> to set up the connection string. Use the appropriate connection string for the database where the stored procedures are located.</p></li><li><p>Test the connection to confirm it works.</p></li></ul></li><li><p><strong>Define Credentials</strong>:</p><ul><li><p>Set credentials either by using <strong>Windows Authentication</strong> or by specifying SQL Server credentials as needed.</p></li></ul></li></ol><h3 id="id-18.11Solutiondesignandimplementation-Step2:ConfiguretheDatasetsforEachReport">Step 2: Configure the Datasets for Each Report</h3><p>You will create two separate datasets for the FATCA and CRS reports, both of which call the <code>USP_Master_FATCA_CRS_RunAllReportingProcesses</code> stored procedure but may require different parameters or filters.</p><h4 id="id-18.11Solutiondesignandimplementation-FATCAReportDataset">FATCA Report Dataset</h4><ol start="1"><li><p><strong>Create Dataset for FATCA Report</strong>:</p><ul><li><p>Right-click on <strong>Datasets</strong> and select <strong>Add Dataset</strong>.</p></li><li><p>Name the dataset <code>FATCA_Report_Dataset</code>.</p></li><li><p>Choose <code>Use a dataset embedded in my report</code> and select the previously created shared data source.</p></li><li><p>In the <strong>Query</strong> field, select <code>Stored Procedure</code> and enter <code>[FATCA].USP_Master_FATCA_CRS_RunAllReportingProcesses</code>.</p></li></ul></li><li><p><strong>Set Parameters</strong>:</p><ul><li><p>After selecting the stored procedure, SSRS will automatically detect the parameters required.</p></li><li><p>Configure the parameters <code>@PeriodStartDate</code>, <code>@PeriodEndDate</code>, and <code>@RefreshHoldingsData</code> based on user input or default values.</p></li><li><p>Example:</p><ul><li><p><strong>@PeriodStartDate</strong>: Set as a date parameter for the report.</p></li><li><p><strong>@PeriodEndDate</strong>: Set as a date parameter for the report.</p></li><li><p><strong>@RefreshHoldingsData</strong>: Set as a Boolean (bit) parameter, allowing users to refresh holdings data if necessary.</p></li></ul></li></ul></li></ol><h4 id="id-18.11Solutiondesignandimplementation-CRSReportDataset">CRS Report Dataset</h4><ol start="1"><li><p><strong>Create Dataset for CRS Report</strong>:</p><ul><li><p>Right-click on <strong>Datasets</strong> and select <strong>Add Dataset</strong>.</p></li><li><p>Name the dataset <code>CRS_Report_Dataset</code>.</p></li><li><p>Choose <code>Use a dataset embedded in my report</code> and select the shared data source created earlier.</p></li><li><p>In the <strong>Query</strong> field, select <code>Stored Procedure</code> and enter <code>[FATCA].USP_Master_FATCA_CRS_RunAllReportingProcesses</code>.</p></li></ul></li><li><p><strong>Set Parameters</strong>:</p><ul><li><p>SSRS will again detect the required parameters.</p></li><li><p>Configure <code>@PeriodStartDate</code>, <code>@PeriodEndDate</code>, and <code>@RefreshHoldingsData</code> as needed.</p></li><li><p>Example:</p><ul><li><p><strong>@PeriodStartDate</strong>: Set as a date parameter for the report.</p></li><li><p><strong>@PeriodEndDate</strong>: Set as a date parameter for the report.</p></li><li><p><strong>@RefreshHoldingsData</strong>: Optional, depending on whether data refresh is needed for CRS.</p></li></ul></li></ul></li></ol><h3 id="id-18.11Solutiondesignandimplementation-Step3:ConfiguretheReports">Step 3: Configure the Reports</h3><p>For each report, you will define the layout, visuals, and fields based on the data returned by the stored procedure.</p><h4 id="id-18.11Solutiondesignandimplementation-FATCAReportLayout">FATCA Report Layout</h4><ol start="1"><li><p><strong>Insert a Table or Matrix</strong>:</p><ul><li><p>Insert a table or matrix in the report to display relevant FATCA data fields, such as <code>@PeriodEndDate</code>, <code>@USDNZDFxRate</code>, and any report-specific columns retrieved by <code>USP_04_FinalFATCAOutput</code>.</p></li></ul></li><li><p><strong>Add Titles and Filters</strong>:</p><ul><li><p>Add a title, such as &quot;FATCA Report.&quot;</p></li><li><p>If applicable, add report filters to display only FATCA-specific records or to refine the data further.</p></li></ul></li></ol><h4 id="id-18.11Solutiondesignandimplementation-CRSReportLayout">CRS Report Layout</h4><ol start="1"><li><p><strong>Insert a Table or Matrix</strong>:</p><ul><li><p>Insert a table or matrix for the CRS data fields, primarily using fields generated by <code>USP_03_FinalCRSOutput</code>.</p></li><li><p>Display fields relevant to CRS data in the report.</p></li></ul></li><li><p><strong>Add Titles and Filters</strong>:</p><ul><li><p>Add a title, such as &quot;CRS Report.&quot;</p></li><li><p>Apply any filters specific to the CRS requirements if needed.</p></li></ul></li></ol><h3 id="id-18.11Solutiondesignandimplementation-Step4:SetUpReportParameters">Step 4: Set Up Report Parameters</h3><p>For both reports, you need to configure the report parameters in SSRS:</p><ol start="1"><li><p>Go to <strong>Report Data</strong> pane, locate each parameter (e.g., <code>@PeriodStartDate</code>, <code>@PeriodEndDate</code>, <code>@RefreshHoldingsData</code>), and configure them to match the input needs:</p><ul><li><p><strong>Date Parameters</strong> (<code>@PeriodStartDate</code> and <code>@PeriodEndDate</code>): Set the data type to <strong>DateTime</strong> and provide default values or user prompt options.</p></li><li><p><strong>RefreshHoldingsData Parameter</strong> (<code>@RefreshHoldingsData</code>): Set this as a Boolean (bit) parameter and provide options like <strong>True/False</strong> or <strong>Yes/No</strong>.</p></li></ul></li></ol><h3 id="id-18.11Solutiondesignandimplementation-Step5:TestingandDeployment">Step 5: Testing and Deployment</h3><ol start="1"><li><p><strong>Preview</strong> each report in SSDT or Report Builder to ensure that the datasets retrieve the correct data and the stored procedure runs as expected.</p></li><li><p><strong>Publish</strong> both reports to the SSRS server, and test them in the report manager to ensure the parameters and layouts display as expected for end users.</p></li></ol><p>Following these steps will create two distinct SSRS reports, each calling the same master stored procedure but tailored for FATCA and CRS-specific outputs, allowing flexible SSRS reporting for these regulatory needs.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

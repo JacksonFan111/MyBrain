@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Outline of DTSX Package: &quot;TMS5_Napier Source to CSV Export&quot;</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Outline of DTSX Package: &quot;TMS5_Napier Source to CSV Export&quot;
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 20-02-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h3 id="OutlineofDTSXPackage:&quot;TMS5_NapierSourcetoCSVExport&quot;-WorkflowandTaskDetailsRelevanttoEmailSending">Workflow and Task Details Relevant to Email Sending</h3><p>After reviewing the XML and the embedded C# script in the <code>ExportCSVEngine</code> Script Task, I found no direct evidence of email-sending functionality (e.g., using <code>System.Net.Mail</code> or SSIS Send Mail Task) in the document. However, there are clues in the script that suggest error handling and logging, which <em>could</em> imply email notifications if integrated with external logging or event handlers not explicitly shown here.</p><p>Here’s the relevant workflow and task details, focusing on where email functionality might be implied or could be added:</p><h4 id="OutlineofDTSXPackage:&quot;TMS5_NapierSourcetoCSVExport&quot;-PackageOverview">Package Overview</h4><ul><li><p><strong>Name</strong>: TMS5_Napier Source to CSV Export  </p></li><li><p><strong>Database</strong>: TMS5_Napier (on server SVSQLTST001\SQLUAT)  </p></li><li><p><strong>Created by</strong>: AACRAIGS\rajendrav  </p></li><li><p><strong>Creation Date</strong>: July 14, 2021  </p></li></ul><h4 id="OutlineofDTSXPackage:&quot;TMS5_NapierSourcetoCSVExport&quot;-Connections">Connections</h4><ul><li><p><strong>OLEDBConn</strong>: OLEDB connection to TMS5_Napier database  </p></li><li><p><strong>SQLDBConn</strong>: <a class="external-link" data-card-appearance="inline" href="http://ADO.NET" rel="nofollow">http://ADO.NET</a>  connection to TMS5_Napier database  </p></li></ul><h4 id="OutlineofDTSXPackage:&quot;TMS5_NapierSourcetoCSVExport&quot;-WorkflowSteps(ExecutableTasks)">Workflow Steps (Executable Tasks)</h4><ol start="1"><li><p><strong>Data Loading (Source to TMS5_Napier)</strong>  </p><ul><li><p><strong>Type</strong>: Execute SQL Task  </p></li><li><p><strong>Connection</strong>: OLEDBConn  </p></li><li><p><strong>Action</strong>: Executes stored procedure <code>[dbo].[usp_PopulateSourceData]</code> with <code>@IsProd = 1</code>  </p></li><li><p><strong>Purpose</strong>: Prepares source data  </p></li><li><p><strong>Email Relevance</strong>: No email sending here; just SQL execution.</p></li></ul></li><li><p><strong>Sequence Container: &quot;Accounts, Contacts, Roles, Persons&quot;</strong>  </p><ul><li><p>Groups tasks for Accounts, Persons, LegalEntities, Roles  </p></li></ul><p>2.1. <strong>Load SQL Statements to Process SQL Table Data</strong>  </p><ul><li><p><strong>Type</strong>: Execute SQL Task  </p></li><li><p><strong>Connection</strong>: OLEDBConn  </p></li><li><p><strong>Action</strong>: Queries <code>[ETL].[vwSSIS_Packages_Config]</code> for table configurations  </p></li><li><p><strong>SQL</strong>:  </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT TableName, [FileName], [FileDestination], [SQLStatement]
+FROM [TMS5_Napier].[ETL].[vwSSIS_Packages_Config]
+WHERE TableName IN (SELECT TableName FROM ETL.TableLoadStatus WHERE [Status]=1)
+AND TableName IN (&#39;Accounts&#39;, &#39;Persons&#39;, &#39;LegalEntities&#39;, &#39;Roles&#39;)</pre>
+</div></div></li><li><p><strong>Result</strong>: Stores in <code>User::SQLStatements</code>  </p></li><li><p><strong>Email Relevance</strong>: No email sending; just data retrieval.</p></li></ul><p>2.2. <strong>Foreach Loop Container: &quot;Loop over SQL Statements&quot;</strong>  </p><ul><li><p><strong>Type</strong>: ForEach Loop Container  </p></li><li><p><strong>Action</strong>: Iterates over <code>User::SQLStatements</code> rows  </p></li></ul><p>   2.2.1. <strong>ExportCSVEngine</strong>  <br/>      - <strong>Type</strong>: Script Task (C#)  <br/>      - <strong>Connection</strong>: SQLDBConn  <br/>      - <strong>Action</strong>: Exports data to CSV files  <br/>      - <strong>Inputs</strong>:  <br/>        - <code>User::FileDestination</code>, <code>User::FileName</code>, <code>User::SQLQuery</code>, <code>User::SQLStatements</code>,  <br/>        - <code>User::TableName</code>, <code>User::FileDelimiter</code>, <code>User::TotRowsChunk</code>  <br/>      - <strong>C# Logic (Relevant to Email)</strong>:  <br/>        - Extracts data, writes to CSV, and logs progress/errors using <code>[ETL].[usp_BatchLog]</code>  <br/>        - <strong>Error Handling</strong>:  <br/>          ```<br/>          catch (Exception exception)<br/>          {<br/>              // Logs error to database via [ETL].[usp_BatchLog]<br/>              string logQuery = &quot;EXEC [ETL].[usp_BatchLog] @BatchID=0, @BatchStatus='In Progress',<br/>                                @TableName='Transactions - Exporting to CSV',<br/>                                @TableStatus='Error', @ErrorMessage='&quot; + exception.Message + &quot;' &quot;;<br/>              SqlCommand data_cmdlog1 = new SqlCommand(logQuery, myADONETConnection);<br/>              data_cmdlog1.ExecuteNonQuery();<br/>              data_cmdlog1.Dispose();<br/>              myADONETConnection.Close();</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">          // Raises an error event in SSIS
+          Dts.Events.FireError(-1, &quot;Main()&quot;, exception.Message, &quot;&quot;, -1);
+          Dts.TaskResult = (int)ScriptResults.Failure;
+      }
+      ```  
+    - **Email Implication**: The `Dts.Events.FireError` call could trigger an email if the package is configured with an event handler (e.g., OnError) to send notifications. However, the XML does not explicitly show a Send Mail Task or email-sending code in the script. Email sending would likely require:  
+      - An OnError event handler in SSIS with a Send Mail Task.  
+      - Additional C# code using `System.Net.Mail` (not present here).  
+  - **Output**: CSV files (e.g., &quot;Accounts_2025-02-20T1230.csv&quot;)  
+  - **Conclusion**: No direct email sending in this task, but errors could trigger emails via SSIS event handlers if configured.</pre>
+</div></div></li><li><p><strong>Sequence Container: &quot;Transactions&quot;</strong>  </p><ul><li><p>Groups tasks for Transactions data  </p></li></ul><p>3.1. <strong>Execute SQL Task</strong>  </p><ul><li><p><strong>Type</strong>: Execute SQL Task  </p></li><li><p><strong>Connection</strong>: OLEDBConn  </p></li><li><p><strong>Action</strong>: Queries <code>[ETL].[vwSSIS_Packages_Config]</code> for Transactions configurations  </p></li><li><p><strong>SQL</strong>:  </p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT TableName, [FileName], [FileDestination], [SQLStatement]
+FROM [TMS5_Napier].[ETL].[vwSSIS_Packages_Config]
+WHERE TableName IN (SELECT TableName FROM ETL.TableLoadStatus WHERE [Status]=1)
+AND TableName = &#39;Transactions&#39;</pre>
+</div></div></li><li><p><strong>Result</strong>: Stores in <code>User::SQLStatements</code>  </p></li><li><p><strong>Email Relevance</strong>: No email sending; just data retrieval.</p></li></ul><p>3.2. <strong>Foreach Loop Container: &quot;Loop over SQL Statements&quot;</strong>  </p><ul><li><p><strong>Type</strong>: ForEach Loop Container  </p></li><li><p><strong>Action</strong>: Iterates over <code>User::SQLStatements</code> for Transactions  </p></li></ul><p>   3.2.1. <strong>Script Task (similar to ExportCSVEngine)</strong>  <br/>      - <strong>Type</strong>: Script Task (C#)  <br/>      - <strong>Connection</strong>: SQLDBConn  <br/>      - <strong>Action</strong>: Exports Transactions data to CSV  <br/>      - <strong>Inputs</strong>: Same as ExportCSVEngine  <br/>      - <strong>C# Logic</strong>: Identical error handling and logging as above (using <code>[ETL].[usp_BatchLog]</code> and <code>Dts.Events.FireError</code>)  <br/>      - <strong>Email Implication</strong>: Same as ExportCSVEngine—errors could trigger emails via SSIS OnError event handlers if configured, but no direct email code exists.  <br/>      - <strong>Output</strong>: CSV file for Transactions (e.g., &quot;Transactions_2025-02-20T1230.csv&quot;)</p></li><li><p><strong>Additional Execute SQL Task</strong>  </p><ul><li><p><strong>Type</strong>: Execute SQL Task  </p></li><li><p><strong>Connection</strong>: OLEDBConn  </p></li><li><p><strong>Action</strong>: Executes unspecified SQL logic  </p></li><li><p><strong>Email Relevance</strong>: No email sending; just SQL execution.</p></li></ul></li><li><p><strong>Final Script Task</strong>  </p><ul><li><p><strong>Type</strong>: Script Task  </p></li><li><p><strong>Action</strong>: Performs unspecified final processing  </p></li><li><p><strong>Email Relevance</strong>: No email sending indicated; details not provided in XML.</p></li></ul></li></ol><hr/><h3 id="OutlineofDTSXPackage:&quot;TMS5_NapierSourcetoCSVExport&quot;-Summary:WhereEmailsAreSent">Summary: Where Emails Are Sent</h3><ul><li><p><strong>No direct email-sending step</strong> is present in the workflow or tasks as shown in the XML or C# script.  </p></li><li><p><strong>Potential for Email</strong>: Emails could be sent via SSIS event handlers (e.g., OnError) triggered by the <code>Dts.Events.FireError</code> calls in the <code>ExportCSVEngine</code> and similar Script Tasks. This would require:  </p><ul><li><p>An OnError event handler configured in the SSIS package.  </p></li><li><p>A Send Mail Task or custom script within that handler to send emails.  </p></li><li><p>The XML does not include such configurations, so email sending is not explicit in this document.  </p></li></ul></li></ul><p>If emails are part of the package, they are likely handled externally (e.g., through SSIS event handlers or post-processing scripts) or missing from this XML snapshot. Let me know if you'd like to explore how to add email functionality or check for event handlers not shown here!</p><p /><hr/><p>Based on your provided SQL Server Agent Job-level stored procedure [dbo].[usp_sp_send_dbmail_Success] and your request to reconstruct its logic in a clear, concise pseudocode format—focusing only on the workflow and task details while cutting out unnecessary information—I’ll simplify and outline the logic. I’ll assume this stored procedure is potentially triggered by the .dtsx package (TMS5_Napier Source to CSV Export) to send success emails, as you suggested it might run at the SQL Server Agent Job level to detect success or failure.</p><h3 id="OutlineofDTSXPackage:&quot;TMS5_NapierSourcetoCSVExport&quot;-KeyNotesforEndUsers:">Key Notes for End Users:</h3><ul><li><p><strong>Workflow</strong>:</p><ol start="1"><li><p>Cleans up temporary tables (#DataLoadedTime, #nTransactions)</p></li><li><p>Creates #DataLoadedTime to track the last data load time from the Accounts table.</p></li><li><p>Generates an HTML email body with:</p><ul><li><p>Success message for Napier data refresh completion.</p></li><li><p>Data load times and daily count summary (Accounts, LegalEntities, Persons, Roles, Transactions).</p></li><li><p>File location of generated CSV files.</p></li></ul></li><li><p>Sends a success email using sp_send_dbmail to compliance and account approval teams, with copies to specific individuals.</p></li><li><p>Checks for new product codes in CRM not configured in Napier (vw_CRM_vs_Napier(ProductCodes)).</p></li><li><p>If new product codes exist, sends an alert email to data team members.</p></li></ol></li><li><p><strong>Email Sending Steps</strong>:</p><ul><li><p><strong>Success Email</strong>: Sent immediately after data refresh, using msdb.dbo.sp_send_dbmail with HTML body.</p></li><li><p><strong>Product Code Alert Email</strong>: Sent conditionally if new product codes are detected, also using msdb.dbo.sp_send_dbmail.</p></li></ul></li><li><p><strong>Connection to .dtsx</strong>: This stored procedure likely runs as part of a SQL Server Agent Job triggered by the .dtsx package’s success (e.g., after ExportCSVEngine completes successfully), or as a post-execution step to notify stakeholders.</p></li></ul><hr/><p>Below is a modernized pseudocode outline that translates the SSIS-based workflow into an Azure Synapse Analytics (and related Azure services) context. In this design, we replace SSIS packages and tasks with Synapse Pipelines, Script Activities, and Azure services such as Logic Apps for email notifications. The pseudocode focuses on the key tasks and error handling logic while omitting extraneous details.</p><hr/><p><strong>Pseudocode: Azure Synapse Pipeline for CSV Export and Email Notification</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">// Pipeline: TMS5_Napier_Source_to_CSV_Export
+
+BEGIN Pipeline &quot;TMS5_Napier_Source_to_CSV_Export&quot;
+
+// Step 1: Data Preparation Task
+Task: ExecuteSQLActivity &quot;LoadSourceData&quot;
+    Connection: Azure Synapse SQL Pool (TMS5_Napier)
+    Command: EXEC usp_PopulateSourceData @IsProd = 1
+    // Prepares source data for export
+
+// Step 2: Load Table Configuration for Core Entities
+Task: ExecuteSQLActivity &quot;FetchCoreEntityConfigs&quot;
+    Connection: Azure Synapse SQL Pool
+    Command:
+        SELECT TableName, FileName, FileDestination, SQLStatement
+        FROM vwSynapse_Packages_Config
+        WHERE TableName IN (&#39;Accounts&#39;, &#39;Persons&#39;, &#39;LegalEntities&#39;, &#39;Roles&#39;)
+              AND TableName IN (SELECT TableName FROM TableLoadStatus WHERE Status=1)
+    Store results in variable: coreEntityConfigs
+
+// Step 3: ForEach Loop – Export Core Entities to CSV
+For each config in coreEntityConfigs:
+    Task: ScriptActivity &quot;ExportCSV_CoreEntity&quot;
+        Inputs:
+            - config.FileDestination
+            - config.FileName
+            - config.SQLStatement
+            - Other parameters (e.g., delimiter, row chunk size)
+        Process:
+            BEGIN
+                Execute the SQL query (config.SQLStatement) against Synapse SQL Pool
+                Write the resulting dataset as a CSV file to Azure Data Lake Storage or Blob Storage
+                Log progress via a logging service (e.g., Azure Monitor or a custom logging table)
+            EXCEPTION
+                On any error:
+                    Log error details to a dedicated logging table via an ExecuteSQLActivity
+                    Trigger error event:
+                        Call a Logic App endpoint to send an immediate error email notification
+                    Mark task as FAILURE and exit the loop if required
+            END
+
+// Step 4: Process Transactions Data Separately
+Task: ExecuteSQLActivity &quot;FetchTransactionConfig&quot;
+    Connection: Azure Synapse SQL Pool
+    Command:
+        SELECT TableName, FileName, FileDestination, SQLStatement
+        FROM vwSynapse_Packages_Config
+        WHERE TableName = &#39;Transactions&#39;
+              AND TableName IN (SELECT TableName FROM TableLoadStatus WHERE Status=1)
+    Store result in variable: transactionConfig
+
+Task: ScriptActivity &quot;ExportCSV_Transactions&quot;
+    Inputs:
+        - transactionConfig.FileDestination
+        - transactionConfig.FileName
+        - transactionConfig.SQLStatement
+        - Other parameters as required
+    Process:
+        BEGIN
+            Run the SQL query to extract Transactions data
+            Export data as a CSV file to Azure Storage
+            Log progress and errors similarly as in the core entities export
+        EXCEPTION
+            On error:
+                Log the error and invoke Logic App for error email notifications
+                Mark task as FAILURE
+        END
+
+// Step 5: Final Processing
+Task: ScriptActivity &quot;FinalProcessing&quot;
+    // Any additional post-processing steps can be implemented here
+    // This might include cleanup or further data transformations
+
+// Step 6: Success Notification and Reporting
+Task: ExecuteSQLActivity &quot;GenerateEmailReportData&quot;
+    Connection: Azure Synapse SQL Pool
+    Command:
+        -- Query temporary tables or log tables to gather:
+        -- - Last data load times (e.g., from Accounts)
+        -- - Daily count summaries (Accounts, LegalEntities, Persons, Roles, Transactions)
+        -- - File locations for the generated CSV files
+    Store results in variable: emailReportData
+
+Task: LogicAppActivity &quot;SendSuccessEmail&quot;
+    Inputs:
+        - HTML body built using emailReportData, including:
+            * Success message for Napier data refresh completion
+            * Data load times and summaries
+            * File paths for exported CSVs
+        Recipients: Compliance team, Account approval teams, plus CC for designated individuals
+    Process:
+        Call an Azure Logic App endpoint that uses Office 365 or another email service to send the success email
+
+// Conditional Step: Alert for New Product Codes
+Task: ExecuteSQLActivity &quot;CheckNewProductCodes&quot;
+    Connection: Azure Synapse SQL Pool
+    Command:
+        SELECT COUNT(*) AS NewProductCount
+        FROM vw_CRM_vs_Synapse_ProductCodes
+        WHERE [Condition for new product codes]
+    Store result in variable: newProductCount
+
+IF newProductCount &gt; 0 THEN
+    Task: LogicAppActivity &quot;SendProductCodeAlert&quot;
+        Inputs:
+            - Alert message regarding new product codes detected
+            Recipients: Data team members
+        Process:
+            Trigger email alert via the Logic App
+
+END IF
+
+END Pipeline &quot;TMS5_Napier_Source_to_CSV_Export&quot;
+</pre>
+</div></div><hr/><p><strong>Explanation of Key Components:</strong></p><ol start="1"><li><p><strong>Data Preparation and Configuration:</strong></p><ul><li><p>The pipeline begins by executing a stored procedure to prepare the source data.</p></li><li><p>Configuration for which tables to export (e.g., Accounts, Persons) is fetched from a dedicated view (renamed for Synapse).</p></li></ul></li><li><p><strong>Data Export Tasks:</strong></p><ul><li><p>A ForEach loop iterates over configurations to export CSV files using Script Activities.</p></li><li><p>Each Script Activity handles the SQL query execution, CSV file creation in cloud storage, and error logging.</p></li><li><p>Errors trigger logging and invoke a Logic App to send immediate error notifications.</p></li></ul></li><li><p><strong>Final Processing and Email Notification:</strong></p><ul><li><p>After all data exports complete, a final task gathers reporting data.</p></li><li><p>A Logic App is used to send a success email that includes an HTML report of data load times, summary counts, and file locations.</p></li><li><p>An additional conditional check sends an alert email if new product codes are detected.</p></li></ul></li><li><p><strong>Modern Azure Services:</strong></p><ul><li><p><strong>Azure Synapse Pipelines</strong> replace SSIS packages.</p></li><li><p><strong>ScriptActivity</strong> and <strong>ExecuteSQLActivity</strong> provide flexible processing and SQL operations.</p></li><li><p><strong>Azure Logic Apps</strong> handle email notifications, replacing SSIS’s Send Mail Task and custom email code.</p></li><li><p><strong>Cloud storage</strong> (Azure Data Lake Storage or Blob Storage) is used for CSV file storage.</p></li></ul></li></ol><p>This pseudocode provides a clear, concise blueprint for translating an SSIS workflow into an Azure Synapse Analytics solution using modern cloud-native components.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

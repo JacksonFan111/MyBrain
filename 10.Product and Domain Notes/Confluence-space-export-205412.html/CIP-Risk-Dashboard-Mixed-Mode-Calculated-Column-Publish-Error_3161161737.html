@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : CIP Risk Dashboard Mixed Mode Calculated Column Publish Error</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : CIP Risk Dashboard Mixed Mode Calculated Column Publish Error
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 13-05-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h2 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-🧭Purpose">🧭 Purpose</h2><p>Provide a step-by-step technical reference for diagnosing and resolving the <strong>“</strong>CIP Risk Dashboard Mixed Mode Calculated Column Publish <strong>Error fetching data for this visual”</strong> issue on the Power BI Risk Dashboard on PBI Services. This covers:</p><div class="confluence-information-macro confluence-information-macro-information"><span class="aui-icon aui-icon-small aui-iconfont-info confluence-information-macro-icon"></span><div class="confluence-information-macro-body"><p><strong>Error fetching data for this visual</strong></p><p>The query referenced calculated column '&lt;oii&gt;Key Risk Indicator Score&lt;/oii&gt;'[&lt;oii&gt;Metric Value API&lt;/oii&gt;] which does not hold any data because evaluation of one of the rows caused an error.</p><p>Please try again later or contact support. If you contact support, please provide these details.</p></div></div><ul><li><p>Root cause analysis</p></li><li><p>Resolution (refactoring calculated columns into measures)</p></li><li><p>Best practices for composite models</p></li></ul><hr/><h2 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-📌Scope">📌 Scope</h2><p>Applicable to:</p><ul><li><p><strong>Power BI Desktop &amp; Service</strong></p></li><li><p><strong>Composite models</strong> (Import + DirectQuery) = Mixed</p></li><li><p><strong>Tables involved</strong>:</p><ul><li><p><code>Key Risk Indicator Score</code> (Import)</p></li><li><p><code>KnowBe4 Training</code> (DirectQuery)</p></li><li><p><code>Elearn by Courses</code> (DirectQuery)</p></li><li><p><code>Halo Dashboard</code> (DirectQuery)</p></li></ul></li></ul><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250513-024824.png" width="760" loading="lazy" src="attachments/3161161737/3160670222.png?width=760" data-image-src="attachments/3161161737/3160670222.png" data-height="603" data-width="788" data-unresolved-comment-count="0" data-linked-resource-id="3160670222" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250513-024824.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3161161737" data-linked-resource-container-version="5" data-media-id="56cf7a3a-b574-41a3-b7ab-73f5b224269e" data-media-type="file"></span><hr/><h2 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-🧪Environment">🧪 Environment</h2><p>|| <strong>Component</strong> || <strong>Mode</strong> || <strong>Notes</strong> ||<br/>| VertiPaq Engine | Import | Materializes import-mode tables at refresh |<br/>| KnowBe4 &amp; Elearn Tables | DirectQuery | Live SQL connections, no in-memory rowset |<br/>| Power BI Desktop (v26) | PBIX File | Refactored version with measures |<br/>| Power BI Service | Published | Composite model with live refresh |</p><hr/><h2 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-⚠️ProblemDescription">⚠️ Problem Description</h2><ul><li><p><strong>Symptom</strong>:</p><p><em>&quot;The query referenced calculated column 'Key Risk Indicator Score'[Metric Value API] which does not hold any data because evaluation of one of the rows caused an error.&quot;</em></p></li><li><p><strong>Observation</strong>:<br/>✅ Works in Desktop<br/>❌ Fails in Power BI Service during refresh</p></li></ul><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250513-030025.png" width="760" loading="lazy" src="attachments/3161161737/3160735758.png?width=760" data-image-src="attachments/3161161737/3160735758.png" data-height="1133" data-width="1783" data-unresolved-comment-count="0" data-linked-resource-id="3160735758" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250513-030025.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3161161737" data-linked-resource-container-version="5" data-media-id="6456945e-2862-41d8-befc-c70c1bc32352" data-media-type="file"></span><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250513-030011.png" width="760" loading="lazy" src="attachments/3161161737/3161325580.png?width=760" data-image-src="attachments/3161161737/3161325580.png" data-height="1176" data-width="2347" data-unresolved-comment-count="0" data-linked-resource-id="3161325580" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250513-030011.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3161161737" data-linked-resource-container-version="5" data-media-id="da917d6f-12c8-4631-94d2-1d2ff46629d9" data-media-type="file"></span><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250513-025957.png" width="760" loading="lazy" src="attachments/3161161737/3160735752.png?width=760" data-image-src="attachments/3161161737/3160735752.png" data-height="157" data-width="1272" data-unresolved-comment-count="0" data-linked-resource-id="3160735752" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250513-025957.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3161161737" data-linked-resource-container-version="5" data-media-id="f9a56cd1-6208-4801-9666-9f4e2919b32a" data-media-type="file"></span><p /><hr/><h2 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-🕵️RootCauseAnalysis">🕵️ Root Cause Analysis</h2><ol start="1"><li><p>Calculated columns are <strong>evaluated at data refresh</strong> time in <strong>VertiPaq</strong></p></li></ol><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250513-025639.png" width="760" loading="lazy" src="attachments/3161161737/3161030664.png?width=760" data-image-src="attachments/3161161737/3161030664.png" data-height="1121" data-width="1092" data-unresolved-comment-count="0" data-linked-resource-id="3161030664" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250513-025639.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3161161737" data-linked-resource-container-version="5" data-media-id="58f11d7f-6c31-40ff-9a7f-d0e610f4b259" data-media-type="file"></span><p /><ol start="2"><li><p>VertiPaq <strong>cannot evaluate DirectQuery</strong> references</p></li><li><p><code>Metric Value API</code> calculated column referenced <strong>DirectQuery tables via SWITCH/FORMAT</strong>, which is <strong>unsupported during refresh</strong></p></li></ol><p><a class="external-link" data-card-appearance="inline" href="https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-composite-models#considerations-and-limitations" rel="nofollow">https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-composite-models#considerations-and-limitations</a> </p><hr/><h2 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-🛠️ResolutionApproach">🛠️ Resolution Approach</h2><h3 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-✅Step1:RefactorCalculatedColumns→Measures">✅ Step 1: Refactor Calculated Columns → Measures</h3><ul><li><p>Measures are evaluated <strong>at query time</strong> and support <strong>DirectQuery references</strong>.</p></li></ul><h3 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-✅Step2:CentralizeAllFormatting">✅ Step 2: Centralize All Formatting</h3><ul><li><p>Created Concise <code>[#Formatted Metric Value (Measure)]</code> measure for <strong>consistent formatting logic</strong>.</p></li></ul><h3 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-✅Step3:ConfigureModelProperly">✅ Step 3: Configure Model Properly</h3><ul><li><p>Keep <strong>Semantics Models Tables in DirectQuery</strong></p></li><li><p>Use calculated columns <strong>only</strong> on Import tables (All the Smartsheets Table)</p></li></ul><hr/><h2 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-💡ImplementationDetails">💡 Implementation Details</h2><h3 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-🧮MetricValueAPI(Measure)">🧮 <code>Metric Value API (Measure)</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">#Metric Value API (Measure) =
+VAR SelectedKRI = SELECTEDVALUE(&#39;Key Risk Indicator Score&#39;[KRI])
+VAR RawValue =
+    SWITCH(
+        TRUE(),
+        SelectedKRI = &quot;KnowBe4&quot;, [Campaign Completion %],
+        SelectedKRI = &quot;BCP Training Completion&quot;, CALCULATE([Course Completion %], &#39;Elearn by Courses&#39;[Course Short Name] = &quot;1017&quot;),
+        SelectedKRI = &quot;AML onLearn course completion rate&quot;, CALCULATE([Course Completion %], &#39;Elearn by Courses&#39;[Course Short Name] = &quot;1013&quot;),
+        SelectedKRI = &quot;H&amp;S eLearn Training&quot;, CALCULATE([Course Completion %], &#39;Elearn by Courses&#39;[Course Short Name] = &quot;1016&quot;),
+        SELECTEDVALUE(&#39;Key Risk Indicator Score&#39;[Metric Value])
+    )
+RETURN
+IF(
+    SELECTEDVALUE(&#39;Key Risk Indicator Score&#39;[Metric Type]) = &quot;Percentage&quot;,
+    FORMAT(RawValue, &quot;0.00%&quot;),
+    RawValue
+)
+</pre>
+</div></div><hr/><h3 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-🧮#APIRiskScore(Measure)">🧮 <code>#API Risk Score (Measure)</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">#API Risk Score (Measure) =
+VAR SelectedKRI = SELECTEDVALUE( &#39;Key Risk Indicator Score&#39;[KRI] )
+ 
+// 1) Pull in the “raw” % as a decimal (0→1) from your existing measures or columns
+VAR RawPct =
+    SWITCH(
+        TRUE(),
+ 
+        /* your DirectQuery measures for KnowBe4 and the three eLearn courses */
+        SelectedKRI = &quot;KnowBe4&quot;,
+            [Campaign Completion %],
+ 
+        SelectedKRI = &quot;BCP Training Completion&quot;,
+            CALCULATE(
+                [Course Completion %],
+                &#39;Elearn by Courses&#39;[Course Short Name] = &quot;1017&quot;
+            ),
+ 
+        SelectedKRI = &quot;AML onLearn course completion rate&quot;,
+            CALCULATE(
+                [Course Completion %],
+                &#39;Elearn by Courses&#39;[Course Short Name] = &quot;1013&quot;
+            ),
+ 
+        SelectedKRI = &quot;H&amp;S eLearn Training&quot;,
+            CALCULATE(
+                [Course Completion %],
+                &#39;Elearn by Courses&#39;[Course Short Name] = &quot;1016&quot;
+            ),
+ 
+        /* any other percentage-type metrics (fallback to your Metric Value column) */
+        SELECTEDVALUE( &#39;Key Risk Indicator Score&#39;[Metric Type] ) = &quot;Percentage&quot;,
+            SELECTEDVALUE( &#39;Key Risk Indicator Score&#39;[Metric Value] ) / 100,
+ 
+        /* if nothing matches, we blank out */
+        BLANK()
+    )
+ 
+// 2) Bucket that decimal into a 1–10 score
+RETURN
+SWITCH(
+    TRUE(),
+ 
+    /* only apply the 1–10 scale for those four training KRIs */
+    SelectedKRI IN {
+        &quot;KnowBe4&quot;,
+        &quot;BCP Training Completion&quot;,
+        &quot;AML onLearn course completion rate&quot;,
+        &quot;H&amp;S eLearn Training&quot;
+    },
+        SWITCH(
+            TRUE(),
+            RawPct = 1,    1,
+            RawPct &gt;= 0.97778, 2,   // 97.778%
+            RawPct &gt;= 0.95556, 3,   // 95.556%
+            RawPct &gt;= 0.93333, 4,   // 93.333%
+            RawPct &gt;= 0.91111, 5,   // 91.111%
+            RawPct &gt;= 0.88889, 6,   // 88.889%
+            RawPct &gt;= 0.86667, 7,   // 86.667%
+            RawPct &gt;= 0.84444, 8,   // 84.444%
+            RawPct &gt;= 0.82222, 9,   // 82.222%
+            RawPct &gt;= 0.80,    10,  // 80.0%
+            BLANK()
+        ),
+ 
+    /* for all other KRIs just fall back to the existing Risk Score column */
+    SELECTEDVALUE( &#39;Key Risk Indicator Score&#39;[Risk Score] )
+)</pre>
+</div></div><p /><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">#API Risk Rating (Measure) =
+VAR Score = [#API Risk Score (Measure)]
+RETURN
+SWITCH(
+    TRUE(),
+    Score &gt;= 9, &quot;High&quot;,               // 9 or 10
+    Score &gt;= 7, &quot;Moderate to High&quot;,   // 7 or 8
+    Score &gt;= 5, &quot;Moderate&quot;,           // 5 or 6
+    Score &gt;= 3, &quot;Low to Moderate&quot;,    // 3 or 4
+    Score &gt;= 1, &quot;Low&quot;,                // 1 or 2
+    BLANK()
+)</pre>
+</div></div><hr/><h3 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-📊FormattedMetricValue(Measure)">📊 <code>Formatted Metric Value (Measure)</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">#Formatted Metric Value (Measure)=
+VAR MetricType  = SELECTEDVALUE(&#39;Key Risk Indicator Score&#39;[Metric Type], &quot;Unknown&quot;)
+VAR RawValue    = [Metric Value API (Measure)]
+VAR AbsValue    = ABS(RawValue)
+VAR PctValue    = RawValue * 100
+VAR ScaledValue =
+    SWITCH(
+        TRUE(),
+        AbsValue &gt;= 1e9, RawValue / 1e9,
+        AbsValue &gt;= 1e6, RawValue / 1e6,
+        AbsValue &gt;= 1e3, RawValue / 1e3,
+        RawValue
+    )
+VAR ScaleFormat =
+    SWITCH(
+        TRUE(),
+        AbsValue &gt;= 1e9, &quot;$0.0b&quot;,
+        AbsValue &gt;= 1e6, &quot;$0.0m&quot;,
+        AbsValue &gt;= 1e3, &quot;$0.0k&quot;,
+        &quot;$0&quot;
+    )
+RETURN
+SWITCH(
+    TRUE(),
+    MetricType = &quot;Percentage&quot;,      FORMAT(PctValue, IF(ABS(PctValue) &lt; 10, &quot;0.##&quot;, &quot;0&quot;) &amp; &quot;%&quot;),
+    MetricType = &quot;Decimal Number&quot;,  FORMAT(RawValue, &quot;0.00&quot;),
+    MetricType = &quot;Count&quot;,           FORMAT(RawValue, &quot;0&quot;),
+    MetricType = &quot;Integer&quot;,         FORMAT(RawValue, &quot;#,0&quot;),
+    MetricType = &quot;Score&quot;,           FORMAT(RawValue, &quot;0.0&quot;),
+    MetricType = &quot;Dollar&quot;,          FORMAT(ScaledValue, ScaleFormat),
+    MetricType = &quot;Categorical&quot;,     FORMAT(RawValue, &quot;General Number&quot;),
+    FORMAT(RawValue, &quot;General Number&quot;)
+)
+</pre>
+</div></div><hr/><h3 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-🧮#AvgofAPIRiskScore">🧮 <code>#Avg of API Risk Score</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">#Avg of API Risk Score =
+AVERAGEX(
+    ALLSELECTED(&#39;Key Risk Indicator Score&#39;[KRI]),
+    [API Risk Score (Measure)]
+)
+</pre>
+</div></div><hr/><h2 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-✅Validation&amp;Testing">✅ Validation &amp; Testing</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="f800abb8-6d7f-4aab-b099-fcb14263d0a3" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Test Location</p></th><th class="confluenceTh"><p>Result</p></th></tr><tr><td class="confluenceTd"><p><strong>Power BI Desktop</strong></p></td><td class="confluenceTd"><p>No errors, visuals render correctly</p></td></tr><tr><td class="confluenceTd"><p><strong>Power BI Service</strong></p></td><td class="confluenceTd"><p>Manual refresh successful, no visual errors (v26 live)</p></td></tr></tbody></table></div><hr/><h2 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-📘Recommendations&amp;BestPractices">📘 Recommendations &amp; Best Practices</h2><ul><li><p><strong>Calculated Columns</strong>: Only reference <strong>Import-mode</strong> tables</p></li><li><p><strong>Measures</strong>: Use to reference <strong>DirectQuery</strong>, handle logic and formatting</p></li><li><p><strong>Composite Models</strong>: Clearly document source table mode (Import vs DirectQuery)</p></li><li><p><strong>ETL Layer</strong>: Use SQL views or Power Query if persistent logic is needed</p></li></ul><hr/><h2 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-📎Attachments">📎 Attachments</h2><ul><li><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20250513-025510.png" width="736" loading="lazy" src="attachments/3161161737/3161260042.png?width=736" data-image-src="attachments/3161161737/3161260042.png" data-height="1168" data-width="1223" data-unresolved-comment-count="0" data-linked-resource-id="3161260042" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20250513-025510.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="3161161737" data-linked-resource-container-version="5" data-media-id="52f98fb7-09f0-4c65-bd10-8a59f5bc2c51" data-media-type="file"></span><p /></li><li><p>🔗 Reference: <a class="external-link" href="https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-composite-models" rel="nofollow">MS Docs – Composite Models</a></p></li></ul><hr/><h2 id="CIPRiskDashboardMixedModeCalculatedColumnPublishError-🗓️ChangeLog">🗓️ Change Log</h2><p>|| Date || Author || Description ||<br/>|-------------|-------------|--------------------------------------------------|<br/>| 2025-05-13 | J. Fan | Initial refactor: moved calculated columns to measures |<br/></p>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3161161737/3160670222.png">image-20250513-024824.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3161161737/3161260042.png">image-20250513-025510.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3161161737/3161030664.png">image-20250513-025639.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3161161737/3160735752.png">image-20250513-025957.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3161161737/3161325580.png">image-20250513-030011.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/3161161737/3160735758.png">image-20250513-030025.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

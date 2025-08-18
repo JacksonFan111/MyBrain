@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : temp</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : temp
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 04-03-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Based on the provided stored procedures (<code>usp_Populating_Staging_Transactions</code> and <code>usp_Populating_Transactions</code>) and the description of your requirements, I'll develop a SQL script to monitor and compare the number of rows in <code>[dbo].[Staging_Transactions]</code> before and after applying the specified filter, on a daily basis. The script will help you observe how many rows are filtered out and how many are loaded into the main <code>[dbo].[Transactions]</code> table.</p><h3 id="temp-Assumptions:">Assumptions:</h3><ol start="1"><li><p>The current date is March 3, 2025 (as per your guidelines).</p></li><li><p>The <code>[dbo].[Staging_Transactions]</code> table only holds the last 7 days of data,<strong><span style="background-color: rgb(211,241,167);"> truncated and repopulated daily.</span></strong></p></li><li><p>The filter applied in <code>[dbo].[usp_Populating_Transactions]</code> (as shown in the second stored procedure) will be used to compare rows before and after filtering.</p></li><li><p>There’s no <code>BatchID</code> in <code>[dbo].[Staging_Transactions]</code>, so we’ll use <code>EntryDate</code> <strong>to track daily changes.</strong></p></li><li><p>The script will run daily to capture the differences in row counts.</p></li></ol><h3 id="temp-SQLScripttoMonitorBeforeandAfterFilterRowCountsin[dbo].[Staging_Transactions]">SQL Script to Monitor Before and After Filter Row Counts in <code>[dbo].[Staging_Transactions]</code></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">USE [TMS5_Napier]
+GO
+
+-- Declare variables for tracking dates and row counts
+DECLARE @CurrentDate DATE = GETDATE();
+DECLARE @StartDate DATE = DATEADD(day, -7, @CurrentDate); -- Last 7 days as per the requirement
+
+-- Create a temporary table to store the results
+CREATE TABLE #StagingTransactionCounts (
+    DateCaptured DATE,
+    BeforeFilterCount INT,
+    AfterFilterCount INT,
+    RowsFilteredOut INT
+);
+
+-- 1. Get the total rows in Staging_Transactions before applying the filter (unfiltered data for the last 7 days)
+INSERT INTO #StagingTransactionCounts (DateCaptured, BeforeFilterCount)
+SELECT 
+    CAST(EntryDate AS DATE) AS DateCaptured,
+    COUNT(*) AS BeforeFilterCount
+FROM [dbo].[Staging_Transactions]
+WHERE EntryDate &gt;= @StartDate
+GROUP BY CAST(EntryDate AS DATE)
+ORDER BY DateCaptured;
+
+-- 2. Apply the filter to simulate the rows that would remain after filtering (as per the filter in usp_Populating_Transactions)
+INSERT INTO #StagingTransactionCounts (DateCaptured, AfterFilterCount)
+SELECT 
+    CAST(st.EntryDate AS DATE) AS DateCaptured,
+    COUNT(*) AS AfterFilterCount
+FROM [dbo].[Staging_Transactions] st
+WHERE st.EntryDate &gt;= @StartDate
+    AND st.[Transaction Type] NOT IN (
+        &#39;Settlement Credit&#39;, 
+        &#39;Settlement Debit&#39;, 
+        &#39;Terminal Tax Payment&#39;, 
+        &#39;FX Switch In Variable&#39;, 
+        &#39;FX Switch Out Fixed&#39;, 
+        &#39;Income&#39;, 
+        &#39;Dividend&#39;, 
+        &#39;Portfolio Fee&#39;, 
+        &#39;Interest&#39;, 
+        &#39;Resident Withholding Tax&#39;,
+        &#39;FX Switch In Fixed&#39;, 
+        &#39;FX Switch Out Variable&#39;, 
+        &#39;Employee Interest&#39;, 
+        &#39;Employer Interest&#39;
+    )
+    AND st.[Normalized Amount] &gt;= 2
+GROUP BY CAST(st.EntryDate AS DATE)
+ORDER BY DateCaptured;
+
+-- 3. Calculate the number of rows filtered out (BeforeFilterCount - AfterFilterCount)
+UPDATE #StagingTransactionCounts
+SET RowsFilteredOut = BeforeFilterCount - AfterFilterCount;
+
+-- 4. Display the results
+SELECT 
+    DateCaptured AS &#39;Date&#39;,
+    BeforeFilterCount AS &#39;RowsBeforeFilter&#39;,
+    AfterFilterCount AS &#39;RowsAfterFilter&#39;,
+    RowsFilteredOut AS &#39;RowsFilteredOut&#39;
+FROM #StagingTransactionCounts
+ORDER BY DateCaptured DESC;
+
+-- Clean up temporary table
+DROP TABLE #StagingTransactionCounts;
+GO</pre>
+</div></div><h3 id="temp-ExplanationoftheScript:">Explanation of the Script:</h3><ol start="1"><li><p><strong>Variables and Setup</strong>:</p><ul><li><p>We use <code>GETDATE()</code> to get the current date (March 3, 2025) and calculate the last 7 days to align with the requirement that <code>[dbo].[Staging_Transactions]</code> holds 7 days of data.</p></li><li><p>A temporary table (<code>#StagingTransactionCounts</code>) is created to store daily row counts before and after filtering.</p></li></ul></li><li><p><strong>Before Filter Count</strong>:</p><ul><li><p>We query <code>[dbo].[Staging_Transactions]</code> to count all rows for each day in the last 7 days, grouped by <code>EntryDate</code>.</p></li></ul></li><li><p><strong>After Filter Count</strong>:</p><ul><li><p>We apply the same filter as in <code>[dbo].[usp_Populating_Transactions]</code> (Transaction Type exclusions and Normalized Amount &gt;= 2) to count the rows that would remain after filtering, grouped by <code>EntryDate</code>.</p></li></ul></li><li><p><strong>Rows Filtered Out</strong>:</p><ul><li><p>We calculate the difference between the before and after filter counts to show how many rows are filtered out daily.</p></li></ul></li><li><p><strong>Output</strong>:</p><ul><li><p>The script outputs a table showing the date, total rows before filtering, total rows after filtering, and the number of rows filtered out, ordered by date in descending order.</p></li></ul></li></ol><h3 id="temp-LimitationsofThisScript:">Limitations of This Script:</h3><ol start="1"><li><p><strong>Dependency on </strong><code>EntryDate</code>:</p><ul><li><p>Since <code>[dbo].[Staging_Transactions]</code> lacks a <code>BatchID</code>, the script relies on <code>EntryDate</code> to track daily data. If <code>EntryDate</code> is not accurately populated or if partial loads occur (as noted in Problem 1), the row counts may be inaccurate or incomplete for a given day.</p></li></ul></li><li><p><strong>Partial Loads (Problem 1)</strong>:</p><ul><li><p>The script assumes that data for each day is complete, but if today’s load (e.g., March 3, 2025) is partial and completed with tomorrow’s load, the counts for March 3 might be underreported until the full load is available. You’d need to run the script again after tomorrow’s load to get the accurate count for March 3.</p></li></ul></li><li><p><strong>Data Truncation and Deletion</strong>:</p><ul><li><p>The <code>[dbo].[Staging_Transactions]</code> table is truncated and repopulated daily, and stale <code>[Transaction ID]</code>s are deleted based on the main <code>[dbo].[Transactions]</code> table. If the deletion or truncation happens mid-day or isn’t synchronized properly, the script might capture inconsistent data.</p></li></ul></li><li><p><strong>No Historical Batch Tracking</strong>:</p><ul><li><p>Without a <code>BatchID</code> in <code>[dbo].[Staging_Transactions]</code>, you cannot directly correlate the staging data with batches in <code>[dbo].[Transactions]</code> (as noted in Problem 2). This limits the ability to audit or verify data flow by batch.</p></li></ul></li><li><p><strong>Performance Impact</strong>:</p><ul><li><p>Running this script daily on a large dataset (e.g., 266,024 rows over 7 days as mentioned in the stored procedure) could impact performance, especially if the table grows or if there are many concurrent operations on the database.</p></li></ul></li><li><p><strong>Static Filter Assumption</strong>:</p><ul><li><p>The script assumes the filter criteria (<code>Transaction Type</code> exclusions and <code>Normalized Amount &gt;= 2</code>) remain constant. If the filter changes (e.g., new transaction types are added to the exclusion list), the script would need to be updated accordingly.</p></li></ul></li><li><p><strong>No Error Handling for Data Quality</strong>:</p><ul><li><p>The script doesn’t account for potential data quality issues, such as missing <code>Transaction Type</code> or <code>Normalized Amount</code> values, which could skew the counts.</p></li></ul></li></ol><h3 id="temp-Recommendations:">Recommendations:</h3><ul><li><p><strong>Run the Script Daily After Loads</strong>: To address partial loads, run the script after the full daily load (including both today’s and tomorrow’s partial loads, if applicable) to ensure accurate counts.</p></li><li><p><strong>Add Error Handling</strong>: Include checks for NULL or invalid values in <code>EntryDate</code>, <code>Transaction Type</code>, and <code>Normalized Amount</code> to improve data reliability.</p></li><li><p><strong>Log Results</strong>: Store the results in a persistent table (e.g., <code>Monitoring_Log</code>) instead of a temporary table for historical tracking and auditing.</p></li><li><p><strong>Performance Optimization</strong>: If the dataset grows, consider indexing <code>EntryDate</code>, <code>Transaction Type</code>, and <code>Normalized Amount</code> in <code>[dbo].[Staging_Transactions]</code> to improve query performance.</p></li></ul><p>This script provides a foundation for monitoring, but you may need to adjust it based on specific data behaviors, load schedules, or additional requirements not detailed here. If you need to search for additional information or refine this further, I can offer to search the web or assist with modifications.</p><p /><p>Based on your request, I’ll create a mockup logic (pseudo-logic and example data) to clearly explain the partial daily load behavior and the incremental behavior of the <code>[dbo].[Staging_Transactions]</code> table to the <code>[dbo].[Transactions]</code> table. This will help illustrate the concepts you mentioned, such as partial loads, incremental inserts, and the 7-day data retention in <code>[dbo].[Staging_Transactions]</code>.</p><hr/><h3 id="temp-MockupLogicandExplanation">Mockup Logic and Explanation</h3><h4 id="temp-Context:">Context:</h4><ul><li><p>The current date is March 3, 2025 (as per your guidelines).</p></li><li><p><code>[dbo].[Staging_Transactions]</code> holds only the last 7 days of data (from February 24, 2025, to March 3, 2025).</p></li><li><p>Data is loaded daily, but today’s load (March 3, 2025) might be partial, with the remainder completed in tomorrow’s load (March 4, 2025).</p></li><li><p>After populating <code>[dbo].[Staging_Transactions]</code>, new rows (based on unique <code>Transaction ID</code>) are incrementally inserted into <code>[dbo].[Transactions]</code>, and stale <code>Transaction ID</code>s are deleted from <code>[dbo].[Staging_Transactions]</code>.</p></li></ul><hr/><h3 id="temp-1.PartialDailyLoadBehavior(Problem1)">1. <strong>Partial Daily Load Behavior (Problem 1)</strong></h3><p><strong>Description</strong>: The <code>[dbo].[Staging_Transactions]</code> table may receive a partial load for the current day (e.g., March 3, 2025), and the full load for that day is completed with tomorrow’s load (March 4, 2025). This means the data for March 3 might be incomplete until March 4.</p><h4 id="temp-MockupExample:">Mockup Example:</h4><p>Let’s assume transactions are loaded into <code>[dbo].[Staging_Transactions]</code> daily, and we track <code>EntryDate</code> and <code>Transaction ID</code>. Here’s how a partial load might look:</p><p><strong>Initial State (March 2, 2025, Evening – Before March 3 Load)</strong>:</p><ul><li><p><code>[dbo].[Staging_Transactions]</code> contains 7 days of data (February 24 to March 2, 2025).</p></li><li><p>Total rows: 1,000 (e.g., 100 rows per day for simplicity).</p></li></ul><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="e1b563a2-ca3a-4eca-932b-580957f91fbf" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>EntryDate</p></th><th class="confluenceTh"><p>Transaction ID</p></th><th class="confluenceTh"><p>Transaction Type</p></th><th class="confluenceTh"><p>Normalized Amount</p></th></tr><tr><td class="confluenceTd"><p>2025-02-24      </p></td><td class="confluenceTd"><p>T001           </p></td><td class="confluenceTd"><p>Transfer            </p></td><td class="confluenceTd"><p>10.50            </p></td></tr><tr><td class="confluenceTd"><p>2025-02-24      </p></td><td class="confluenceTd"><p>T002           </p></td><td class="confluenceTd"><p>Buy                 </p></td><td class="confluenceTd"><p>5.00             </p></td></tr><tr><td class="confluenceTd"><p>...             </p></td><td class="confluenceTd"><p>...            </p></td><td class="confluenceTd"><p>...                 </p></td><td class="confluenceTd"><p>...              </p></td></tr><tr><td class="confluenceTd"><p>2025-03-02      </p></td><td class="confluenceTd"><p>T098           </p></td><td class="confluenceTd"><p>Sell                </p></td><td class="confluenceTd"><p>15.00            </p></td></tr><tr><td class="confluenceTd"><p>2025-03-02      </p></td><td class="confluenceTd"><p>T099           </p></td><td class="confluenceTd"><p>Transfer            </p></td><td class="confluenceTd"><p>8.00             </p></td></tr></tbody></table></div><p><strong>March 3, 2025, Morning – Partial Load</strong>:</p><ul><li><p>A partial load for March 3, 2025, arrives with 50 transactions (out of an expected 100 for the full day).</p></li><li><p>The <code>[dbo].[usp_Populating_Staging_Transactions]</code> procedure truncates the table and reloads data for the last 7 days, including the partial March 3 data.</p></li></ul><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="f125a2da-ef1d-42c4-b9a4-c2e132b74898" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>EntryDate</p></th><th class="confluenceTh"><p>Transaction ID</p></th><th class="confluenceTh"><p>Transaction Type</p></th><th class="confluenceTh"><p>Normalized Amount</p></th></tr><tr><td class="confluenceTd"><p>2025-02-25      </p></td><td class="confluenceTd"><p>T101           </p></td><td class="confluenceTd"><p>Transfer            </p></td><td class="confluenceTd"><p>12.00            </p></td></tr><tr><td class="confluenceTd"><p>2025-02-25      </p></td><td class="confluenceTd"><p>T102           </p></td><td class="confluenceTd"><p>Buy                 </p></td><td class="confluenceTd"><p>6.00             </p></td></tr><tr><td class="confluenceTd"><p>...             </p></td><td class="confluenceTd"><p>...            </p></td><td class="confluenceTd"><p>...                 </p></td><td class="confluenceTd"><p>...              </p></td></tr><tr><td class="confluenceTd"><p>2025-03-02      </p></td><td class="confluenceTd"><p>T198           </p></td><td class="confluenceTd"><p>Sell                </p></td><td class="confluenceTd"><p>18.00            </p></td></tr><tr><td class="confluenceTd"><p>2025-03-02      </p></td><td class="confluenceTd"><p>T199           </p></td><td class="confluenceTd"><p>Transfer            </p></td><td class="confluenceTd"><p>9.00             </p></td></tr><tr><td class="confluenceTd"><p>2025-03-03      </p></td><td class="confluenceTd"><p>T200           </p></td><td class="confluenceTd"><p>Buy                 </p></td><td class="confluenceTd"><p>7.00             </p></td></tr><tr><td class="confluenceTd"><p>2025-03-03      </p></td><td class="confluenceTd"><p>T201           </p></td><td class="confluenceTd"><p>Sell                </p></td><td class="confluenceTd"><p>11.00            </p></td></tr></tbody></table></div><ul><li><p>Total rows now: 950 (previous 900 rows for Feb 25–Mar 2 + 50 partial rows for Mar 3).</p></li></ul><p><strong>March 4, 2025, Morning – Completion of March 3 Load</strong>:</p><ul><li><p>The remaining 50 transactions for March 3, 2025, are loaded, completing the full day’s data.</p></li><li><p>The table is truncated again, and data for February 25 to March 3 is reloaded (7 days).</p></li></ul><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="8831b9b5-27c6-4e68-b159-558d06c41665" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>EntryDate</p></th><th class="confluenceTh"><p>Transaction ID</p></th><th class="confluenceTh"><p>Transaction Type</p></th><th class="confluenceTh"><p>Normalized Amount</p></th></tr><tr><td class="confluenceTd"><p>2025-02-26      </p></td><td class="confluenceTd"><p>T201           </p></td><td class="confluenceTd"><p>Transfer            </p></td><td class="confluenceTd"><p>13.00            </p></td></tr><tr><td class="confluenceTd"><p>2025-02-26      </p></td><td class="confluenceTd"><p>T202           </p></td><td class="confluenceTd"><p>Buy                 </p></td><td class="confluenceTd"><p>7.00             </p></td></tr><tr><td class="confluenceTd"><p>...             </p></td><td class="confluenceTd"><p>...            </p></td><td class="confluenceTd"><p>...                 </p></td><td class="confluenceTd"><p>...              </p></td></tr><tr><td class="confluenceTd"><p>2025-03-03      </p></td><td class="confluenceTd"><p>T298           </p></td><td class="confluenceTd"><p>Sell                </p></td><td class="confluenceTd"><p>19.00            </p></td></tr><tr><td class="confluenceTd"><p>2025-03-03      </p></td><td class="confluenceTd"><p>T299           </p></td><td class="confluenceTd"><p>Transfer            </p></td><td class="confluenceTd"><p>10.00            </p></td></tr></tbody></table></div><ul><li><p>Total rows now: 1,000 (100 rows per day for Feb 26–Mar 3).</p></li><li><p>The partial load on March 3 (50 rows) combined with the remaining 50 rows on March 4 makes up the full load for March 3.</p></li></ul><p><strong>Impact</strong>:</p><ul><li><p>If you run a query or script on March 3 before the full load, you’ll see only 50 rows for March 3, underrepresenting the day’s data. This is why monitoring scripts need to account for partial loads by running after the full load is complete (e.g., on March 4).</p></li></ul><hr/><h3 id="temp-2.IncrementalBehaviorofStagingtoTransactions(Problem2)">2. <strong>Incremental Behavior of Staging to Transactions (Problem 2)</strong></h3><p><strong>Description</strong>: After <code>[dbo].[Staging_Transactions]</code> is populated, only new rows (with unique <code>Transaction ID</code>s not already in <code>[dbo].[Transactions]</code>) are inserted incrementally. Stale <code>Transaction ID</code>s (already in <code>[dbo].[Transactions]</code>) are deleted from <code>[dbo].[Staging_Transactions]</code>.</p><h4 id="temp-MockupExample:.1">Mockup Example:</h4><p>Let’s assume <code>[dbo].[Transactions]</code> already contains some data, and we’re processing new data in <code>[dbo].[Staging_Transactions]</code>.</p><p><strong>State of </strong><code>[dbo].[Transactions]</code> (Before March 3, 2025, Load):</p><ul><li><p>Contains data from previous days, including some <code>Transaction ID</code>s.</p></li></ul><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="633c05e3-a6de-4f75-8c1c-42efb4ea4882" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Transaction ID</p></th><th class="confluenceTh"><p>EntryDate</p></th><th class="confluenceTh"><p>Transaction Type</p></th><th class="confluenceTh"><p>Normalized Amount</p></th><th class="confluenceTh"><p>BatchID</p></th></tr><tr><td class="confluenceTd"><p>T001           </p></td><td class="confluenceTd"><p>2025-02-24      </p></td><td class="confluenceTd"><p>Transfer            </p></td><td class="confluenceTd"><p>10.50            </p></td><td class="confluenceTd"><p>1001    </p></td></tr><tr><td class="confluenceTd"><p>T002           </p></td><td class="confluenceTd"><p>2025-02-24      </p></td><td class="confluenceTd"><p>Buy                 </p></td><td class="confluenceTd"><p>5.00             </p></td><td class="confluenceTd"><p>1001    </p></td></tr><tr><td class="confluenceTd"><p>T098           </p></td><td class="confluenceTd"><p>2025-03-02      </p></td><td class="confluenceTd"><p>Sell                </p></td><td class="confluenceTd"><p>15.00            </p></td><td class="confluenceTd"><p>1002    </p></td></tr><tr><td class="confluenceTd"><p>T099           </p></td><td class="confluenceTd"><p>2025-03-02      </p></td><td class="confluenceTd"><p>Transfer            </p></td><td class="confluenceTd"><p>8.00             </p></td><td class="confluenceTd"><p>1002    </p></td></tr></tbody></table></div><p><strong>State of </strong><code>[dbo].[Staging_Transactions]</code> (After March 3, 2025, Partial Load):</p><ul><li><p>Contains 7 days of data, including partial March 3 data.</p></li></ul><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="c3ccc4ee-bddc-4d80-a43c-9166e7971215" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Transaction ID</p></th><th class="confluenceTh"><p>EntryDate</p></th><th class="confluenceTh"><p>Transaction Type</p></th><th class="confluenceTh"><p>Normalized Amount</p></th></tr><tr><td class="confluenceTd"><p>T101           </p></td><td class="confluenceTd"><p>2025-02-25      </p></td><td class="confluenceTd"><p>Transfer            </p></td><td class="confluenceTd"><p>12.00            </p></td></tr><tr><td class="confluenceTd"><p>T102           </p></td><td class="confluenceTd"><p>2025-02-25      </p></td><td class="confluenceTd"><p>Buy                 </p></td><td class="confluenceTd"><p>6.00             </p></td></tr><tr><td class="confluenceTd"><p>...            </p></td><td class="confluenceTd"><p>...             </p></td><td class="confluenceTd"><p>...                 </p></td><td class="confluenceTd"><p>...              </p></td></tr><tr><td class="confluenceTd"><p>T198           </p></td><td class="confluenceTd"><p>2025-03-02      </p></td><td class="confluenceTd"><p>Sell                </p></td><td class="confluenceTd"><p>18.00            </p></td></tr><tr><td class="confluenceTd"><p>T199           </p></td><td class="confluenceTd"><p>2025-03-02      </p></td><td class="confluenceTd"><p>Transfer            </p></td><td class="confluenceTd"><p>9.00             </p></td></tr><tr><td class="confluenceTd"><p>T200           </p></td><td class="confluenceTd"><p>2025-03-03      </p></td><td class="confluenceTd"><p>Buy                 </p></td><td class="confluenceTd"><p>7.00             </p></td></tr><tr><td class="confluenceTd"><p>T201           </p></td><td class="confluenceTd"><p>2025-03-03      </p></td><td class="confluenceTd"><p>Sell                </p></td><td class="confluenceTd"><p>11.00            </p></td></tr></tbody></table></div><p><strong>Incremental Insert into </strong><code>[dbo].[Transactions]</code>:</p><ul><li><p>The <code>[dbo].[usp_Populating_Transactions]</code> procedure checks for new <code>Transaction ID</code>s not in <code>[dbo].[Transactions]</code>.</p></li><li><p>It applies the filter (<code>Transaction Type</code> not in the specified list, <code>Normalized Amount &gt;= 2</code>).</p></li><li><p>Only new rows (e.g., T200, T201) are inserted, assuming they meet the filter criteria.</p></li></ul><p><strong>After Filter and Insert (March 3, 2025)</strong>:</p><ul><li><p>Filtered rows (e.g., rows with <code>Transaction Type</code> like ‘Dividend’ or <code>Normalized Amount &lt; 2</code>) are excluded.</p></li><li><p>New rows (e.g., T200, T201) are inserted into <code>[dbo].[Transactions]</code> with a new <code>BatchID</code> (e.g., 1003).</p></li></ul><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="95313f45-8dfe-413e-8e46-e844714631de" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Transaction ID</p></th><th class="confluenceTh"><p>EntryDate</p></th><th class="confluenceTh"><p>Transaction Type</p></th><th class="confluenceTh"><p>Normalized Amount</p></th><th class="confluenceTh"><p>BatchID</p></th></tr><tr><td class="confluenceTd"><p>T001           </p></td><td class="confluenceTd"><p>2025-02-24      </p></td><td class="confluenceTd"><p>Transfer            </p></td><td class="confluenceTd"><p>10.50            </p></td><td class="confluenceTd"><p>1001    </p></td></tr><tr><td class="confluenceTd"><p>T002           </p></td><td class="confluenceTd"><p>2025-02-24      </p></td><td class="confluenceTd"><p>Buy                 </p></td><td class="confluenceTd"><p>5.00             </p></td><td class="confluenceTd"><p>1001    </p></td></tr><tr><td class="confluenceTd"><p>T098           </p></td><td class="confluenceTd"><p>2025-03-02      </p></td><td class="confluenceTd"><p>Sell                </p></td><td class="confluenceTd"><p>15.00            </p></td><td class="confluenceTd"><p>1002    </p></td></tr><tr><td class="confluenceTd"><p>T099           </p></td><td class="confluenceTd"><p>2025-03-02      </p></td><td class="confluenceTd"><p>Transfer            </p></td><td class="confluenceTd"><p>8.00             </p></td><td class="confluenceTd"><p>1002    </p></td></tr><tr><td class="confluenceTd"><p>T200           </p></td><td class="confluenceTd"><p>2025-03-03      </p></td><td class="confluenceTd"><p>Buy                 </p></td><td class="confluenceTd"><p>7.00             </p></td><td class="confluenceTd"><p>1003    </p></td></tr><tr><td class="confluenceTd"><p>T201           </p></td><td class="confluenceTd"><p>2025-03-03      </p></td><td class="confluenceTd"><p>Sell                </p></td><td class="confluenceTd"><p>11.00            </p></td><td class="confluenceTd"><p>1003    </p></td></tr></tbody></table></div><p><strong>Delete Stale </strong><code>Transaction ID</code>s from <code>[dbo].[Staging_Transactions]</code>:</p><ul><li><p>The procedure deletes rows in <code>[dbo].[Staging_Transactions]</code> where <code>Transaction ID</code> exists in <code>[dbo].[Transactions]</code> (e.g., T001, T002, T098, T099).</p></li><li><p>Only new or unprocessed <code>Transaction ID</code>s (e.g., T200, T201) remain in <code>[dbo].[Staging_Transactions]</code> until the next load.</p></li></ul><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="e86b0f34-576e-4c91-be00-fd9b2cd22bcc" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Transaction ID</p></th><th class="confluenceTh"><p>EntryDate</p></th><th class="confluenceTh"><p>Transaction Type</p></th><th class="confluenceTh"><p>Normalized Amount</p></th></tr><tr><td class="confluenceTd"><p>T200           </p></td><td class="confluenceTd"><p>2025-03-03      </p></td><td class="confluenceTd"><p>Buy                 </p></td><td class="confluenceTd"><p>7.00             </p></td></tr><tr><td class="confluenceTd"><p>T201           </p></td><td class="confluenceTd"><p>2025-03-03      </p></td><td class="confluenceTd"><p>Sell                </p></td><td class="confluenceTd"><p>11.00            </p></td></tr></tbody></table></div><p><strong>Impact</strong>:</p><ul><li><p>The incremental behavior ensures that <code>[dbo].[Transactions]</code> only grows with new, filtered data, while <code>[dbo].[Staging_Transactions]</code> is kept clean of duplicates.</p></li><li><p>However, without a <code>BatchID</code> in <code>[dbo].[Staging_Transactions]</code>, you can’t directly track or compare batches between the two tables, making daily monitoring by <code>EntryDate</code> necessary (as addressed in your previous script request).</p></li></ul><hr/><h3 id="temp-3.SummaryofBehaviors">3. <strong>Summary of Behaviors</strong></h3><ul><li><p><strong>Partial Daily Load</strong>:</p><ul><li><p>On March 3, 2025, <code>[dbo].[Staging_Transactions]</code> might only have 50% of the day’s data (e.g., 50 rows instead of 100).</p></li><li><p>The full load for March 3 is completed on March 4, 2025, when the remaining data arrives.</p></li><li><p>This requires monitoring scripts to account for partial data by running after the full load or aggregating over multiple days.</p></li></ul></li><li><p><strong>Incremental Behavior</strong>:</p><ul><li><p>New <code>Transaction ID</code>s in <code>[dbo].[Staging_Transactions]</code> (after filtering) are inserted into <code>[dbo].[Transactions]</code>.</p></li><li><p>Stale <code>Transaction ID</code>s (already in <code>[dbo].[Transactions]</code>) are removed from <code>[dbo].[Staging_Transactions]</code>.</p></li><li><p>The 7-day window ensures only recent data is processed, with older data dropped as new data arrives.</p></li></ul></li></ul><hr/><h3 id="temp-4.HowtoMonitorThisClearly">4. <strong>How to Monitor This Clearly</strong></h3><p>To address your request for monitoring, you can extend the script I provided earlier to include checks for partial loads and incremental behavior. Here’s a modified snippet to track partial loads and incremental changes:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">USE [TMS5_Napier]
+GO
+
+DECLARE @CurrentDate DATE = GETDATE();
+DECLARE @StartDate DATE = DATEADD(day, -7, @CurrentDate);
+
+-- Create a table to log daily counts and incremental changes
+CREATE TABLE #DailyMonitoring (
+    DateCaptured DATE,
+    StagingBeforeFilter INT,
+    StagingAfterFilter INT,
+    RowsFilteredOut INT,
+    NewTransactionsInserted INT,
+    StagingAfterDeletion INT
+);
+
+-- 1. Count rows in Staging_Transactions before filtering (unfiltered, last 7 days)
+INSERT INTO #DailyMonitoring (DateCaptured, StagingBeforeFilter)
+SELECT 
+    CAST(EntryDate AS DATE) AS DateCaptured,
+    COUNT(*) AS StagingBeforeFilter
+FROM [dbo].[Staging_Transactions]
+WHERE EntryDate &gt;= @StartDate
+GROUP BY CAST(EntryDate AS DATE);
+
+-- 2. Count rows after applying the filter (simulating what goes to Transactions)
+INSERT INTO #DailyMonitoring (DateCaptured, StagingAfterFilter)
+SELECT 
+    CAST(st.EntryDate AS DATE) AS DateCaptured,
+    COUNT(*) AS StagingAfterFilter
+FROM [dbo].[Staging_Transactions] st
+WHERE st.EntryDate &gt;= @StartDate
+    AND st.[Transaction Type] NOT IN (
+        &#39;Settlement Credit&#39;, 
+        &#39;Settlement Debit&#39;, 
+        &#39;Terminal Tax Payment&#39;, 
+        &#39;FX Switch In Variable&#39;, 
+        &#39;FX Switch Out Fixed&#39;, 
+        &#39;Income&#39;, 
+        &#39;Dividend&#39;, 
+        &#39;Portfolio Fee&#39;, 
+        &#39;Interest&#39;, 
+        &#39;Resident Withholding Tax&#39;,
+        &#39;FX Switch In Fixed&#39;, 
+        &#39;FX Switch Out Variable&#39;, 
+        &#39;Employee Interest&#39;, 
+        &#39;Employer Interest&#39;
+    )
+    AND st.[Normalized Amount] &gt;= 2
+GROUP BY CAST(st.EntryDate AS DATE);
+
+-- 3. Calculate rows filtered out
+UPDATE #DailyMonitoring
+SET RowsFilteredOut = StagingBeforeFilter - StagingAfterFilter;
+
+-- 4. Count new transactions inserted into Transactions (incremental)
+INSERT INTO #DailyMonitoring (DateCaptured, NewTransactionsInserted)
+SELECT 
+    CAST(st.EntryDate AS DATE) AS DateCaptured,
+    COUNT(*) AS NewTransactionsInserted
+FROM [dbo].[Staging_Transactions] st
+LEFT JOIN [dbo].[Transactions] t ON st.[Transaction ID] = t.[Transaction ID]
+WHERE st.EntryDate &gt;= @StartDate
+    AND t.[Transaction ID] IS NULL  -- New transactions not in Transactions
+    AND st.[Transaction Type] NOT IN (
+        &#39;Settlement Credit&#39;, 
+        &#39;Settlement Debit&#39;, 
+        &#39;Terminal Tax Payment&#39;, 
+        &#39;FX Switch In Variable&#39;, 
+        &#39;FX Switch Out Fixed&#39;, 
+        &#39;Income&#39;, 
+        &#39;Dividend&#39;, 
+        &#39;Portfolio Fee&#39;, 
+        &#39;Interest&#39;, 
+        &#39;Resident Withholding Tax&#39;,
+        &#39;FX Switch In Fixed&#39;, 
+        &#39;FX Switch Out Variable&#39;, 
+        &#39;Employee Interest&#39;, 
+        &#39;Employer Interest&#39;
+    )
+    AND st.[Normalized Amount] &gt;= 2
+GROUP BY CAST(st.EntryDate AS DATE);
+
+-- 5. Count rows remaining in Staging after deletion of stale Transaction IDs
+INSERT INTO #DailyMonitoring (DateCaptured, StagingAfterDeletion)
+SELECT 
+    CAST(st.EntryDate AS DATE) AS DateCaptured,
+    COUNT(*) AS StagingAfterDeletion
+FROM [dbo].[Staging_Transactions] st
+LEFT JOIN [dbo].[Transactions] t ON st.[Transaction ID] = t.[Transaction ID]
+WHERE st.EntryDate &gt;= @StartDate
+    AND t.[Transaction ID] IS NULL  -- Only rows not in Transactions remain
+GROUP BY CAST(st.EntryDate AS DATE);
+
+-- 6. Display results
+SELECT 
+    DateCaptured AS &#39;Date&#39;,
+    StagingBeforeFilter AS &#39;StagingRowsBeforeFilter&#39;,
+    StagingAfterFilter AS &#39;StagingRowsAfterFilter&#39;,
+    RowsFilteredOut AS &#39;RowsFilteredOut&#39;,
+    NewTransactionsInserted AS &#39;NewTransactionsInserted&#39;,
+    StagingAfterDeletion AS &#39;StagingRowsAfterDeletion&#39;
+FROM #DailyMonitoring
+ORDER BY DateCaptured DESC;
+
+DROP TABLE #DailyMonitoring;
+GO</pre>
+</div></div><p><strong>This script now tracks</strong>:</p><ul><li><p>Rows in <code>[dbo].[Staging_Transactions]</code> before filtering.</p></li><li><p>Rows after applying the filter (what would go to <code>[dbo].[Transactions]</code>).</p></li><li><p>Rows filtered out.</p></li><li><p>New transactions inserted into <code>[dbo].[Transactions]</code> (incremental behavior).</p></li><li><p>Rows remaining in <code>[dbo].[Staging_Transactions]</code> after deleting stale <code>Transaction ID</code>s.</p></li></ul><p>This mockup and script clarify the partial load and incremental behavior, addressing your concerns about monitoring the data flow day-to-day. If you need further adjustments or additional examples, feel free to ask!</p><p /><p>Below is an <strong>alternative approach</strong> that shows each date side-by-side <strong>even if some metrics are missing</strong> for that date. This avoids the problem where the <code>WHERE ... IS NOT NULL</code> condition filters out rows that do not appear in <em>all</em> sub-queries.</p><h2 id="temp-WhytheOriginalScriptCanHideRows">Why the Original Script Can Hide Rows</h2><ul><li><p>In the original script, you insert one column at a time into the same temporary table (<code>#DailyMonitoring</code>).</p></li><li><p>If a given date only appears in some of the inserts (e.g., <code>StagingBeforeFilter</code> but not <code>StagingAfterFilter</code>), that date can end up with <code>NULL</code> in other columns.</p></li><li><p>Then the final <code>WHERE ... IS NOT NULL</code> filters out that date entirely.</p></li></ul><h2 id="temp-Single-Query“Side-by-Side”Solution">Single-Query “Side-by-Side” Solution</h2><p>Below, we use <strong>multiple CTEs</strong> (Common Table Expressions) to calculate each metric separately. Then we do a <strong>FULL OUTER JOIN</strong> on <code>DateCaptured</code> so that each date will appear in the final result set, even if some columns are <code>NULL</code> for that date. This way, you can see partial data for each day.</p><h3 id="temp-Script">Script</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">USE [TMS5_Napier];
+GO
+
+DECLARE @CurrentDate DATE = GETDATE();
+DECLARE @StartDate  DATE = DATEADD(DAY, -7, @CurrentDate);
+
+;WITH cteBeforeFilter AS
+(
+    -- 1) All rows in Staging (no filter)
+    SELECT 
+        CAST(EntryDate AS DATE) AS DateCaptured,
+        COUNT(*) AS StagingBeforeFilter
+    FROM [dbo].[Staging_Transactions]
+    WHERE EntryDate &gt;= @StartDate
+    GROUP BY CAST(EntryDate AS DATE)
+),
+cteAfterFilter AS
+(
+    -- 2) Rows that pass the custom filter
+    SELECT 
+        CAST(st.EntryDate AS DATE) AS DateCaptured,
+        COUNT(*) AS StagingAfterFilter
+    FROM [dbo].[Staging_Transactions] st
+    WHERE st.EntryDate &gt;= @StartDate
+      AND st.[Transaction Type] NOT IN (
+            &#39;Settlement Credit&#39;, 
+            &#39;Settlement Debit&#39;, 
+            &#39;Terminal Tax Payment&#39;, 
+            &#39;FX Switch In Variable&#39;, 
+            &#39;FX Switch Out Fixed&#39;, 
+            &#39;Income&#39;, 
+            &#39;Dividend&#39;, 
+            &#39;Portfolio Fee&#39;, 
+            &#39;Interest&#39;, 
+            &#39;Resident Withholding Tax&#39;,
+            &#39;FX Switch In Fixed&#39;, 
+            &#39;FX Switch Out Variable&#39;, 
+            &#39;Employee Interest&#39;, 
+            &#39;Employer Interest&#39;
+         )
+      AND st.[Normalized Amount] &gt;= 2
+    GROUP BY CAST(st.EntryDate AS DATE)
+),
+cteNewTransactions AS
+(
+    -- 3) Rows not already in [Transactions] that pass the filter
+    SELECT 
+        CAST(st.EntryDate AS DATE) AS DateCaptured,
+        COUNT(*) AS NewTransactionsInserted
+    FROM [dbo].[Staging_Transactions] st
+    LEFT JOIN [dbo].[Transactions] t 
+           ON st.[Transaction ID] = t.[Transaction ID]
+    WHERE st.EntryDate &gt;= @StartDate
+      AND t.[Transaction ID] IS NULL
+      AND st.[Transaction Type] NOT IN (
+            &#39;Settlement Credit&#39;, 
+            &#39;Settlement Debit&#39;, 
+            &#39;Terminal Tax Payment&#39;, 
+            &#39;FX Switch In Variable&#39;, 
+            &#39;FX Switch Out Fixed&#39;, 
+            &#39;Income&#39;, 
+            &#39;Dividend&#39;, 
+            &#39;Portfolio Fee&#39;, 
+            &#39;Interest&#39;, 
+            &#39;Resident Withholding Tax&#39;,
+            &#39;FX Switch In Fixed&#39;, 
+            &#39;FX Switch Out Variable&#39;, 
+            &#39;Employee Interest&#39;, 
+            &#39;Employer Interest&#39;
+         )
+      AND st.[Normalized Amount] &gt;= 2
+    GROUP BY CAST(st.EntryDate AS DATE)
+),
+cteAfterDeletion AS
+(
+    -- 4) Rows remaining in Staging after deleting any that are already in [Transactions]
+    SELECT 
+        CAST(st.EntryDate AS DATE) AS DateCaptured,
+        COUNT(*) AS StagingAfterDeletion
+    FROM [dbo].[Staging_Transactions] st
+    LEFT JOIN [dbo].[Transactions] t 
+           ON st.[Transaction ID] = t.[Transaction ID]
+    WHERE st.EntryDate &gt;= @StartDate
+      AND t.[Transaction ID] IS NULL
+    GROUP BY CAST(st.EntryDate AS DATE)
+)
+
+-- Final SELECT uses FULL OUTER JOINS so we keep all dates
+SELECT 
+    COALESCE(b.DateCaptured, a.DateCaptured, n.DateCaptured, d.DateCaptured) AS DateCaptured,
+    b.StagingBeforeFilter,
+    a.StagingAfterFilter,
+    -- Use ISNULL() so that if one side is NULL, we treat it as zero
+    ISNULL(b.StagingBeforeFilter, 0) 
+      - ISNULL(a.StagingAfterFilter, 0) AS RowsFilteredOut,
+    n.NewTransactionsInserted,
+    d.StagingAfterDeletion
+FROM cteBeforeFilter    b
+FULL OUTER JOIN cteAfterFilter      a 
+    ON b.DateCaptured = a.DateCaptured
+FULL OUTER JOIN cteNewTransactions  n 
+    ON COALESCE(b.DateCaptured, a.DateCaptured) = n.DateCaptured
+FULL OUTER JOIN cteAfterDeletion    d 
+    ON COALESCE(b.DateCaptured, a.DateCaptured, n.DateCaptured) = d.DateCaptured
+ORDER BY COALESCE(b.DateCaptured, a.DateCaptured, n.DateCaptured, d.DateCaptured) DESC;
+</pre>
+</div></div><h3 id="temp-HowItWorks">How It Works</h3><ol start="1"><li><p><strong>CTEs</strong></p><ul><li><p>Each CTE computes one metric:</p><ul><li><p><code>cteBeforeFilter</code> = raw count of staging rows per date.</p></li><li><p><code>cteAfterFilter</code> = count of rows that pass the filter.</p></li><li><p><code>cteNewTransactions</code> = how many new rows (not in <code>[Transactions]</code>) pass the filter.</p></li><li><p><code>cteAfterDeletion</code> = how many remain in staging once we “remove” (logically) all <code>[Transaction ID]</code> that exist in the main table.</p></li></ul></li></ul></li><li><p><strong>FULL OUTER JOIN</strong></p><ul><li><p>This ensures each <code>DateCaptured</code> from any CTE will appear in the final result.</p></li><li><p>If a date exists in <code>cteBeforeFilter</code> but not in <code>cteAfterFilter</code>, you’ll still see that date. The missing columns become <code>NULL</code>.</p></li></ul></li><li><p><strong>RowsFilteredOut</strong></p><ul><li><p>We calculate <code>(StagingBeforeFilter - StagingAfterFilter)</code> on the fly.</p></li><li><p>We wrap each side with <code>ISNULL(..., 0)</code> so if one side is missing (NULL), the result does not become NULL. Instead, we treat the missing side as zero.</p></li></ul></li><li><p><strong>Partial Data for the Current Day</strong></p><ul><li><p>If your staging loads in multiple batches, you might see partial numbers for “today” until the final batch is loaded. But you’ll still see a row with whatever data is available so far.</p></li></ul></li><li><p><strong>Side-by-Side</strong></p><ul><li><p>You get a single row per date with columns for:</p><ul><li><p><code>StagingBeforeFilter</code></p></li><li><p><code>StagingAfterFilter</code></p></li><li><p><code>RowsFilteredOut</code></p></li><li><p><code>NewTransactionsInserted</code></p></li><li><p><code>StagingAfterDeletion</code></p></li></ul></li></ul></li></ol><h3 id="temp-AdvantagesofThisApproach">Advantages of This Approach</h3><ul><li><p><strong>No “missing rows”</strong>: Because we are not forcing <code>IS NOT NULL</code> across all columns, each date is shown even if it only appears in some of the metrics.</p></li><li><p><strong>Fewer steps</strong>: We avoid multiple inserts into a temp table and do all calculations in one query.</p></li><li><p><strong>Flexible</strong>: You can easily add more metrics by creating additional CTEs and extending the final <code>FULL OUTER JOIN</code>.</p></li></ul><h3 id="temp-Limitations/Notes">Limitations / Notes</h3><ol start="1"><li><p><strong>If You Want Zero Instead of NULL</strong></p><ul><li><p>We already used <code>ISNULL(...,0)</code> in the subtraction for <code>RowsFilteredOut</code>. But if you want to display zero for <em>every</em> column instead of <code>NULL</code>, you can do <code>ISNULL(a.StagingAfterFilter, 0) AS StagingAfterFilter</code>, etc. in the final <code>SELECT</code>.</p></li></ul></li><li><p><strong>Date Granularity</strong></p><ul><li><p>We group by <code>CAST(EntryDate AS DATE)</code>. If you need more precise tracking (e.g., hour-by-hour), you would adjust the grouping to include time.</p></li></ul></li><li><p><strong>Performance</strong></p><ul><li><p>Each CTE scans <code>[Staging_Transactions]</code>. For very large staging tables, consider indexing or materializing partial results.</p></li></ul></li><li><p><strong>Deletions</strong></p><ul><li><p>This script <strong>counts</strong> how many rows <em>would remain</em> after removing IDs already in <code>[Transactions]</code>. It does not physically delete them. If your process actually runs <code>DELETE</code> first, then the counts might differ.</p></li></ul></li></ol><hr/><h2 id="temp-FinalThoughts">Final Thoughts</h2><p>Using a <strong>single-query</strong> approach with <strong>FULL OUTER JOIN</strong> is often simpler for day-to-day monitoring. You get <strong>one row per date</strong> with all metrics, and you do not lose rows where some columns might be <code>NULL</code>. This should resolve the problem of “IS NOT NULL filtering out all rows.”</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

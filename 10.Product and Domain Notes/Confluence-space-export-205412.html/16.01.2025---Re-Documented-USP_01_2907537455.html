@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 16.01.2025 - Re-Documented USP_01</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 16.01.2025 - Re-Documented USP_01
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 15-01-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <h1 id="id-16.01.2025-Re-DocumentedUSP_01-USP_01_FATCA_CRS_ExtractAndPrepareData">USP_01_FATCA_CRS_ExtractAndPrepareData</h1><p><strong>Last Updated</strong>: January 16, 2025<br/><strong>Author</strong>: Jackson Fan</p><hr/><h2 id="id-16.01.2025-Re-DocumentedUSP_01-1.Purpose">1. Purpose</h2><p>This stored procedure is <strong>the first major step</strong> in the <strong>FATCA/CRS</strong> reporting pipeline. It:</p><ol start="1"><li><p>Pulls base CRM data and transforms it into a <strong>unified</strong> dataset (entities + individuals).</p></li><li><p>Builds <strong>recursive hierarchies</strong> for layered entities (e.g., trusts of trusts).</p></li><li><p>Filters out <strong>non-reportable</strong> records (e.g., purely NZ-based, charities, winding-up estates, etc.).</p></li><li><p>Outputs curated results into <code>FATCA.Stage_crmdatafatcacrs_jf</code> for <strong>downstream</strong> processing (like TIN pivoting, final FATCA/CRS XML generation, etc.).</p></li></ol><hr/><h2 id="id-16.01.2025-Re-DocumentedUSP_01-2.Parameters">2. Parameters</h2><div class="table-wrap"><table data-layout="default" data-local-id="99337f2f-cda6-43ca-a87c-8e1c8bb5af95" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Parameter</p></th><th class="confluenceTh"><p>Type</p></th><th class="confluenceTh"><p>Description</p></th></tr><tr><td class="confluenceTd"><p>@PeriodStartDate</p></td><td class="confluenceTd"><p>datetime</p></td><td class="confluenceTd"><p>Start date of the FATCA/CRS reporting period.</p></td></tr><tr><td class="confluenceTd"><p>@PeriodEndDate</p></td><td class="confluenceTd"><p>datetime</p></td><td class="confluenceTd"><p>End date of the FATCA/CRS reporting period.</p></td></tr><tr><td class="confluenceTd"><p>@RefreshHoldingsData</p></td><td class="confluenceTd"><p>bit</p></td><td class="confluenceTd"><p>If set to <code>1</code>, triggers <code>[dbo].[spr_AEOI_Financials]</code> to refresh holdings prior to main steps.</p></td></tr></tbody></table></div><hr/><h2 id="id-16.01.2025-Re-DocumentedUSP_01-3.High-LevelDataFlow">3. High-Level Data Flow</h2><p>Below is an <strong>SQL-centric</strong> perspective on <strong>how</strong> each piece of data is transformed.</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">                  ┌────────────────────────┐
+                  │   CRM Data Tables      │
+                  │ (Accounts, Contacts,   │
+                  │   Roles, CIP Records)  │
+                  └────────────┬───────────┘
+                               │
+                               ▼
+         1. Optionally refresh holdings if @RefreshHoldingsData=1
+                               │
+                               ▼
+        2. Create #TaxRegimeMapping (Key-Value for FATCA/CRS Logic)
+                               │
+                               ▼
+        3. Build #RecursiveHierarchy (CTE recursion for multi-layer)
+                               │
+                               ▼
+       4. Populate #HierarchyIndividuals (Entity → Ind links + roles)
+                               │
+                               ▼
+        5A. #EntityData (Trust/Company + TIN extraction)
+        5B. #IndividualData (Individual + TIN extraction)
+                               │
+                               ▼
+              6. Union, Filter, and Standardize
+                  (#EntityData ∪ #IndividualData)
+                               │
+                               ▼
+             7. Store final in ##crmdatafatcacrs 
+                               │
+                               ▼
+   8. Output to FATCA.Stage_crmdatafatcacrs_jf (staging for next steps)
+</pre>
+</div></div><hr/><h2 id="id-16.01.2025-Re-DocumentedUSP_01-4.Step-by-StepAnalysis(SQLEngineeringPerspective)">4. Step-by-Step Analysis (SQL Engineering Perspective)</h2><h3 id="id-16.01.2025-Re-DocumentedUSP_01-Step0:Setup&amp;Preliminaries"><strong>Step 0: Setup &amp; Preliminaries</strong></h3><ol start="1"><li><p><strong>Capture the reporting year</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">DECLARE @rptYear INT = YEAR(@PeriodEndDate);
+</pre>
+</div></div><ul><li><p>Used to apply date-based logic (e.g., calling certain stored procs or scoping queries to a reporting window).</p></li></ul></li><li><p><strong>Optional Holdings Refresh</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">IF @RefreshHoldingsData = 1
+    EXEC [dbo].[spr_AEOI_Financials] @rptYear;
+</pre>
+</div></div><ul><li><p>This step is <strong>expensive</strong> (~30 mins) but critical if upstream data changed.</p></li></ul></li></ol><hr/><h3 id="id-16.01.2025-Re-DocumentedUSP_01-Step1:Create#TaxRegimeMappingTable"><strong>Step 1: Create #TaxRegimeMapping Table</strong></h3><ol start="1"><li><p><strong>Why?</strong></p><ul><li><p>CRM flags for “US citizen”, “Foreign tax resident,” etc. can be incorrectly or inconsistently set.</p></li><li><p>We create a <strong>key-value</strong> table that maps a <strong>calculated </strong><code>ReportCode</code> to the correct <strong>FATCA/CRS</strong> <code>TaxRegime</code>.</p></li></ul></li><li><p><strong>SQL Technique</strong>:</p><ul><li><p>A <strong>Common Table Expression</strong> (<code>WITH TaxRegimeMapping AS (...)</code>) enumerates possible flags (e.g., <code>1</code> = FATCA individual, <code>2</code> = CRS individual, etc.).</p></li><li><p>Insert that <strong>CTE</strong> into a <strong>temp table</strong> (<code>#TaxRegimeMapping</code>) for easy, repeated joins.</p></li></ul></li><li><p><strong>Outcome</strong>:</p><ul><li><p>All possible combos of flags—&gt; mapped to <code>'FATCA'</code>, <code>'CRS'</code>, or <code>'FATCA_CRS'</code>.</p></li><li><p>This is the backbone for subsequent filtering.</p></li></ul></li></ol><hr/><h3 id="id-16.01.2025-Re-DocumentedUSP_01-Step2:BuildaRecursiveHierarchy(#RecursiveHierarchy)"><strong>Step 2: Build a Recursive Hierarchy (#RecursiveHierarchy)</strong></h3><ol start="1"><li><p><strong>Goal</strong>:</p><ul><li><p>Some entities are multi-layer (Trust A owns Trust B owns Company C, etc.).</p></li><li><p>We need a <strong>recursive</strong> approach (using <strong>CTEs</strong>) to gather all “child” entities.</p></li></ul></li><li><p><strong>SQL Technique</strong>:</p><ul><li><p><strong>Anchor Query</strong> identifies <strong>root</strong> entities in <code>Account</code> that have their own FATCA/CRS flags or contain foreign individuals.</p></li><li><p><strong>Recursive Query</strong> joins <code>dsl_roles</code> to find child entities (<code>dsl_OrganisationName</code> linking back to <code>Account</code>).</p></li><li><p>Restricts recursion to <code>Level &lt; 3</code> to <strong>prevent infinite loops</strong> and excessive depth.</p></li></ul></li><li><p><strong>Outcome</strong>:</p><ul><li><p><code>#RecursiveHierarchy</code>: Each row includes <code>[EntityID, RootEntityID, Level, Path, FATCA/CRS Flags]</code> for each layer.</p></li></ul></li></ol><hr/><h3 id="id-16.01.2025-Re-DocumentedUSP_01-Step3:MapEntitiestoTheirIndividuals(#HierarchyIndividuals)"><strong>Step 3: Map Entities to Their Individuals (#HierarchyIndividuals)</strong></h3><ol start="1"><li><p><strong>Goal</strong>:</p><ul><li><p>Identify controlling individuals within each entity—directors, trustees, authorized persons, etc.</p></li></ul></li><li><p><strong>SQL Technique</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT rh.RootEntityId,
+       rh.EntityId,
+       i.ContactId AS IndividualId,
+       ...
+  INTO #HierarchyIndividuals
+  FROM #RecursiveHierarchy rh
+  JOIN dsl_roles r ON rh.EntityId = r.dsl_TradingEntityID
+  JOIN Contact i    ON r.dsl_IndividualId = i.ContactId
+  ...
+</pre>
+</div></div><ul><li><p>Links the <strong>recursive entities</strong> from <code>#RecursiveHierarchy</code> with actual <strong>Contacts</strong> in the CRM.</p></li><li><p>Filters only valid, controlling roles.</p></li></ul></li><li><p><strong>Outcome</strong>:</p><ul><li><p><code>#HierarchyIndividuals</code>: One row per <strong>(Entity, Individual)</strong> relationship with the relevant role info.</p></li></ul></li></ol><hr/><h3 id="id-16.01.2025-Re-DocumentedUSP_01-Step4A:ExtractEntityData(#EntityData)"><strong>Step 4A: Extract Entity Data (#EntityData)</strong></h3><ol start="1"><li><p><strong>Focus</strong>:</p><ul><li><p><strong>Trusts, Companies, Incorporated Entities, Partnerships</strong>.</p></li><li><p><strong>Foreign TIN</strong> logic from <code>cip_foreigntaxrecord</code> at the <em>entity</em> level (<code>ft1.cip_Entity</code>).</p></li></ul></li><li><p><strong>SQL Technique</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">;WITH EntityData AS (
+    SELECT
+        rh.EntityId AS AccountID,
+        rh.Entity_FATCA_Flag,
+        rh.Entity_CRS_Flag,
+        ft1.cip_identification AS EntityTIN,
+        ...
+    FROM #HierarchyIndividuals hi
+    JOIN #RecursiveHierarchy rh ON ...
+    JOIN Account a ON rh.EntityId = a.AccountId
+    LEFT JOIN cip_foreigntaxrecord ft1 ON a.AccountId = ft1.cip_Entity
+    ...
+)
+SELECT * INTO #EntityData FROM EntityData;
+</pre>
+</div></div><ul><li><p><strong>CTEs</strong> or subqueries collect fields from <code>Account</code> (like <code>Name</code>, <code>TradingEntityType</code>), from <code>ft1</code> (Entity TIN), from <code>#TaxRegimeMapping</code>, etc.</p></li><li><p>Filters out purely NZ TIN records, charities, winding-up estates, etc.</p></li></ul></li><li><p><strong>Outcome</strong>:</p><ul><li><p><code>#EntityData</code>: Each row represents an <strong>entity</strong> (plus controlling individuals) that is potentially FATCA or CRS relevant.</p></li></ul></li></ol><hr/><h3 id="id-16.01.2025-Re-DocumentedUSP_01-Step4B:ExtractIndividualData(#IndividualData)"><strong>Step 4B: Extract Individual Data (#IndividualData)</strong></h3><ol start="1"><li><p><strong>Focus</strong>:</p><ul><li><p><strong>Individual accounts</strong> (including “Single,” “Joint,” “Minor Under 18 yrs”) with foreign TIN records.</p></li><li><p>Many individuals can appear on multiple accounts; we capture those associations too.</p></li></ul></li><li><p><strong>SQL Technique</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT
+    i.ContactId AS IndividualId,
+    ft2.cip_identification AS cip_Identification,
+    ...
+  INTO #IndividualData
+  FROM Account a
+  JOIN dsl_roles r ON a.AccountId = r.dsl_TradingEntityID
+  JOIN Contact i    ON r.dsl_IndividualId = i.ContactId
+  JOIN cip_foreigntaxrecord ft2 ON i.ContactId = ft2.cip_Individual
+  ...
+</pre>
+</div></div><ul><li><p>Joins to <code>#TaxRegimeMapping</code> for correct FATCA/CRS classification.</p></li><li><p>Excludes purely NZ TINs, charities, and entity accounts.</p></li></ul></li><li><p><strong>Outcome</strong>:</p><ul><li><p><code>#IndividualData</code>: Each row is an <strong>individual</strong> with a valid foreign TIN, role data, and potential beneficial ownership.</p></li></ul></li></ol><hr/><h3 id="id-16.01.2025-Re-DocumentedUSP_01-Step5:Combine&amp;Filter→##crmdatafatcacrs"><strong>Step 5: Combine &amp; Filter → ##crmdatafatcacrs</strong></h3><ol start="1"><li><p><strong>Union #EntityData &amp; #IndividualData</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT * 
+INTO ##crmdatafatcacrs
+FROM
+(
+    SELECT ... FROM #EntityData
+    UNION ALL
+    SELECT ... FROM #IndividualData
+) AS CombinedData
+WHERE &lt;business_filters&gt;;
+</pre>
+</div></div><ul><li><p><strong>Business Filters</strong>:</p><ul><li><p>Exclude <strong>Financial Institutions (FI)</strong> that do their own reporting.</p></li><li><p>Exclude purely <strong>NZ</strong> or non-foreign.</p></li><li><p>Remove “winding-up” estates, charities, etc.</p></li><li><p>Keep only accounts active or closed in the <strong>reporting window</strong>.</p></li></ul></li></ul></li><li><p><strong>Why “Union ALL”?</strong></p><ul><li><p>Entities and Individuals share a <strong>similar</strong> column structure but originate from <strong>different</strong> vantage points.</p></li><li><p>A union creates <strong>one</strong> final data set representing <em>all</em> FATCA/CRS subjects.</p></li></ul></li><li><p><strong>Outcome</strong>:</p><ul><li><p><code>##crmdatafatcacrs</code> (global temp): The consolidated set of records that <em>survived</em> the business logic checks.</p></li></ul></li></ol><hr/><h3 id="id-16.01.2025-Re-DocumentedUSP_01-Step6:ISOCountryCodeStandardization"><strong>Step 6: ISO Country Code Standardization</strong></h3><ol start="1"><li><p><strong>Additional Joins</strong>:</p><ul><li><p>Compares the country names from CRM with a separate reference table: <code>[SQLUAT].[DataServices].FATCA.CountryReference</code>.</p></li><li><p>Produces consistent <strong>2-letter</strong> or <strong>3-letter</strong> ISO codes.</p></li></ul></li><li><p><strong>SQL Technique</strong>:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT cr.*,
+       etc.ISOCode AS EntityTaxCodeCountryISOShort,
+       ...
+  INTO ##crmdatafatcacrsiso
+  FROM ##crmdatafatcacrs cr
+  LEFT JOIN [SQLUAT].[DataServices].FATCA.CountryReference etc
+     ON UPPER(etc.Country) = UPPER(LTRIM(RTRIM(cr.[EntityCountryJurisdictionName])))
+...
+</pre>
+</div></div><ul><li><p><strong>Column-level mapping</strong> from arbitrary text (e.g., “United States” vs. “USA” vs. “U.S.A.”) to an ISO standard.</p></li></ul></li><li><p><strong>Outcome</strong>:</p><ul><li><p><code>##crmdatafatcacrsiso</code>: The final “clean” record set with unified country codes.</p></li></ul></li></ol><hr/><h3 id="id-16.01.2025-Re-DocumentedUSP_01-Step7:OutputStaging→FATCA.Stage_crmdatafatcacrs_jf"><strong>Step 7: Output Staging → FATCA.Stage_crmdatafatcacrs_jf</strong></h3><ol start="1"><li><p><strong>Create or Re-Create the Table</strong>:</p><ul><li><p>If table exists, <strong>DROP</strong>.</p></li><li><p>Then <code>SELECT * INTO FATCA.Stage_crmdatafatcacrs_jf</code> from <code>##crmdatafatcacrsiso</code>.</p></li></ul></li><li><p><strong>Result</strong>:</p><ul><li><p><code>FATCA.Stage_crmdatafatcacrs_jf</code> is the <strong>permanent</strong> staging table for next steps (like TIN pivoting, final FATCA/CRS reporting, etc.).</p></li></ul></li></ol><hr/><h2 id="id-16.01.2025-Re-DocumentedUSP_01-5.TypicalExecutionTime">5. Typical Execution Time</h2><ul><li><p><strong>No holdings refresh</strong>: ~6.5 minutes</p></li><li><p><strong>With holdings refresh</strong> (<code>@RefreshHoldingsData = 1</code>): ~30 minutes</p></li></ul><hr/><h2 id="id-16.01.2025-Re-DocumentedUSP_01-6.ExampleExecution">6. Example Execution</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">-- Without refreshing holdings:
+EXEC [FATCA].[USP_01_FATCA_CRS_ExtractAndPrepareData]
+     @PeriodStartDate = &#39;2024-04-01&#39;,
+     @PeriodEndDate   = &#39;2025-03-31&#39;,
+     @RefreshHoldingsData = 0;
+
+-- With holdings refresh:
+EXEC [FATCA].[USP_01_FATCA_CRS_ExtractAndPrepareData]
+     @PeriodStartDate = &#39;2024-04-01&#39;,
+     @PeriodEndDate   = &#39;2025-03-31&#39;,
+     @RefreshHoldingsData = 1;
+</pre>
+</div></div><hr/><h2 id="id-16.01.2025-Re-DocumentedUSP_01-7.KnownCaveats&amp;DataQualityConsiderations">7. Known Caveats &amp; Data Quality Considerations</h2><ol start="1"><li><p><strong>CRM Flag Inconsistencies</strong>:</p><ul><li><p>Many steps attempt to correct for missing or incorrect <code>dsl_USCitizensforTaxPurposes</code> or <code>ots_foreigntaxresident</code> flags.</p></li><li><p>The <code>#TaxRegimeMapping</code> and <strong>recursive</strong> detection logic are partial fixes.</p></li></ul></li><li><p><strong>Recursive Depth</strong>:</p><ul><li><p>Currently limited to <code>Level &lt; 3</code>. Deeper trusts or corporate structures might be missed if incorrectly linked in CRM.</p></li></ul></li><li><p><strong>Role Overlaps</strong>:</p><ul><li><p>One person can be both a beneficial owner and an authorized person. The SQL tries to <strong>union</strong> these roles carefully to avoid duplications.</p></li></ul></li><li><p><strong>Reference Data</strong>:</p><ul><li><p>Country name standardization is only as accurate as the reference table. “Edge case” country name variations may still exist.</p></li></ul></li></ol><hr/><h2 id="id-16.01.2025-Re-DocumentedUSP_01-8.NextSteps">8. Next Steps</h2><ul><li><p><strong>Pivot TINs</strong>:</p><ul><li><p>The next procedure (e.g., <code>USP_02_FATCA_CRS_PivotTINs</code>) transforms rows with multiple TINs into columns or separate records for final FATCA/CRS generation.</p></li></ul></li><li><p><strong>Reporting</strong>:</p><ul><li><p><code>FATCA.Stage_crmdatafatcacrs_jf</code> is ultimately consumed by the final FATCA/CRS XML production scripts.</p></li></ul></li></ul><hr/><h3 id="id-16.01.2025-Re-DocumentedUSP_01-QuestionsorIssues?">Questions or Issues?</h3><ul><li><p><strong>FATCA/CRS</strong> Code Queries: Contact the Data Engineering team.</p></li><li><p><strong>CRM Data Corrections</strong>: Contact CRM Data Stewards if you find incorrect flags or incomplete TIN info.</p></li></ul><hr/><p><strong>End of Confluence Documentation</strong></p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

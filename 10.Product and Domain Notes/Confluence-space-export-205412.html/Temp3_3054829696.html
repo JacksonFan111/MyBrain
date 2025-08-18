@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Temp3</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Temp3
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 04-03-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p><strong>Subject:</strong> Daily Monitoring Process for Staging and Transactions Data</p><p>Hello <strong>Team</strong>,</p><p>Below is a simple overview of how we monitor the daily flow of transactions from <strong>Staging_Transactions</strong> into our main <strong>Transactions</strong> table. This ensures everyone understands what happens each day, how partial loads work, and how we track filtered vs. inserted rows.</p><hr/><h2 id="Temp3-1.WhatDoestheProcessDo?">1. What Does the Process Do?</h2><ul><li><p><strong>Captures 7 Days of Data</strong>: Our staging table, <strong>Staging_Transactions</strong>, holds the last 7 days of transactions.</p></li><li><p><strong>Applies a Filter</strong>: Certain transaction types are excluded (e.g., <em>Settlement Debit</em>, <em>Interest</em>, <em>Employer Interest</em>), and we only keep transactions with a <strong>Normalized Amount &gt;= 2</strong>.</p></li><li><p><strong>Compares Before &amp; After</strong>: We check how many transactions were in staging before filtering and how many remain after applying the filter.</p></li><li><p><strong>Inserts New Rows</strong>: Only rows not already in the main <strong>Transactions</strong> table get inserted (i.e., new transaction IDs).</p></li><li><p><strong>Removes Duplicates</strong>: Any staging row that already exists in <strong>Transactions</strong> is deleted from staging so we don’t re-process duplicates.</p></li></ul><hr/><h2 id="Temp3-2.DealingwithPartialLoads">2. Dealing with Partial Loads</h2><ul><li><p>Sometimes we receive <strong>incomplete data for “today.”</strong> The rest of the data might arrive the next day.</p></li><li><p>This means <strong>today’s counts might look low</strong> until the final load is done. We typically confirm the final numbers the next morning.</p></li></ul><hr/><h2 id="Temp3-3.DailyScriptOverview">3. Daily Script Overview</h2><p>Here’s what the monitoring script checks each day (for the past 7 days):</p><ol start="1"><li><p><strong>Staging Before Filter</strong></p><ul><li><p>Counts <strong>all</strong> transactions in staging for each day.</p></li></ul></li><li><p><strong>Staging After Filter</strong></p><ul><li><p>Counts only the transactions that pass our business rules (excluded types + Normalized Amount &gt;= 2).</p></li></ul></li><li><p><strong>Rows Filtered Out</strong></p><ul><li><p>Shows how many were <strong>excluded</strong> by our rules (simply the difference between before and after).</p></li></ul></li><li><p><strong>New Transactions Inserted</strong></p><ul><li><p>Indicates how many filtered rows were <strong>new</strong> (not already in <strong>Transactions</strong>).</p></li></ul></li><li><p><strong>Rows Remaining After Deletion</strong></p><ul><li><p>Counts how many rows are <strong>still</strong> in staging after removing duplicates (i.e., transaction IDs that are already in <strong>Transactions</strong>).</p></li></ul></li></ol><p><strong>Why a “Side-by-Side” View?</strong></p><ul><li><p>We want to see <strong>all</strong> days even if some columns might be empty or partial. Using a more flexible join (called a “FULL OUTER JOIN”) ensures we don’t lose any day’s data if a column is missing.</p></li></ul><hr/><h2 id="Temp3-4.ExampleoftheDailyOutput">4. Example of the Daily Output</h2><p>Each date appears in one row, like so:</p><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="cd585faa-6d0f-40a3-8193-322429942f7c" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Date</p></th><th class="confluenceTh"><p>StagingBeforeFilter</p></th><th class="confluenceTh"><p>StagingAfterFilter</p></th><th class="confluenceTh"><p>RowsFilteredOut</p></th><th class="confluenceTh"><p>NewTransactionsInserted</p></th><th class="confluenceTh"><p>StagingAfterDeletion</p></th></tr><tr><td class="confluenceTd"><p>2025-03-01</p></td><td class="confluenceTd"><p>100</p></td><td class="confluenceTd"><p>80</p></td><td class="confluenceTd"><p>20</p></td><td class="confluenceTd"><p>70</p></td><td class="confluenceTd"><p>30</p></td></tr><tr><td class="confluenceTd"><p>2025-03-02</p></td><td class="confluenceTd"><p>120</p></td><td class="confluenceTd"><p>95</p></td><td class="confluenceTd"><p>25</p></td><td class="confluenceTd"><p>80</p></td><td class="confluenceTd"><p>35</p></td></tr><tr><td class="confluenceTd"><p>...</p></td><td class="confluenceTd"><p>...</p></td><td class="confluenceTd"><p>...</p></td><td class="confluenceTd"><p>...</p></td><td class="confluenceTd"><p>...</p></td><td class="confluenceTd"><p>...</p></td></tr></tbody></table></div><ul><li><p><strong>StagingBeforeFilter</strong> = total rows in staging that day (unfiltered).</p></li><li><p><strong>StagingAfterFilter</strong> = rows that passed our business rules.</p></li><li><p><strong>RowsFilteredOut</strong> = how many we excluded.</p></li><li><p><strong>NewTransactionsInserted</strong> = how many new rows actually got inserted into <strong>Transactions</strong>.</p></li><li><p><strong>StagingAfterDeletion</strong> = how many remain in staging that aren’t in <strong>Transactions</strong> yet.</p></li></ul><hr/><h2 id="Temp3-5.WhyIsThisImportant?">5. Why Is This Important?</h2><ol start="1"><li><p><strong>Checks Data Quality</strong>: We quickly see if unexpected rows are being filtered out or if new transactions are missing.</p></li><li><p><strong>Tracks Partial Loads</strong>: We know if “today’s” row count is incomplete, we’ll look again tomorrow for the full picture.</p></li><li><p><strong>Prevents Duplicates</strong>: Confirms that rows already in <strong>Transactions</strong> are removed from staging.</p></li><li><p><strong>Helps Troubleshoot</strong>: If we see a sudden drop or spike, we can investigate the staging load or the filter criteria.</p></li></ol><hr/><h2 id="Temp3-6.KeyTakeawaysforBusinessUsers">6. Key Takeaways for Business Users</h2><ul><li><p><strong>If You See Fewer Rows for Today</strong>: It might be a partial load. Check back tomorrow for the final count.</p></li><li><p><strong>If RowsFilteredOut Seems High</strong>: It may be correct (lots of excluded transaction types), or it could signal a misconfiguration in the filter rules.</p></li><li><p><strong>If NewTransactionsInserted Is Low</strong>: Possibly we have mostly duplicates or the filter is excluding them.</p></li><li><p><strong>No Action Needed Daily</strong>: This is mainly a <strong>monitoring</strong> step. We’ll address issues if any numbers look off.</p></li></ul><hr/><p><strong>Thank you</strong> for reviewing this process. If you have any questions or notice unusual numbers in the daily report, please reach out so we can investigate further.</p><p>Best Regards,</p><p>YourNameYour Name<br/>YourRoleYour Role<br/>YourContactInformationYour Contact Information</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

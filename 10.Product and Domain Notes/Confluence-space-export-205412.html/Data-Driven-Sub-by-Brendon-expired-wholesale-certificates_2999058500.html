@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Data Driven Sub by Brendon expired wholesale certificates</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Data Driven Sub by Brendon expired wholesale certificates
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 10-02-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is a detailed explanation of the query and its components:</p><hr/><h3 id="DataDrivenSubbyBrendonexpiredwholesalecertificates-Overview">Overview</h3><p>The query is designed to pull a distinct list of portfolio-related records from the <strong>CRM_MSCRM</strong> database. It combines data from several tables to provide information about:</p><ul><li><p><strong>Portfolios</strong> (identified by <code>dsl_PortfolioIdName</code>)</p></li><li><p><strong>Accounts/Trading Entities</strong> (with details like <code>AccountId</code>, <code>Name</code>, and primary adviser)</p></li><li><p><strong>Adviser Information</strong> (specifically the adviser’s internal email from the <strong>SystemUser</strong> table)</p></li><li><p><strong>Client Categorization</strong> (mapped through the <strong>StringMap</strong> table)</p></li><li><p><strong>Sophisticated Investor Programme (SIP)</strong> details (including certificate name, expiry date, status, and category)</p></li></ul><p>The ultimate goal is to filter and display portfolios that meet certain criteria (active records and belonging to a provided list of portfolio IDs) and, for each account, include the most recent SIP record based on the expiry date.</p><hr/><h3 id="DataDrivenSubbyBrendonexpiredwholesalecertificates-Step-by-StepExplanation">Step-by-Step Explanation</h3><ol start="1"><li><p><strong>Setting the Database Context:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">use CRM_MSCRM
+</pre>
+</div></div><p>This tells SQL Server to run the following queries against the <strong>CRM_MSCRM</strong> database.</p></li><li><p><strong>Main SELECT Statement:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">select distinct 
+    dsl_PortfolioIdName,
+    a.AccountId,
+    a.Name as TradingEntityName,
+    a.dsl_PrimaryAdviserIdName,
+    su.InternalEMailAddress,
+    sm2.Value as ClientCategorization,
+    sip.dsl_name,
+    sip.dsl_Expiry,
+    sip.statecode,
+    sip.statuscode,
+    sm3.Value as SIP_Category,
+    Ranking
+</pre>
+</div></div><ul><li><p><code>distinct</code>: Ensures that duplicate rows are eliminated.</p></li><li><p><strong>Columns Selected:</strong></p><ul><li><p><code>dsl_PortfolioIdName</code>: Identifier for the portfolio.</p></li><li><p><code>AccountId</code> and <code>TradingEntityName</code>: Details from the account table.</p></li><li><p><code>dsl_PrimaryAdviserIdName</code> and <code>InternalEMailAddress</code>: Adviser information.</p></li><li><p><code>ClientCategorization</code>: Derived from a string mapping (sm2).</p></li><li><p><strong>SIP Details</strong>: Such as the SIP name, expiry, state, and status.</p></li><li><p><code>SIP_Category</code>: Mapped via another StringMap (sm3).</p></li><li><p><code>Ranking</code>: A computed field from the subquery used to pick the most relevant SIP record.</p></li></ul></li></ul></li><li><p><strong>Data Sources and Joins:</strong></p><ul><li><p><strong>Portfolios Service Table (</strong><code>ps</code><strong>):</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">from CRM_MSCRM.dbo.dsl_portfolioservice ps
+</pre>
+</div></div><p>The primary table used is <strong>dsl_portfolioservice</strong>, aliased as <code>ps</code>.</p></li><li><p><strong>Join with Account Table (</strong><code>a</code><strong>):</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">inner join account a
+    on ps.dsl_tradingentityID = a.AccountId
+    and a.StateCode = 0
+</pre>
+</div></div><ul><li><p><strong>Join Condition:</strong> Matches the portfolio’s trading entity ID to the account ID.</p></li><li><p><strong>Filter:</strong> Only active accounts (<code>StateCode = 0</code>).</p></li></ul></li><li><p><strong>Join with SystemUser Table (</strong><code>su</code><strong>):</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">inner join SystemUser su
+    on su.FullName = a.dsl_PrimaryAdviserIdName 
+</pre>
+</div></div><ul><li><p>Retrieves the adviser’s internal email address by matching the adviser’s name in the account table with the <strong>SystemUser</strong> table.</p></li></ul></li><li><p><strong>Join with StringMap for Client Categorization (</strong><code>sm2</code><strong>):</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">inner join StringMap sm2
+    on sm2.AttributeName = &#39;dsl_ClientCategorisation&#39;
+    and sm2.AttributeValue = a.dsl_ClientCategorisation
+</pre>
+</div></div><ul><li><p>This maps the client's categorisation code from the account record to a human-readable value.</p></li></ul></li><li><p><strong>Left Join with a Subquery for SIP Details (</strong><code>sip</code><strong>):</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">left join 
+    (
+      select
+          sip.dsl_name,
+          sip.dsl_Expiry,
+          sip.statecode,
+          sip.statuscode,
+          sip.dsl_TradingEntityId,
+          sip.dsl_Category,
+          ROW_NUMBER() over (partition by dsl_TradingEntityId order by dsl_Expiry desc) as Ranking
+      from dsl_sophisticatedinvestorprogrammeBase sip
+      group by 
+          sip.dsl_name,
+          sip.dsl_Expiry,
+          sip.statecode,
+          sip.statuscode,
+          sip.dsl_TradingEntityId,
+          sip.dsl_Category
+    ) sip
+    on sip.dsl_TradingEntityId = a.AccountId
+    and Ranking = 1
+</pre>
+</div></div><ul><li><p><strong>Purpose:</strong> To retrieve SIP details for each trading entity.</p></li><li><p><strong>ROW_NUMBER() Function:</strong></p><ul><li><p>Partitions the SIP records by each <code>dsl_TradingEntityId</code> (account) and orders them by <code>dsl_Expiry</code> in descending order.</p></li><li><p>This ranking assigns <strong>Ranking = 1</strong> to the most recent SIP record per account.</p></li></ul></li><li><p><strong>Left Join:</strong></p><ul><li><p>Ensures that even if there is no corresponding SIP record, the account information still appears.</p></li><li><p>The join condition includes <code>Ranking = 1</code> to only pick the latest record for each account.</p></li></ul></li></ul></li><li><p><strong>Join with StringMap for SIP Category (</strong><code>sm3</code><strong>):</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">inner join StringMap sm3 
+    on sm3.AttributeName = &#39;dsl_Category&#39;
+    and sm3.AttributeValue = sip.dsl_Category
+</pre>
+</div></div><ul><li><p>Maps the SIP category code from the SIP record to a human-readable value.</p></li></ul></li></ul></li><li><p><strong>WHERE Clause – Filtering Conditions:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">where
+    ps.statecode = 0
+    and
+    dsl_PortfolioIdName in (XXX)
+</pre>
+</div></div><ul><li><p><code>ps.statecode = 0</code><strong>:</strong></p><ul><li><p>Filters the portfolio service records to include only active portfolios.</p></li></ul></li><li><p><code>dsl_PortfolioIdName in (XXX)</code><strong>:</strong></p><ul><li><p>This condition is a placeholder. You are expected to supply a list of portfolio names or IDs (the 58 portfolio codes mentioned) to filter the results accordingly.</p></li></ul></li></ul><p><strong>Note:</strong> There are several commented-out sections in the WHERE clause and elsewhere. These indicate additional filters or exclusions (such as excluding accounts based on certain SIP statuses or filtering for a specific portfolio) that are currently not active but might be used in other scenarios.</p></li><li><p><strong>ORDER BY Clause:</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">order by dsl_PortfolioIdName desc
+</pre>
+</div></div><ul><li><p>Sorts the final result set in descending order based on the portfolio name or ID.</p></li></ul></li></ol><hr/><h3 id="DataDrivenSubbyBrendonexpiredwholesalecertificates-Summary">Summary</h3><ul><li><p><strong>Purpose:</strong><br/>The query extracts a combined view of portfolio services, account details, adviser information, client categorization, and the latest sophisticated investor programme (SIP) details for each account.</p></li><li><p><strong>Key Features:</strong></p><ul><li><p><strong>Distinct Rows:</strong> Prevents duplicate records.</p></li><li><p><strong>Multiple Joins:</strong></p><ul><li><p>Ensures data from related tables (accounts, advisers, string maps, and SIP records) is combined.</p></li></ul></li><li><p><strong>Subquery with ROW_NUMBER():</strong></p><ul><li><p>Isolates the most recent SIP record for each trading entity.</p></li></ul></li><li><p><strong>Flexible Filtering:</strong></p><ul><li><p>Uses a placeholder (<code>in (XXX)</code>) for portfolio codes, making it adaptable for specific lists.</p></li></ul></li><li><p><strong>Commented Code:</strong></p><ul><li><p>Indicates potential additional filtering or conditions that might be applied later.</p></li></ul></li></ul></li></ul><p>This detailed explanation should help you understand how each part of the query works together to produce the desired dataset. If you have any further questions or need additional clarification on any section, please let me know!</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

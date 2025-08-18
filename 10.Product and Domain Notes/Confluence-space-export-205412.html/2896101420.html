@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : &quot;Standard Broking Service” exclusion logic FIXed</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : &quot;Standard Broking Service” exclusion logic FIXed
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 11-12-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Let’s carefully verify that the “Standard Broking Service” exclusion logic in the new code matches the behavior of the old delete-based code. We’ll walk through the logic step-by-step using a hypothetical scenario, just as we did previously. We’ll consider a few variations of portfolios under the same Account/Individual/Regime context to ensure consistency.</p><p><strong>Old Logic (Delete Approach):</strong><br/>The old code ran a <code>DELETE</code> statement on <code>##crmtaxdatafilt</code>:</p><ul><li><p>Deletes any rows where:</p><ol start="1"><li><p><code>dsl_PortfolioServiceLevelName = 'Standard Broking Service'</code></p></li><li><p>The client has <strong>no</strong> Safe Custody holdings.</p></li><li><p>The client has <strong>no</strong> Cash Management (CCM) account.</p></li></ol></li></ul><p>If all three conditions are met, the standard broking service row is removed from the final dataset.</p><p><strong>New Logic (Exclusion with </strong><code>AND NOT</code><strong>):</strong><br/>The new code uses a condition in the <code>WHERE</code> clause:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">AND NOT (
+    PortfolioServiceLevelName = &#39;Standard Broking Service&#39;
+    AND NOT EXISTS ( ... Safe Custody Holdings Subquery ... )
+    AND NOT EXISTS ( ... CCM Subquery ... )
+)
+</pre>
+</div></div><ul><li><p>If <code>PortfolioServiceLevelName = 'Standard Broking Service'</code> <strong>and</strong> there are <strong>no</strong> Safe Custody holdings, and <strong>no</strong> CCM accounts, then this entire <code>AND NOT(...)</code> condition is triggered, causing that row to be excluded from the final result set (similar to the old code’s delete).</p></li></ul><p><strong>Hypothetical Test Cases:</strong></p><ol start="1"><li><p><strong>Case A: Standard Broking, No Safe Custody, No CCM</strong></p><ul><li><p>Old Code:</p><ul><li><p>Condition met? Yes, this is a Standard Broking Service without safe custody and without CCM.</p></li><li><p>Row is deleted.</p></li></ul></li><li><p>New Code:</p><ul><li><p><code>PortfolioServiceLevelName = 'Standard Broking Service'</code>? Yes.</p></li><li><p>Safe Custody holdings check: <code>NOT EXISTS</code> returns true (no holdings found).</p></li><li><p>CCM account check: <code>NOT EXISTS</code> returns true (no CCM found).</p></li><li><p>Therefore, the <code>AND NOT(...)</code> clause is triggered, excluding this row.</p></li></ul></li></ul><p><strong>Result:</strong> Matches old logic.</p></li><li><p><strong>Case B: Standard Broking, Has Safe Custody, No CCM</strong></p><ul><li><p>Old Code:</p><ul><li><p>Standard Broking? Yes.</p></li><li><p>No Safe Custody? No (since they have safe custody, the condition for deletion isn’t met).</p></li><li><p>The row is not deleted.</p></li></ul></li><li><p>New Code:</p><ul><li><p>Standard Broking? Yes.</p></li><li><p>Safe Custody check: <code>NOT EXISTS (SafeCustody)</code>: This subquery <strong>fails</strong> because safe custody is found (<code>SUM(t.nominal) &gt; 0</code>). Thus <code>NOT EXISTS</code> is false.</p></li><li><p>Since we require both no safe custody and no CCM to exclude, and here we have safe custody, the <code>AND NOT(...)</code> condition does not fully apply.</p></li><li><p>The row remains in the final dataset.</p></li></ul></li></ul><p><strong>Result:</strong> Matches old logic.</p></li><li><p><strong>Case C: Standard Broking, No Safe Custody, Has CCM</strong></p><ul><li><p>Old Code:</p><ul><li><p>Standard Broking? Yes.</p></li><li><p>No Safe Custody? True.</p></li><li><p>No CCM? False (because CCM exists).</p></li><li><p>Since no CCM is not true (they do have CCM), the old code does not delete this row.</p></li></ul></li><li><p>New Code:</p><ul><li><p>Standard Broking? Yes.</p></li><li><p>Safe Custody check: <code>NOT EXISTS(...)</code>: True (no holdings).</p></li><li><p>CCM check: <code>NOT EXISTS(...)</code>: False (CCM does exist).</p></li><li><p>Since the row does have a CCM, the combined condition inside <code>AND NOT(...)</code> is not fully met. Therefore, the row is not excluded.</p></li></ul></li></ul><p><strong>Result:</strong> Matches old logic.</p></li><li><p><strong>Case D: Standard Broking, Has Safe Custody, Has CCM</strong></p><ul><li><p>Old Code:</p><ul><li><p>Safe custody present means they are never deleted based on the old conditions.</p></li></ul></li><li><p>New Code:</p><ul><li><p>With safe custody present, <code>NOT EXISTS (SafeCustody)</code> returns false. This alone breaks the chain of conditions needed to exclude, so the row stays.</p></li></ul></li></ul><p><strong>Result:</strong> Matches old logic.</p></li></ol><p><strong>Double Checking the Underlying Data Source:</strong><br/>One subtlety we previously identified is ensuring that both the old and new code refer to the same dataset when checking for CCM accounts. The new code now checks CCM existence within <code>CombinedData</code> (which represents the same combined dataset that <code>##crmtaxdatafilt</code> once represented). As long as <code>CombinedData</code> is indeed equivalent to <code>##crmtaxdatafilt</code>, both old and new logic produce the same results.</p><p><strong>Conclusion:</strong><br/>By walking through various scenarios involving “Standard Broking Service” portfolios, we see that the new exclusion logic (<code>AND NOT(...)</code> with subqueries) behaves exactly as the old delete logic did, assuming the underlying data (i.e., presence of CCM and safe custody holdings) is matched in both approaches. The new code simply excludes non-qualifying rows instead of explicitly deleting them from a temporary table, but the end result—removing those rows from the final output—is effectively the same.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

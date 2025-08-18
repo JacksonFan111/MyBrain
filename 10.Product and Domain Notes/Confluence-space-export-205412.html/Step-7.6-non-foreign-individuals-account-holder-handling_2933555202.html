@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : Step 7.6 non-foreign individuals account holder handling</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : Step 7.6 non-foreign individuals account holder handling
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 07-01-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is a <strong>comprehensive, tax-reporting-focused</strong> documentation of the entire <strong>Step 7.6</strong> process. It explains the <strong>why</strong> and <strong>how</strong> behind each SQL query—showing how we identify <strong>Entities</strong> with at least one foreign (or US-tax-resident) individual, then gather the <strong>non-foreign</strong> individuals on those Entities, and finally integrate that information into the <strong>FATCA</strong> and <strong>CRS</strong> pivoted data sets.</p><hr/><h2 id="Step7.6non-foreignindividualsaccountholderhandling-Overview"><strong>Overview</strong></h2><ol start="1"><li><p><strong>FATCA</strong> (Foreign Account Tax Compliance Act) and <strong>CRS</strong> (Common Reporting Standard) require financial institutions to <strong>identify</strong> and <strong>report</strong> accounts held by certain foreign individuals (or non-resident entities with foreign controlling persons).</p></li><li><p>An <strong>Entity</strong> (e.g., an account in the CRM system) can have multiple individuals (roles such as “Account Holder,” “Beneficiary,” “Minor,” etc.).</p></li><li><p>We first determine which Entities are subject to potential FATCA/CRS reporting by finding any <strong>foreign/US-tax-resident</strong> individuals.</p></li><li><p>Next, we locate the <strong>non-foreign</strong> individuals (those not flagged as foreign) on the <strong>same</strong> Entities—because these non-foreign individuals might or might not be relevant for reporting.</p></li><li><p>We then <strong>merge</strong> those non-foreign holders into the pivoted <strong>FATCA</strong> and <strong>CRS</strong> data to ensure complete coverage of all relevant roles for the Entity.</p></li></ol><blockquote><p><strong>Important Note:</strong> In this script, we are specifically focusing on Entities classified as <code>'Individual'</code> or <code>'Minor Under 18 yrs'</code>. In practice, you may also need to consider Entities that are <code>'Company'</code> or <code>'Trust'</code> to capture <strong>foreign controlling persons</strong>. Those are typically handled in separate or additional queries.</p></blockquote><hr/><h2 id="Step7.6non-foreignindividualsaccountholderhandling-Step7.6.1:FlagEntitiesThatHaveAtLeastOne“Foreign”Individual"><strong>Step 7.6.1: Flag Entities That Have At Least One “Foreign” Individual</strong></h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">IF OBJECT_ID(&#39;tempdb..#EntitiesWithFlaggedIndividuals2&#39;) IS NOT NULL
+    DROP TABLE #EntitiesWithFlaggedIndividuals2;
+
+SELECT DISTINCT 
+    r.dsl_TradingEntityID AS EntityId
+INTO #EntitiesWithFlaggedIndividuals2
+FROM [DynamicsPROD].[CRM_MSCRM].dbo.dsl_roles AS r
+INNER JOIN [DynamicsPROD].[CRM_MSCRM].dbo.Contact AS i
+    ON r.dsl_IndividualId = i.ContactId
+WHERE r.statuscode = 1
+  AND (
+        i.dsl_USCitizensforTaxPurposes = 1 
+        OR i.ots_foreigntaxresident = 1
+      );
+</pre>
+</div></div><p><strong>Logic Explanation</strong></p><ul><li><p>The table <code>dsl_roles</code> links <strong>Entities</strong> (<code>dsl_TradingEntityID</code>) to <strong>Individuals</strong> (<code>dsl_IndividualId</code>).</p></li><li><p>We pick rows where <code>statuscode = 1</code> (an active role) <strong>and</strong> where the Individual is flagged as <strong>US citizen for tax</strong> or <strong>foreign tax resident</strong>.</p></li><li><p>Any <strong>Entity</strong> that meets this condition is put into <code>#EntitiesWithFlaggedIndividuals2</code>.</p></li><li><p>The result is a list of <strong>Entities</strong> that have <strong>at least one</strong> foreign or US-tax-resident holder—these are potentially <strong>reportable</strong> under FATCA/CRS.</p></li></ul><hr/><h2 id="Step7.6non-foreignindividualsaccountholderhandling-Step7.6.2:IdentifyNon-ForeignIndividualsonThoseEntities"><strong>Step 7.6.2: Identify Non-Foreign Individuals on Those Entities</strong></h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">IF OBJECT_ID(&#39;FATCA.NonForeignAccHolderData_jf&#39;,&#39;U&#39;) IS NOT NULL
+    DROP TABLE FATCA.NonForeignAccHolderData_jf;
+
+SELECT DISTINCT
+    CASE 
+        WHEN r.dsl_RoleTypeIdName IN 
+             (&#39;Individual&#39;,&#39;Bank Account Holder&#39;,&#39;Minor&#39;,&#39;Power of Attorney&#39;,&#39;Beneficiary&#39;)
+             AND ft2.cip_identification IS NULL
+        THEN &#39;non-Foreign Acc Holder&#39;
+        ELSE &#39;&#39;
+    END AS IndType,
+    sm.Value                  AS dsl_tradingentitytype,
+    i.ContactId               AS IndividualId,
+    i.FullName                AS AccHolderName,
+    a.AccountId               AS EntityID,
+    a.Name                    AS EntityName,
+    r.dsl_RoleTypeIdName,
+    r.dsl_BeneficialOwner,
+    r.dsl_BeneficiaryOwnership,
+    r.dsl_Authorised
+INTO FATCA.NonForeignAccHolderData_jf
+FROM [DynamicsPROD].[CRM_MSCRM].dbo.Account        AS a
+INNER JOIN [DynamicsPROD].[CRM_MSCRM].dbo.dsl_roles AS r
+    ON a.AccountId = r.dsl_TradingEntityID
+    AND r.statuscode = 1
+    AND r.dsl_RoleTypeIdName IN 
+        (&#39;Individual&#39;,&#39;Bank Account Holder&#39;,&#39;Minor&#39;,&#39;Power of Attorney&#39;,&#39;Beneficiary&#39;)
+    AND r.dsl_Authorised = 1
+INNER JOIN #EntitiesWithFlaggedIndividuals2 AS ewf2
+    ON ewf2.EntityId = a.AccountId
+INNER JOIN [DynamicsPROD].[CRM_MSCRM].dbo.Contact AS i
+    ON i.ContactId = r.dsl_IndividualId
+LEFT JOIN [DynamicsPROD].[CRM_MSCRM].dbo.dsl_portfolioservice AS ps
+    ON ps.dsl_TradingEntityId = a.AccountId
+LEFT JOIN [DynamicsPROD].[CRM_MSCRM].dbo.StringMap AS sm
+    ON sm.AttributeValue = a.dsl_TradingEntityType
+    AND sm.AttributeName = &#39;dsl_tradingentitytype&#39;
+LEFT JOIN [DynamicsPROD].[CRM_MSCRM].dbo.cip_foreigntaxrecord AS ft2
+    ON ft2.cip_Individual = i.ContactId
+LEFT JOIN [DynamicsPROD].[CRM_MSCRM].dbo.dsl_countryBase AS cc2
+    ON cc2.dsl_countryid = ft2.cip_CountryJurisdiction
+    AND cc2.statuscode = 1
+WHERE 
+    sm.Value &lt;&gt; &#39;Estate Winding-Up&#39;
+    AND ft2.cip_identification IS NULL
+    AND sm.Value IN (&#39;Individual&#39;,&#39;Minor Under 18 yrs&#39;)
+    AND a.Name &lt;&gt; &#39;#Training&#39;
+    AND a.Name NOT LIKE &#39;%OFFICE%&#39;
+    AND (i.FullName NOT LIKE &#39;%Dummy%&#39; OR i.FullName NOT LIKE &#39;%TEST%&#39;);
+</pre>
+</div></div><p><strong>Logic Explanation</strong></p><ul><li><p>We create a table <code>FATCA.NonForeignAccHolderData_jf</code> for <strong>non-foreign</strong> individuals on Entities that <strong>already</strong> have a foreign/US-tax-resident individual (from Step 7.6.1).</p></li><li><p>The query ensures:</p><ul><li><p><code>r.statuscode = 1</code> and <code>r.dsl_Authorised = 1</code> (active, authorized relationship).</p></li><li><p>The role (<code>r.dsl_RoleTypeIdName</code>) is in <code>('Individual','Bank Account Holder','Minor','Power of Attorney','Beneficiary')</code>.</p></li><li><p><code>ft2.cip_identification IS NULL</code> indicates no foreign tax identification record, hence “non-foreign.”</p></li><li><p>We exclude certain special cases (e.g., <code>sm.Value &lt;&gt; 'Estate Winding-Up'</code>, <code>a.Name NOT LIKE '%OFFICE%'</code>, etc.).</p></li><li><p>We also only take Entities whose <code>sm.Value</code> is in <code>('Individual','Minor Under 18 yrs')</code>, effectively focusing on Entities deemed to be natural persons (not companies, trusts, etc.).</p></li></ul></li></ul><blockquote><p><strong>Why do this?</strong></p><ul><li><p>Although the <strong>Entity</strong> is flagged due to at least one foreign individual, there may be <strong>other</strong> individuals on the same Entity who are <strong>not</strong> foreign.</p></li><li><p>We gather those “non-foreign” individuals so we can decide how to treat them in final FATCA/CRS reporting (e.g., whether they need to be included or excluded from certain reportable fields).</p></li></ul></blockquote><hr/><h2 id="Step7.6non-foreignindividualsaccountholderhandling-Step7.6.3:CombineNon-ForeignAccountHolderswithFATCAPivotedData"><strong>Step 7.6.3: Combine Non-Foreign Account Holders with FATCA Pivoted Data</strong></h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT
+    sfp.*,
+    CASE
+        WHEN nfah.EntityID IS NOT NULL
+             AND nfah.AccHolderName IS NOT NULL
+             AND nfah.AccHolderName COLLATE DATABASE_DEFAULT
+                 &lt;&gt; sfp.IndividualName COLLATE DATABASE_DEFAULT
+        THEN nfah.AccHolderName
+        ELSE &#39;N/A&#39;
+    END AS NonForeignAccHolderName
+FROM FATCA.Stage_FATCAPivotedData_jf AS sfp
+LEFT JOIN FATCA.NonForeignAccHolderData_jf AS nfah
+    ON sfp.EntityID = nfah.EntityID
+WHERE nfah.EntityID IS NOT NULL
+  AND nfah.AccHolderName COLLATE DATABASE_DEFAULT 
+      &lt;&gt; sfp.IndividualName COLLATE DATABASE_DEFAULT;
+</pre>
+</div></div><p><strong>Logic Explanation</strong></p><ul><li><p>We <strong>left-join</strong> the non-foreign holders (<code>nfah</code>) onto the pivoted FATCA data (<code>sfp</code>) by matching on <code>EntityID</code>.</p></li><li><p>We filter out rows where there is <strong>no</strong> match on <code>nfah.EntityID</code>.</p></li><li><p>We also require that <code>nfah.AccHolderName</code> is <strong>different</strong> from <code>sfp.IndividualName</code> (collation-adjusted comparison to avoid collation conflicts).</p></li><li><p>If <code>AccHolderName</code> is different, we display it; if it’s the same or no match, we show <code>'N/A'</code>.</p></li></ul><blockquote><p><strong>Why exclude duplicates?</strong></p><ul><li><p>If the pivoted data <code>sfp.IndividualName</code> already contains the same individual name, we do not want to double-count or incorrectly list them as a separate holder.</p></li></ul></blockquote><hr/><h2 id="Step7.6non-foreignindividualsaccountholderhandling-Step7.6.4:CombineNon-ForeignAccountHolderswithCRSPivotedData"><strong>Step 7.6.4: Combine Non-Foreign Account Holders with CRS Pivoted Data</strong></h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT
+    sfp.*,
+    CASE
+        WHEN nfah.EntityID IS NOT NULL
+             AND nfah.AccHolderName IS NOT NULL
+             AND nfah.AccHolderName COLLATE DATABASE_DEFAULT
+                 &lt;&gt; sfp.IndividualName COLLATE DATABASE_DEFAULT
+        THEN nfah.AccHolderName
+        ELSE &#39;N/A&#39;
+    END AS NonForeignAccHolderName
+FROM FATCA.Stage_CRSPivotedData_jf AS sfp
+LEFT JOIN FATCA.NonForeignAccHolderData_jf AS nfah
+    ON sfp.EntityID = nfah.EntityID
+WHERE nfah.EntityID IS NOT NULL
+  AND nfah.AccHolderName COLLATE DATABASE_DEFAULT
+      &lt;&gt; sfp.IndividualName COLLATE DATABASE_DEFAULT;
+</pre>
+</div></div><p><strong>Logic Explanation</strong></p><ul><li><p>Same approach as Step 7.6.3 but applied to <strong>CRS</strong> pivoted data (<code>Stage_CRSPivotedData_jf</code>).</p></li><li><p>Ensures that in the <strong>CRS</strong> context, any matching non-foreign individual will only appear if they differ from the already-pivoted <code>IndividualName</code>.</p></li></ul><blockquote><p><strong>Why do we replicate the logic for CRS?</strong></p><ul><li><p>FATCA and CRS have overlapping but distinct reporting requirements.</p></li><li><p>We must ensure consistency and completeness in <strong>both</strong> data sets so that any non-foreign holders are properly documented or excluded.</p></li></ul></blockquote><hr/><h2 id="Step7.6non-foreignindividualsaccountholderhandling-ImportantCaveat:CompanyorTrustEntities"><strong>Important Caveat: Company or Trust Entities</strong></h2><p>The above queries deliberately <strong>filter</strong> on <code>sm.Value IN ('Individual','Minor Under 18 yrs')</code>. This means we are <strong>not</strong> currently capturing Entities classified as <code>'Company'</code>, <code>'Trust'</code>, or other forms. In FATCA/CRS:</p><ul><li><p><strong>Companies</strong>, <strong>trusts</strong>, <strong>partnerships</strong>, etc., may be <strong>reportable</strong> if they have foreign <strong>controlling persons</strong> (e.g., beneficial owners).</p></li><li><p>If your institution must report those entities, you’ll need <strong>separate</strong> or <strong>additional</strong> code to identify and include them.</p></li><li><p>The logic here focuses on Entities that are known to be <strong>natural persons</strong>—hence <code>'Individual'</code> or <code>'Minor Under 18 yrs'</code>.</p></li></ul><hr/><h2 id="Step7.6non-foreignindividualsaccountholderhandling-SummaryofTaxReportingLogic"><strong>Summary of Tax Reporting Logic</strong></h2><ol start="1"><li><p><strong>Identify Entities</strong> (Step 7.6.1) that have <strong>at least one foreign/US-tax-resident</strong> individual—these Entities potentially trigger FATCA/CRS reporting.</p></li><li><p><strong>Gather the non-foreign individuals</strong> (Step 7.6.2) associated with those same Entities, ensuring we have a complete picture of who else is attached to the Entity.</p></li><li><p><strong>Merge</strong> the non-foreign holders into the pivoted <strong>FATCA</strong> data (Step 7.6.3) and the pivoted <strong>CRS</strong> data (Step 7.6.4).</p></li><li><p><strong>Exclude</strong> or mark as <code>'N/A'</code> any holder whose name matches an already-listed pivoted name, preventing double-counting.</p></li><li><p><strong>Acknowledge</strong> that this process only covers Entities classified as natural persons (<code>'Individual'</code>, <code>'Minor Under 18 yrs'</code>). If your reporting obligations include <strong>Company</strong>, <strong>Trust</strong>, or other legal entities, additional logic is required to capture their foreign controlling persons.</p></li></ol><p>By the end of Step 7.6, your data set is enriched with non-foreign account holders’ details (where relevant) for both FATCA and CRS, providing a more complete basis for final tax compliance reporting.</p><p /><p /><p>Below is a <strong>review and practical solution</strong> outline that acknowledges the <strong>complex</strong> reality of FATCA/CRS reporting when multiple individuals—each with different roles and tax residencies—are attached to the <strong>same account</strong> (Entity). The fundamental challenge is that an Entity can be labeled as “Individual,” “Joint,” or “Minor,” yet still have <strong>multiple</strong> people involved in controlling, benefiting from, or authorizing transactions on the same account, each potentially subject to different reporting rules.</p><hr/><h2 id="Step7.6non-foreignindividualsaccountholderhandling-1.UnderstandingtheProblem">1. <strong>Understanding the Problem</strong></h2><ol start="1"><li><p><strong>Overlapping Roles</strong></p><ul><li><p>A single Entity (e.g., an account “Josephine Thea Searles”) might have many Individuals:</p><ul><li><p>Josephine herself (perhaps a “beneficial owner” and “account holder”).</p></li><li><p>Jackson (maybe an “authorized person” <strong>and</strong> a US citizen → foreign for FATCA/CRS).</p></li><li><p>Sarah (an “authorized person” but <strong>not</strong> foreign → not reportable).</p></li></ul></li></ul></li><li><p><strong>Different Tax Residency/Status</strong></p><ul><li><p>Some individuals are foreign or US-tax-resident (triggering FATCA/CRS reporting).</p></li><li><p>Others are domestic (New Zealand, for instance) and <strong>not</strong> reportable under FATCA/CRS unless other conditions apply.</p></li></ul></li><li><p><strong>Multiple ‘Types’ of Entities</strong></p><ul><li><p>Even if the trading entity type is <code>'Individual'</code>, <code>'Joint'</code>, or <code>'Minor Under 18 yrs'</code>, the account can still have multiple controlling persons or authorized persons.</p></li><li><p>For <strong>companies</strong> or <strong>trusts</strong>, you’d also have beneficial owners or controlling persons who might be foreign.</p></li></ul></li><li><p><strong>Role + Status + Authorization</strong></p><ul><li><p>Each person can wear multiple hats: “account holder,” “controlling person,” “beneficial owner,” or “authorized signatory.”</p></li><li><p>You must confirm if <strong>any</strong> of those roles triggers reporting under FATCA or CRS when that person is foreign/US-tax-resident.</p></li></ul></li></ol><hr/><h2 id="Step7.6non-foreignindividualsaccountholderhandling-2.KeyConceptsforaPracticalSolution">2. <strong>Key Concepts for a Practical Solution</strong></h2><ol start="1"><li><p><strong>Central Data Model / Unified Query</strong></p><ul><li><p>Bring together <strong>all</strong> relevant columns in a single query or view:</p><ul><li><p><strong>Entity</strong> details (trading entity type, name, etc.).</p></li><li><p><strong>Role</strong> details (account holder, beneficial owner, authorized person, controlling person, etc.).</p></li><li><p><strong>Individual</strong> details (tax residency flags like US citizen, foreign tax resident).</p></li><li><p><strong>Authorization</strong> flags (dsl_authorised, dsl_BeneficialOwner, etc.).</p></li></ul></li><li><p>This helps you <strong>see</strong> the full picture of each person’s relationship to the account.</p></li></ul></li><li><p><strong>Role/Residency Matrix</strong></p><ul><li><p>Conceptually, you can think of a matrix: <strong>Individual</strong> <strong>Foreign/US</strong>? <strong>Role</strong> (Account Holder, Beneficial Owner, Controlling Person, etc.) <strong>Reportable Under FATCA/CRS?</strong> Josephine No (NZ Only) Account Holder, Beneficial Owner Likely yes (account holder) Jackson Yes (US) Authorized Person, Controlling Person Definitely yes (foreign) Sarah No (NZ Only) Authorized Person Likely no</p></li><li><p>The <strong>reporting</strong> column is derived by combining role + foreign status.</p></li></ul></li><li><p><strong>Do Not Rely on Entity Type Alone</strong></p><ul><li><p>Even if the entity is <code>'Individual'</code> or <code>'Minor'</code>, you still can have multiple people attached.</p></li><li><p>For <strong>companies</strong>, <strong>trusts</strong>, or <strong>joint</strong> accounts, the same approach stands: gather controlling persons, beneficial owners, signatories, then check <strong>who</strong> is foreign.</p></li></ul></li><li><p><strong>Multi-Step or Single-Step Approach</strong></p><ul><li><p><strong>Multi-step</strong>:</p><ol start="1"><li><p>Get all Individuals linked to an Entity (via the <code>dsl_roles</code> table).</p></li><li><p>Filter for those flagged as foreign/US, or keep all and do the classification in a next step.</p></li><li><p>Identify who is controlling, beneficial, or authorized (which can trigger or exclude them from reporting).</p></li><li><p>Pivot or aggregate as needed for the final FATCA/CRS submission.</p></li></ol></li><li><p><strong>Single-step</strong> (big JOIN):</p><ul><li><p>Create one comprehensive SQL query or view that <strong>joins</strong> all relevant tables (Account, Roles, Individual, CIP/Tax records, etc.), then <strong>applies</strong> the logic in a single pass to determine “reportable vs. not reportable.”</p></li></ul></li></ul></li></ol><hr/><h2 id="Step7.6non-foreignindividualsaccountholderhandling-3.APracticalSolutionOutline">3. <strong>A Practical Solution Outline</strong></h2><p>Below is a conceptual outline (not a single script, but the <strong>flow</strong> you might implement):</p><h3 id="Step7.6non-foreignindividualsaccountholderhandling-StepA:GatherFullRelationshipData"><strong>Step A: Gather Full Relationship Data</strong></h3><ul><li><p><strong>FROM</strong> <code>Account</code> (or Entity) <strong>JOIN</strong> <code>dsl_roles</code> (role definitions) <strong>JOIN</strong> <code>Contact</code> (individual details).</p></li><li><p>Include columns like:</p><ul><li><p><code>AccountId</code> (Entity ID),</p></li><li><p><code>dsl_TradingEntityType</code> (Individual, Joint, Minor, Company, etc.),</p></li><li><p><code>dsl_RoleTypeIdName</code> (e.g., Individual, Bank Account Holder, Minor, Beneficiary, Power of Attorney),</p></li><li><p><code>dsl_Authorised</code>, <code>dsl_BeneficialOwner</code>, <code>dsl_BeneficiaryOwnership</code> (indicates authority/ownership),</p></li><li><p><code>i.dsl_USCitizensforTaxPurposes</code>, <code>i.ots_foreigntaxresident</code> (indicates foreign status),</p></li><li><p>Any CIP/foreign tax record data you might need.</p></li></ul></li></ul><h3 id="Step7.6non-foreignindividualsaccountholderhandling-StepB:ClassifyEachIndividual"><strong>Step B: Classify Each Individual</strong></h3><p>Use a <code>CASE WHEN</code> logic in SQL (or a data transformation layer) to determine:</p><ol start="1"><li><p><strong>Foreign vs. Not Foreign</strong></p><ul><li><p><code>CASE WHEN i.dsl_USCitizensforTaxPurposes = 1 OR i.ots_foreigntaxresident = 1 THEN 'Foreign/US' ELSE 'Domestic' END</code></p></li></ul></li><li><p><strong>Reportable Role</strong></p><ul><li><p>For FATCA/CRS, certain roles <strong>must</strong> be reported if they have foreign/US status, e.g., Account Holder, Controlling Person, Beneficial Owner above a certain threshold, etc.</p></li><li><p>You might do:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">CASE
+  WHEN dsl_BeneficialOwner = 1 THEN &#39;ReportableBeneficialOwner&#39;
+  WHEN dsl_Authorised = 1 AND [some condition for controlling] THEN &#39;ControllingPerson&#39;
+  ELSE &#39;Non-ReportableRole&#39;
+END
+</pre>
+</div></div></li></ul></li><li><p><strong>Combine</strong>: “Is this individual <strong>reportable</strong> under FATCA/CRS or not?”</p><ul><li><p>If <code>'Foreign/US'</code> <strong>and</strong> role is <code>'AccountHolder'</code> or <code>'ControllingPerson'</code>, then <strong>Yes</strong>. Otherwise, <strong>No</strong>.</p></li></ul></li></ol><h3 id="Step7.6non-foreignindividualsaccountholderhandling-StepC:AggregateorPivot(IfNeeded)"><strong>Step C: Aggregate or Pivot (If Needed)</strong></h3><ul><li><p>Once you have each individual’s classification, you might pivot data by Entity (so you see a row per Entity with the names of individuals who are reported vs. not reported).</p></li><li><p>Or you can keep it in a “flat” structure: one line per individual, with columns for <em>why</em> they are or aren’t reportable.</p></li></ul><h3 id="Step7.6non-foreignindividualsaccountholderhandling-StepD:FinalFilter/Output"><strong>Step D: Final Filter / Output</strong></h3><ul><li><p>If generating your <strong>FATCA</strong> or <strong>CRS</strong> submission, filter to <strong>only</strong> individuals with “reportable = Yes.”</p></li><li><p>You can still keep others in the dataset for reference, but they won’t end up in the official submission.</p></li></ul><hr/><h2 id="Step7.6non-foreignindividualsaccountholderhandling-4.WhyThisApproachHelps">4. <strong>Why This Approach Helps</strong></h2><ol start="1"><li><p><strong>Captures All Individuals</strong></p><ul><li><p>You no longer rely solely on the <code>dsl_TradingEntityType</code> being “Individual.” Even a so-called “Individual” account can have multiple roles/people.</p></li><li><p>This prevents missing <strong>foreign</strong> controlling persons hidden behind an “Individual” or “Minor” label.</p></li></ul></li><li><p><strong>Role-Based + Tax Residency</strong></p><ul><li><p>By <strong>explicitly</strong> checking <code>dsl_BeneficialOwner</code>, <code>dsl_Authorised</code>, or other flags, you know exactly who has <strong>control</strong>, who is an <strong>account holder</strong>, who is a <strong>beneficiary</strong>, etc.</p></li><li><p>Combining that with foreign/US flags clarifies precisely who is <strong>reportable</strong> and who is <strong>not</strong>.</p></li></ul></li><li><p><strong>Avoids Double-Counting</strong></p><ul><li><p>If one individual appears in multiple roles (e.g., “account holder” and “controlling person” in different contexts), you can handle that logically in one place, rather than having separate queries that might duplicate them.</p></li></ul></li><li><p><strong>Transparent &amp; Flexible</strong></p><ul><li><p>Auditors, compliance officers, or regulators can see the logic in a straightforward query or series of steps.</p></li><li><p>You can easily add new roles or modify rules as FATCA/CRS evolves.</p></li></ul></li></ol><hr/><h2 id="Step7.6non-foreignindividualsaccountholderhandling-5.Conclusion/Recommendation">5. <strong>Conclusion / Recommendation</strong></h2><p>Because of the overlapping roles and foreign-residency statuses in one account, you need a <strong>comprehensive</strong> approach:</p><ol start="1"><li><p><strong>Unify</strong> your data from <code>Account</code>, <code>Contact</code>, <code>dsl_roles</code>, CIP/Tax records, etc.</p></li><li><p><strong>Classify</strong> each person by <strong>foreign/US</strong> status and <strong>role</strong> (account holder, beneficial owner, controlling person, etc.).</p></li><li><p><strong>Determine</strong> who’s <strong>actually reportable</strong> (FATCA or CRS) based on that combined classification.</p></li><li><p><strong>Optionally pivot</strong> or transform the data into the final submission format (FATCA XML, CRS schema, etc.).</p></li></ol><p>This ensures you <strong>do not</strong> overlook a controlling person who is foreign or double-count a purely domestic authorized signatory who is <strong>not</strong> reportable. Your final dataset will accurately reflect everyone’s role and status, so you can produce correct FATCA and CRS reports.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

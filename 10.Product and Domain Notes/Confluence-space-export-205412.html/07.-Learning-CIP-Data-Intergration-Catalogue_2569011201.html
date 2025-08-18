@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 07. Learning CIP Data Intergration Catalogue</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="1.-Internal_2555216013.html">1. Internal</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 07. Learning CIP Data Intergration Catalogue
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 20-06-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Original confluence link <a href="https://craigsip.atlassian.net/wiki/spaces/DAC/pages/1795457031/Data+Integrations+Catalogue" data-linked-resource-id="1795457031" data-linked-resource-version="18" data-linked-resource-type="page">Data Integrations Catalogue</a> </p><style type='text/css'>/*<![CDATA[*/
+div.rbtoc1755550341295 {padding: 0px;}
+div.rbtoc1755550341295 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1755550341295 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style><div class='toc-macro rbtoc1755550341295'>
+<ul class='toc-indentation'>
+<li><a href='#id-07.LearningCIPDataIntergrationCatalogue-Overview'>Overview</a>
+<ul class='toc-indentation'>
+<li><a href='#id-07.LearningCIPDataIntergrationCatalogue-Historylesson'>History lesson</a></li>
+<li><a href='#id-07.LearningCIPDataIntergrationCatalogue-OurNamingConvention'>Our Naming Convention</a>
+<ul class='toc-indentation'>
+<li><a href='#id-07.LearningCIPDataIntergrationCatalogue-StoredProcedures:'>Stored Procedures:</a></li>
+<li><a href='#id-07.LearningCIPDataIntergrationCatalogue-SSISPackages:'>SSIS Packages:</a></li>
+<li><a href='#id-07.LearningCIPDataIntergrationCatalogue-SQLAgentJobs:'>SQL Agent Jobs:</a></li>
+</ul>
+</li>
+<li><a href='#id-07.LearningCIPDataIntergrationCatalogue-SSISCatalogue(WIP-partofPinnicleproject)'>SSIS Catalogue (WIP - part of Pinnicle project)</a></li>
+</ul>
+</li>
+<li><a href='#id-07.LearningCIPDataIntergrationCatalogue-ImportantPoints'>Important Points</a></li>
+</ul>
+</div><h1 id="id-07.LearningCIPDataIntergrationCatalogue-Overview">Overview</h1><p> CIP got a lot of random data sources and intergration process that developed before the cloud age. need to udnerstadn hpw each one genrally work.</p><p>The primary technologies used here are: (these are old stuff and some of them are a black box to get into)</p><ul><li><p>SQL Agent Jobs</p></li><li><p>SSIS Packages</p></li><li><p>Task Scheduled Jobs</p></li><li><p>PowerShell</p></li></ul><h2 id="id-07.LearningCIPDataIntergrationCatalogue-Historylesson">History lesson</h2><p>Old Intergration are mainly on <strong>SVSQLCIP\SQLCIP (Karl DBA have full access to this thanks God)</strong> and on the Scheduling server (SVSCHED2k8001)</p><p>New Intergration will be all on <strong>KAPSQLDAT</strong>-XXX</p><h2 id="id-07.LearningCIPDataIntergrationCatalogue-OurNamingConvention">Our Naming Convention</h2><h3 id="id-07.LearningCIPDataIntergrationCatalogue-StoredProcedures:">Stored Procedures:</h3><p>Naming conventions:</p><ul><li><p>dbo.usp_</p></li><li><p>Schema can change depending on whether or not it is logically grouped with other similar procs of a single business function.</p></li></ul><p>eg.</p><p>dbo.usp_GetCustomerDetails</p><p>hr.usp_UpdateEmployeeSalary</p><p>sales.usp_InsertNewOrder</p><h3 id="id-07.LearningCIPDataIntergrationCatalogue-SSISPackages:">SSIS Packages:</h3><p>Storage locations:</p><ul><li><p>Can be stored on the file server or on the Server’s C drive.</p></li><li><p>Best practice would be on the SQL file server.</p></li></ul><p>eg. SSIS package for exporting customer data</p><p>File Server: \\FileServer\SSIS\CustomerDataExport.dtsx </p><p>C Drive: C:\SSIS\CustomerDataExport.dtsx</p><p /><h3 id="id-07.LearningCIPDataIntergrationCatalogue-SQLAgentJobs:">SQL Agent Jobs:</h3><p>Naming conventions:</p><ul><li><p>[Process Grouping] - [Specific Process Name]</p></li><li><p>i.e. Compliance - Wilsons Positions Import</p></li></ul><p>For jobs relating to loggin/monitoring, please use:</p><ul><li><p>Logging - [Specific Process being logged]</p></li><li><p>i.e Logging - Server Health Check</p></li></ul><p /><h2 id="id-07.LearningCIPDataIntergrationCatalogue-SSISCatalogue(WIP-partofPinnicleproject)">SSIS Catalogue (WIP - part of Pinnicle project)</h2><p>Backgroud: we used dr. migrate from lab 3 to scan all the data sources and find out that are the stuff is in CIP.</p><p>there are so many stuff.</p><p>Some new Stuff built over time &gt;&gt;  <a class="external-link" data-card-appearance="inline" href="https://craigsip.sharepoint.com/:x:/r/sites/ProjectPinnacleDiscoveryTeam/_layouts/15/Doc.aspx?sourcedoc=%7BFCA872A2-A140-4A6C-BE8A-8A47488F9050%7D&amp;file=SSIS%20Catalogue.xlsx&amp;action=default&amp;mobileredirect=true&amp;DefaultItemOpen=1" rel="nofollow">https://craigsip.sharepoint.com/:x:/r/sites/ProjectPinnacleDiscoveryTeam/_layouts/15/Doc.aspx?sourcedoc=%7BFCA872A2-A140-4A6C-BE8A-8A47488F9050%7D&amp;file=SSIS%20Catalogue.xlsx&amp;action=default&amp;mobileredirect=true&amp;DefaultItemOpen=1</a> </p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240620-035046.png" width="760" loading="lazy" src="attachments/2569011201/2568585249.png?width=760" data-image-src="attachments/2569011201/2568585249.png" data-height="496" data-width="2383" data-unresolved-comment-count="0" data-linked-resource-id="2568585249" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240620-035046.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2569011201" data-linked-resource-container-version="3" data-media-id="d4401d12-dde7-4211-a1a5-a6b2da32a923" data-media-type="file"></span><p>most new stuff are SSIS packages&gt;&gt; via <strong>SQL agent jobs</strong></p><p /><p>Some Old Stuff still in use (it might changed when you read it) <a class="external-link" data-card-appearance="inline" href="https://craigsip.sharepoint.com/:x:/r/sites/ProjectPinnacleDiscoveryTeam/_layouts/15/Doc.aspx?sourcedoc=%7BFCA872A2-A140-4A6C-BE8A-8A47488F9050%7D&amp;file=SSIS%20Catalogue.xlsx&amp;action=default&amp;mobileredirect=true&amp;DefaultItemOpen=1" rel="nofollow">https://craigsip.sharepoint.com/:x:/r/sites/ProjectPinnacleDiscoveryTeam/_layouts/15/Doc.aspx?sourcedoc=%7BFCA872A2-A140-4A6C-BE8A-8A47488F9050%7D&amp;file=SSIS%20Catalogue.xlsx&amp;action=default&amp;mobileredirect=true&amp;DefaultItemOpen=1</a> </p><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240620-035201.png" width="760" loading="lazy" src="attachments/2569011201/2567929922.png?width=760" data-image-src="attachments/2569011201/2567929922.png" data-height="821" data-width="2466" data-unresolved-comment-count="0" data-linked-resource-id="2567929922" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240620-035201.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2569011201" data-linked-resource-container-version="3" data-media-id="cb722d22-6cdd-41bf-8ab1-e1d214699e54" data-media-type="file"></span><p>some CmdExec some SSIS</p><p>&gt;&gt; Chris also summarised some Prcoesses from Those Jobs and Steps, obeserve and learn how Chris deal with these process. (Not an easy job to do)</p><p><a href="https://craigsip.atlassian.net/wiki/spaces/IR/pages/148078778/IRD+Automated+Reporting+Engine-+FSS+Functional+System+Specification" data-linked-resource-id="148078778" data-linked-resource-version="19" data-linked-resource-type="page">IRD Automated Reporting Engine- FSS (Functional System Specification)</a> </p><p><a href="https://craigsip.atlassian.net/wiki/spaces/DAC/pages/1914339335/APEX+MMC+New+Client+File+Functional+System+Specification" data-linked-resource-id="1914339335" data-linked-resource-version="10" data-linked-resource-type="page">APEX/MMC New Client File Functional System Specification</a> </p><p /><p><a href="https://craigsip.atlassian.net/wiki/spaces/DAC/pages/2224816129/Project+Alpha+-+Functional+System+Specification" data-linked-resource-id="2224816129" data-linked-resource-version="41" data-linked-resource-type="page">Project Alpha - Functional System Specification</a> </p><p>Quick Summary: Find Underperforming Cleint Profolio and Boost it , we don’t have enough resources for this yet.</p><p /><span class="confluence-embedded-file-wrapper image-center-wrapper confluence-embedded-manual-size"><img class="confluence-embedded-image image-center" alt="image-20240620-040352.png" width="615" loading="lazy" src="attachments/2569011201/2568323146.png?width=615" data-image-src="attachments/2569011201/2568323146.png" data-height="602" data-width="615" data-unresolved-comment-count="0" data-linked-resource-id="2568323146" data-linked-resource-version="1" data-linked-resource-type="attachment" data-linked-resource-default-alias="image-20240620-040352.png" data-base-url="https://craigsip.atlassian.net/wiki" data-linked-resource-content-type="image/png" data-linked-resource-container-id="2569011201" data-linked-resource-container-version="3" data-media-id="876ae49d-c1d5-4ffc-81c3-07d2bb8d986c" data-media-type="file"></span><p /><h1 id="id-07.LearningCIPDataIntergrationCatalogue-ImportantPoints">Important Points</h1><ol start="1"><li><p><strong>Overview</strong>: CIP's integration processes are outdated, requiring an understanding of various legacy and new technologies.</p></li><li><p><strong>Technologies</strong>: Utilizes SQL Agent Jobs, SSIS Packages, Task Scheduled Jobs, and PowerShell.</p></li><li><p><strong>History</strong>: Older integrations are on SVSQLCIP\SQLCIP and SVSCHED2k8001, with Karl DBA having full access.</p></li><li><p><strong>New Integrations</strong>: Hosted on KAPSQLDAT-XXX.</p></li><li><p><strong>Naming Conventions</strong>: Stored procedures use dbo.usp_, SSIS packages should be stored on the file server, and SQL Agent Jobs follow a specific naming format.</p></li><li><p><strong>SSIS Catalogue</strong>: Contains a comprehensive list of processes, both old and new, managed via SQL Agent Jobs.</p></li><li><p><strong>Documentation</strong>: Chris's documentation and project links provide detailed functional specifications for key processes.</p></li><li><p><strong>Resource Limitation</strong>: There is a shortage of resources to fully address underperforming client portfolios.</p></li></ol>
+                    </div>
+
+                                        <div class="pageSection group">
+                        <div class="pageSectionHeader">
+                            <h2 id="attachments" class="pageSectionTitle">Attachments:</h2>
+                        </div>
+
+                        <div class="greybox" align="left">
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2569011201/2569011210.png">image-20240620-024415.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2569011201/2569011213.png">image-20240618-210029.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2569011201/2569011216.png">image-20240618-205820.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2569011201/2569011219.png">processflow-20220616-014001.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2569011201/2569011222.png">image-20240619-024350.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2569011201/2568585249.png">image-20240620-035046.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2569011201/2568421431.png">image-20240620-035109.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2569011201/2567929922.png">image-20240620-035201.png</a> (image/png)
+                                <br/>
+                                                            <img src="images/icons/bullet_blue.gif" height="8" width="8" alt=""/>
+                                <a href="attachments/2569011201/2568323146.png">image-20240620-040352.png</a> (image/png)
+                                <br/>
+                                                    </div>
+                    </div>
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:52</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : QI Change in Circumtance (CIC) Audit report Tech notes</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : QI Change in Circumtance (CIC) Audit report Tech notes
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 10-06-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <style type='text/css'>/*<![CDATA[*/
+div.rbtoc1755550429857 {padding: 0px;}
+div.rbtoc1755550429857 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1755550429857 li {margin-left: 0px;padding-left: 0px;}
+
+/*]]>*/</style><div class='toc-macro rbtoc1755550429857'>
+<ul class='toc-indentation'>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-QIAudit&amp;Change-LogReport–TechnicalWalk-through'>QI Audit &amp; Change-Log Report – Technical Walk-through</a>
+<ul class='toc-indentation'>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-0Context&amp;DateHandling(Basics)'>0 Context &amp; Date Handling (Basics)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-1Safety:DropTempObjects(Basics)'>1 Safety: Drop Temp Objects (Basics)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-2PullQI15Trading-Entities(CoreSelect/Insert)'>2 Pull QI15 Trading-Entities (Core Select/Insert)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-3IdentifyBeneficial-OwnerContacts(IntermediateJoins)'>3 Identify Beneficial-Owner Contacts (Intermediate Joins)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-4UniversalObjectList(Lookupacceleration)'>4 Universal Object List (Lookup acceleration)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-5Foreign-Tax-Record(FTR)Harvest(Union&amp;Stringconcatenation)'>5 Foreign-Tax-Record (FTR) Harvest (Union &amp; String concatenation)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-6Trust-BeneficiaryHarvest(ConditionalJOIN)'>6 Trust-Beneficiary Harvest (Conditional JOIN)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-7ColumnMappingTable(Staticvs.DynamicCTE)'>7 Column Mapping Table (Static vs. Dynamic CTE)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-8Temp-StructureRebuild(House-keepingbestpractice)'>8 Temp-Structure Rebuild (House-keeping best practice)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-9Local→UTCReversion(Datediscipline)'>9 Local→UTC Reversion (Date discipline)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-10AuditSubsetExtraction(Targetedsearch)'>10 Audit Subset Extraction (Targeted search)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-11ApostropheSanitiser(Datacleansing)'>11 Apostrophe Sanitiser (Data cleansing)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-12EnrichAuditRows→#temptemp(Metadatajoins)'>12 Enrich Audit Rows → #temptemp (Metadata joins)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-13Primary-KeyDiscovery(Generic)(Systemviewhack)'>13 Primary-Key Discovery (Generic) (System view hack)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-14FlattenAttributeMask/ChangeData(Stringslicing)'>14 Flatten AttributeMask / ChangeData (String slicing)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-15Cursor-DrivenShredder(DynamicSQL–Level1)'>15 Cursor-Driven Shredder (Dynamic SQL – Level 1)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-16Normalise“table,GUID”OldValue(Stringparse+GUIDtest)'>16 Normalise “table,GUID” OldValue (String parse + GUID test)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-17Reference-TablePKDiscovery(Metadata,step2)'>17 Reference-Table PK Discovery (Metadata, step 2)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-18PickDisplay-NameColumn(Window-functionranking)'>18 Pick Display-Name Column (Window-function ranking)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-19ExecuteDynamicSELECTs(DynamicSQL–Level2)'>19 Execute Dynamic SELECTs (Dynamic SQL – Level 2)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-20Option-SetTranslation(StringMapjoins+Booleancleanup)'>20 Option-Set Translation (StringMap joins + Boolean cleanup)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-21BuildGUID→NameQueries(DynamicSQL–Level3)'>21 Build GUID→Name Queries (Dynamic SQL – Level 3)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-22–23RunGUIDQueries(Nestedcursorexecution)'>22–23 Run GUID Queries (Nested cursor execution)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-24#Result1–FriendlyLabels(Metadatafan-out)'>24 #Result1 – Friendly Labels (Metadata fan-out)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-25Collapseto“From→To”Rows(WindowFunction)'>25 Collapse to “From → To” Rows (Window Function)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-26FinalReportEnrichment&amp;Delivery(Multi-entityUNION)'>26 Final Report Enrichment &amp; Delivery (Multi-entity UNION)</a></li>
+</ul>
+</li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-KeyTake-AwayTechniques(Cheat-Sheet)'>Key Take-Away Techniques (Cheat-Sheet)</a>
+<ul class='toc-indentation'>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-Performance/MaintainabilityTips'>Performance / Maintainability Tips</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-👩‍🏫LessonPlan'>👩‍🏫 Lesson Plan</a></li>
+</ul>
+</li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-1Whyonlythelast30days?'>1 Why only the last 30 days?</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-2Wheredo“old”and“new”liveinCRM?'>2 Where do “old” and “new” live in CRM?</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-3Explodingoneauditrow–thecursorloop(Section15)'>3 Exploding one audit row – the cursor loop (Section 15)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-4Resolvingdatatypestosomethinghumansread(Sections16–20)'>4 Resolving data types to something humans read (Sections 16–20)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-5FromGUID/Textblobstorealnewvalues(Section19+22+23)'>5 From GUID/Text blobs to real new values (Section 19 + 22 + 23)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-6Deduplicatingtothesingle“Old→New”row(Section25)'>6 Deduplicating to the single “Old → New” row (Section 25)</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-7Datalineagesummary'>7 Data lineage summary</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-8KeySQLServer2008techniquesinplay'>8 Key SQL Server 2008 techniques in play</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-9Whythedesignstillworkstoday'>9 Why the design still works today</a>
+<ul class='toc-indentation'>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-📝Homework'>📝 Homework</a></li>
+</ul>
+</li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-🛠Section15—“TheCursorEngine”'>🛠 Section 15 — “The Cursor Engine”</a>
+<ul class='toc-indentation'>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-15.0Whydoweneedacursoratall?'>15.0 Why do we need a cursor at all?</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-15.1Declarations&amp;scratchtables'>15.1 Declarations &amp; scratch tables</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-15.2Outercursordriver'>15.2 Outer cursor driver</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-15.3Splitthestrings→#Mask&amp;#Vals'>15.3 Split the strings → #Mask &amp; #Vals</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-15.4Build#Atrib—1rowperchangedfield'>15.4 Build #Atrib — 1 row per changed field</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-15.5PreparethedynamicSELECTfornewvalues'>15.5 Prepare the dynamic SELECT for new values</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-15.6Persisteverythingto#AtribStore'>15.6 Persist everything to #AtribStore</a></li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-15.7Advancetheouterpointer'>15.7 Advance the outer pointer</a></li>
+</ul>
+</li>
+<li><a href='#QIChangeinCircumtance(CIC)AuditreportTechnotes-RecapofSection15inonesentence'>Recap of Section 15 in one sentence</a></li>
+</ul>
+</div><h2 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-QIAudit&amp;Change-LogReport–TechnicalWalk-through">QI Audit &amp; Change-Log Report – Technical Walk-through</h2><div class="table-wrap"><table data-table-width="1310" data-layout="center" data-local-id="e6d52e73-fc97-449e-9671-6e3f86ae127d" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p><strong>Topic</strong></p></th><th class="confluenceTh"><p><strong>Level</strong></p></th><th class="confluenceTh"><p><strong>SQL Features Highlighted</strong></p></th></tr><tr><td class="confluenceTd"><p>0 – 4</p></td><td class="confluenceTd"><p>Beginner / Core DML</p></td><td class="confluenceTd"><p><code>USE …</code>, <code>DECLARE</code>, scalar functions, <code>JOIN</code>, basic <code>INSERT … SELECT</code>, temp-table patterns</p></td></tr><tr><td class="confluenceTd"><p>5 – 9</p></td><td class="confluenceTd"><p>Intermediate</p></td><td class="confluenceTd"><p>UNION, <code>CREATE TABLE</code> (heap vs. logged tables), audit windowing, bulk cleanup of temp objects</p></td></tr><tr><td class="confluenceTd"><p>10 – 15</p></td><td class="confluenceTd"><p>Proficient</p></td><td class="confluenceTd"><p>CTEs, dynamic filtering, primary-key discovery, <em>cursor-driven decomposition</em> of audit blobs, cross-joining metadata</p></td></tr><tr><td class="confluenceTd"><p>16 – 23</p></td><td class="confluenceTd"><p>Advanced</p></td><td class="confluenceTd"><p>multi-step GUID normalisation, option-set resolution, <strong>dynamic SQL generation &amp; execution</strong>, window functions (<code>LEAD</code>), complex collation handling, incremental updates</p></td></tr><tr><td class="confluenceTd"><p>24 – 26</p></td><td class="confluenceTd"><p>Expert / Delivery</p></td><td class="confluenceTd"><p>result collapsing, final business joins, conditional UNION, “delta-only” filtering, report-ready ordering</p></td></tr></tbody></table></div><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-0Context&amp;DateHandling(Basics)">0 Context &amp; Date Handling <em>(Basics)</em></h3><ul><li><p><strong>Why</strong> – Establish one canonical time-window in <em>local</em> and <em>UTC</em>.</p></li><li><p><strong>Techniques</strong></p><ul><li><p><code>GETDATE()</code> arithmetic (days back).</p></li><li><p>Use of a <em>helper function</em> (<code>fn_LocalTimeToUTC_rpt</code>) to ensure cross-region reproducibility.</p></li></ul></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-1Safety:DropTempObjects(Basics)">1 Safety: Drop Temp Objects <em>(Basics)</em></h3><ul><li><p>Defensive coding: each <code>IF OBJECT_ID … DROP TABLE</code> keeps reruns idempotent.</p></li><li><p>✔️ <em>Tip</em>: when executed in a pipeline, this prevents “table already exists” failures.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-2PullQI15Trading-Entities(CoreSelect/Insert)">2 Pull QI15 Trading-Entities <em>(Core Select/Insert)</em></h3><ul><li><p>Classical <code>INSERT … SELECT</code> into <strong>#QIAccounts</strong>.</p></li><li><p>Self-contained <code>ISNULL + SUBSTRING</code> logic to coerce a <em>portfolio number</em> while avoiding NULL/blank edge-cases.</p></li><li><p><strong>Beginner takeaway</strong> – temp-tables are persisted only in the user’s session (<code>tempdb</code>), safe for iterative analytics.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-3IdentifyBeneficial-OwnerContacts(IntermediateJoins)">3 Identify Beneficial-Owner Contacts <em>(Intermediate Joins)</em></h3><ul><li><p>Multiple <code>JOIN</code>s across role + role-type + contact tables with status filters.</p></li><li><p>Introduces <strong>filtered cross-entity look-ups</strong> (Active roles only).</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-4UniversalObjectList(Lookupacceleration)">4 Universal Object List <em>(Lookup acceleration)</em></h3><ul><li><p>A <em>single</em> <strong>#Objects</strong> hub allows one-pass joining later instead of repeated UNION logic.</p></li><li><p>Demonstrates composite key storage (AccountId + ObjectTypeCode) for fast look-ups.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-5Foreign-Tax-Record(FTR)Harvest(Union&amp;Stringconcatenation)">5 Foreign-Tax-Record (FTR) Harvest <em>(Union &amp; String concatenation)</em></h3><ul><li><p>Two-way <code>UNION</code> combines <strong>Entity-level</strong> and <strong>Individual-level</strong> FTRs.</p></li><li><p>String-built <code>IDTypeName</code> becomes the <em>persisted object title</em>.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-6Trust-BeneficiaryHarvest(ConditionalJOIN)">6 Trust-Beneficiary Harvest <em>(Conditional JOIN)</em></h3><ul><li><p><code>statecode = 0</code> (Active) gating shows <strong>status-code filtering</strong> best practice.</p></li><li><p>Uses identical pattern to FTR with UNION.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-7ColumnMappingTable(Staticvs.DynamicCTE)">7 Column Mapping Table <em>(Static vs. Dynamic CTE)</em></h3><ul><li><p>Starts with <strong>static CTE</strong> of <em>ColumnNumber/ObjectType</em> pairs → simplest form of a mapping table.</p></li><li><p>Then a <strong>dynamic UNION</strong> against metadata to scoop extra columns for FTR ( <code>10307</code> ) &amp; beneficiary ( <code>10075</code> ) entities.</p></li><li><p><em>Key advanced trick</em>: <code>a.IsAuditEnabled = 1</code> ensures only auditable columns are tracked, keeping the downstream dataset small.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-8Temp-StructureRebuild(House-keepingbestpractice)">8 Temp-Structure Rebuild <em>(House-keeping best practice)</em></h3><ul><li><p>Full teardown/rebuild ensures <em>no residue</em> from previous runs.</p></li><li><p>Shows <strong>table-valued staging</strong> for:</p><ul><li><p>Mask/value shredding (#Mask, #Vals)</p></li><li><p>Attribute enrichment (#Atrib / #AtribStore)</p></li><li><p>Dynamic-SQL storage (#QueryStore)</p></li></ul></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-9Local→UTCReversion(Datediscipline)">9 Local→UTC Reversion <em>(Date discipline)</em></h3><ul><li><p>A second call to <code>fn_LocalTimeToUTC_rpt</code> refreshes the value after table resets – subtle but important if the script is modularised.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-10AuditSubsetExtraction(Targetedsearch)">10 Audit Subset Extraction <em>(Targeted search)</em></h3><ul><li><p>Smart filter:<br/><code>AttributeMask LIKE '%&lt;ColumnNumber&gt;%'</code> ⇢ narrows to only those audit rows containing <em>any</em> interesting field.</p></li><li><p>Rejects corrupted masks via <code>NOT LIKE '%[a-z]%'</code>.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-11ApostropheSanitiser(Datacleansing)">11 Apostrophe Sanitiser <em>(Data cleansing)</em></h3><ul><li><p>Single global <code>REPLACE</code> to eliminate <code>'</code> which break subsequent dynamic SQL compilation.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-12EnrichAuditRows→#temptemp(Metadatajoins)">12 Enrich Audit Rows → #temptemp <em>(Metadata joins)</em></h3><ul><li><p>Converts raw <code>ACTION</code> integer to text (<code>StringMap</code>) <strong>without a sub-query</strong>.</p></li><li><p>Adds <strong>local time</strong> materialisation with <code>fn_UTCToLocalTime_rpt</code>.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-13Primary-KeyDiscovery(Generic)(Systemviewhack)">13 Primary-Key Discovery (Generic) <em>(System view hack)</em></h3><ul><li><p>Generic extraction from <code>INFORMATION_SCHEMA.KEY_COLUMN_USAGE</code>.</p></li><li><p>🚀 <strong>Portable trick</strong> – works even if entity schemas evolve.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-14FlattenAttributeMask/ChangeData(Stringslicing)">14 Flatten AttributeMask / ChangeData <em>(String slicing)</em></h3><ul><li><p>Removes <code>{}</code> and <code>~</code> sentinel chars before “big split”.</p></li><li><p><strong>Core technique</strong> – <code>SUBSTRING</code> + <code>LEN</code> used to peel leading/trailing braces.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-15Cursor-DrivenShredder(DynamicSQL–Level1)">15 Cursor-Driven Shredder <em>(Dynamic SQL – Level 1)</em></h3><div class="table-wrap"><table data-table-width="1180" data-layout="center" data-local-id="1c9b9d63-9585-4d2d-9366-82bb54f7adf4" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p><strong>Inside the loop</strong></p></th><th class="confluenceTh"><p><strong>Technique</strong></p></th></tr><tr><td class="confluenceTd"><p>Split mask list → <code>#Mask</code></p></td><td class="confluenceTd"><p><code>REPLACE(…, ',', …)</code> + bulk-insert string</p></td></tr><tr><td class="confluenceTd"><p>Split change-data → <code>#Vals</code></p></td><td class="confluenceTd"><p>same idea with <code>~</code></p></td></tr><tr><td class="confluenceTd"><p>Join to <code>MetadataSchema.Attribute</code></p></td><td class="confluenceTd"><p>convert <em>ColumnNumber</em> → <em>field name</em></p></td></tr><tr><td class="confluenceTd"><p>Build <em>on-the-fly</em> <code>SELECT &lt;field&gt; FROM &lt;entity&gt;</code></p></td><td class="confluenceTd"><p>stored in <strong>#QueryStore</strong> for later</p></td></tr></tbody></table></div><ul><li><p><strong><span style="background-color: rgb(211,241,167);">Why not use XML?</span></strong><span style="background-color: rgb(211,241,167);"> – Legacy CRM audit format is already delimited; coercing to XML would add overhead.</span></p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-16Normalise“table,GUID”OldValue(Stringparse+GUIDtest)">16 Normalise “table,GUID” OldValue <em>(String parse + GUID test)</em></h3><ul><li><p><code>TRY_CAST(… AS UNIQUEIDENTIFIER)</code> quietly skips non-GUID rows.</p></li><li><p>Sets <code>IsGUID = 1</code> so later logic knows to resolve names.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-17Reference-TablePKDiscovery(Metadata,step2)">17 Reference-Table PK Discovery <em>(Metadata, step 2)</em></h3><ul><li><p>Cross-joins each ref-table to <code>EntityView</code> → <code>BaseTableName</code> → <code>#PKs</code>.</p></li><li><p>Smart collation cast ensures matching even when <code>ReferenceTableName</code> comes from audit text.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-18PickDisplay-NameColumn(Window-functionranking)">18 Pick Display-Name Column <em>(Window-function ranking)</em></h3><ul><li><p>Ranks candidates (<code>Name</code>, <code>FullName</code>, <code>Description</code>, etc.) with a <code>ROW_NUMBER()</code> priority scheme.</p></li><li><p>Guarantees <em>one</em> text column per lookup table without hardcoding.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-19ExecuteDynamicSELECTs(DynamicSQL–Level2)">19 Execute Dynamic SELECTs <em>(Dynamic SQL – Level 2)</em></h3><ul><li><p>Re-uses the <em>cursor + table variable</em> pattern to iterate #QueryStore and back-fill each row’s current value.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-20Option-SetTranslation(StringMapjoins+Booleancleanup)">20 Option-Set Translation <em>(StringMap joins + Boolean cleanup)</em></h3><ul><li><p>Double pass to resolve <strong>Old</strong> and <strong>Current</strong> values.</p></li><li><p>Converts CRM booleans (<code>True</code>/<code>False</code>) to user-friendly <code>Yes</code>/<code>No</code>.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-21BuildGUID→NameQueries(DynamicSQL–Level3)">21 Build GUID→Name Queries <em>(Dynamic SQL – Level 3)</em></h3><ul><li><p>Pre-builds statements like:<br/><code>SELECT &lt;NameColumn&gt; FROM &lt;RefTable&gt; WHERE &lt;PK&gt; = '&lt;GUID&gt;'</code></p></li><li><p>Stored in columns <code>OldValueGuidSQL</code> / <code>CurrentValueGuidSQL</code>.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-22–23RunGUIDQueries(Nestedcursorexecution)">22–23 Run GUID Queries <em>(Nested cursor execution)</em></h3><ul><li><p>Two passes (OldValue then CurrentValue).</p></li><li><p>Uses a <strong>session-scoped table variable</strong> instead of temp-table to avoid concurrency locks.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-24#Result1–FriendlyLabels(Metadatafan-out)">24 #Result1 – Friendly Labels <em>(Metadata fan-out)</em></h3><ul><li><p>Joins back to <em>AttributeView</em> + <code>LocalizedLabelView</code> to surface English display-names (<code>LanguageId = 1033</code>).</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-25Collapseto“From→To”Rows(WindowFunction)">25 Collapse to “From → To” Rows <em>(Window Function)</em></h3><ul><li><p><code>LEAD</code> pulls the <em>next</em> recorded value so we can compute deltas in one query.</p></li><li><p>Ignores rows where <code>OldValue = NewValue</code> to cut noise.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-26FinalReportEnrichment&amp;Delivery(Multi-entityUNION)">26 Final Report Enrichment &amp; Delivery <em>(Multi-entity UNION)</em></h3><ul><li><p>Two pipelines (Entity, Individual) unified with <code>UNION ALL</code>.</p></li><li><p>Demonstrates:</p><ul><li><p><em>Status-flag joins</em> (<code>StateCode</code>, role status).</p></li><li><p>Collation fixes when comparing free-text to CRM text columns.</p></li></ul></li><li><p>Final <code>ORDER BY ChangedDate DESC</code> produces a <em>timeline-style</em> report.</p></li></ul><hr/><h2 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-KeyTake-AwayTechniques(Cheat-Sheet)">Key Take-Away Techniques (Cheat-Sheet)</h2><ol start="1"><li><p><strong>CTEs for static + dynamic metadata</strong> – quick, readable lookup tables.</p></li><li><p><strong>Temp-table orchestration</strong> – isolate every logical stage; simplify replay &amp; debugging.</p></li><li><p><strong>Dynamic SQL</strong> – generated once, cached in <code>#QueryStore</code>, executed in tightly-scoped cursor loops.</p></li><li><p><strong>Window functions (</strong><code>LEAD</code><strong>)</strong> – ideal for <em>before/after</em> diffing without self-joins.</p></li><li><p><strong><span style="background-color: rgb(211,241,167);">GUID normalisation &amp; reference-table discovery</span></strong> – fully data-driven; no hard-coded FK lists.</p></li><li><p><strong>Collation-aware joins</strong> – critical when CRM physical names differ in case or collation.</p></li><li><p><strong>StringMap resolution</strong> – converts opaque integer option-sets to business-friendly text early, so later filters/readers see clear values.</p></li><li><p><strong>Defensive clean-ups</strong> – apostrophe strip, <code>IsAuditEnabled = 1</code>, boolean coercion.</p></li></ol><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-Performance/MaintainabilityTips">Performance / Maintainability Tips</h3><ul><li><p><strong>Indexing</strong> – consider a non-clustered index on <code>Audit.CreatedOn</code> + <code>ObjectId</code> when the audit table grows into millions.</p></li><li><p><strong>Avoiding cursor row-by-row fetch</strong> – possible rewrite with <code>STRING_SPLIT</code> (SQL 2016+) or cross-apply XML shredding if lower latency is required.</p></li><li><p><strong>Temp-table sizes</strong> – monitor in <code>tempdb</code>; large QI portfolios may drive spill.</p></li><li><p><strong>Move ETL pieces into stored procedures</strong> – keeps Confluence script concise while retaining a single entry-point for schedulers.</p></li></ul><hr/><blockquote><p><strong>Use-case</strong> – This Confluence guide can be handed to:</p><ul><li><p><strong>Junior devs</strong> learning about audit extraction (sections 0-10).</p></li><li><p><strong>Mid-level analysts</strong> extending field coverage (sections 11-20).</p></li><li><p><strong>Senior DBAs / architects</strong> optimising dynamic SQL &amp; metadata joins (sections 21-26).</p></li></ul></blockquote><p>Feel free to copy, tweak headings, and add internal wiki links to your team’s coding standards or CRM metadata reference.</p><p /><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-👩‍🏫LessonPlan">👩‍🏫 Lesson Plan</h3><p><strong>Topic:</strong> <em>How the “Old → New” value engine works inside the QI Audit &amp; Change-Log script</em><br/><strong>Audience:</strong> Senior high-school / first-year tertiary students who know basic <code>SELECT</code>/<code>JOIN</code> but not yet dynamic SQL or CRM auditing tables.<br/><strong>Edition:</strong> SQL Server 2008 (so no <code>STRING_SPLIT</code>, no <code>FORMAT</code>, no <code>TRY_CONVERT</code>).</p><hr/><h2 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-1Whyonlythelast30days?">1 Why only the last 30 days?</h2><ul><li><p>At the very top we do</p></li></ul><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">DECLARE @DateFrom DATETIME = GETDATE() - 30;
+SET     @DateFrom = dbo.fn_LocalTimeToUTC_rpt(@DateFrom);
+</pre>
+</div></div><ul><li><p><strong>GETDATE() – 30</strong> → <em>rolling</em> window: the report is always “today minus thirty”.</p></li><li><p>Converting to <strong>UTC</strong> up-front means we can safely compare with the CRM <code>Audit.CreatedOn</code> column, which is stored in UTC.<br/><em>If we stayed in local time we’d miss/twin some rows around daylight-saving edges.</em></p></li><li><p>➡️ <strong>Grain of the report</strong>: <em>one change</em> to <em>one field</em> to <em>one record</em> <em>inside</em> that 30-day slice.</p></li></ul><hr/><h2 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-2Wheredo“old”and“new”liveinCRM?">2 Where do “old” and “new” live in CRM?</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="06ebf054-e619-4a74-a2c6-3093fb208cab" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Table</p></th><th class="confluenceTh"><p>Key idea</p></th><th class="confluenceTh"><p>Why we need it</p></th></tr><tr><td class="confluenceTd"><p><code>Audit</code></p></td><td class="confluenceTd"><p>Holds <em>every</em> change but compresses many columns into two text blobs:• <code>AttributeMask</code> – comma-list of ColumnNumbers• <code>ChangeData</code> – tilde-list of <em>old</em> values</p></td><td class="confluenceTd"><p>We have to <em>explode</em> those blobs.</p></td></tr><tr><td class="confluenceTd"><p><strong>Metadata tables</strong> (<code>Attribute</code>, <code>Entity</code>, <code>LocalizedLabel</code>)</p></td><td class="confluenceTd"><p>Translate a <em>ColumnNumber</em> → real field name → friendly label</p></td><td class="confluenceTd"><p>Lets people read “Country of Birth” not “Column 10057”.</p></td></tr><tr><td class="confluenceTd"><p><strong>Business tables</strong> (<code>Account</code>, <code>Contact</code>, …)</p></td><td class="confluenceTd"><p>Hold the <em>current</em> value</p></td><td class="confluenceTd"><p>We query them to fetch the <em>new</em> value after the change.</p></td></tr></tbody></table></div><hr/><h2 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-3Explodingoneauditrow–thecursorloop(Section15)">3 Exploding one audit row – the cursor loop (Section 15)</h2><blockquote><p>Think of one Audit row as a <strong>zip-file</strong> that contains N pairs:<br/><strong>[ColumnNumber]</strong> &amp; <strong>[OldValue]</strong>.<br/>The cursor unzips it like this:</p></blockquote><ol start="1"><li><p><strong>Pick the row</strong> from <code>#temp</code> (outer cursor variable <code>@outeri</code>).<br/><em>We only need its PK, the mask string and the old-value string.</em></p></li><li><p><strong>Split</strong><br/><em>SQL Server 2008 doesn’t have </em><code>STRING_SPLIT</code><em>, so we cheat with</em></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">INSERT #Mask(Item) VALUES (&#39;...&#39;),(...)  -- comma → new row
+INSERT #Vals(Item) VALUES (&#39;...&#39;),(...)  -- tilde  → new row
+</pre>
+</div></div><p>Building a string and executing <code>EXEC(@Insert)</code> is the pre-2016 way.</p></li><li><p><strong>Marry the two lists</strong><br/>Join <code>#Mask m</code> ↔ <code>#Vals v ON m.ID = v.ID</code> → you now have<br/><code>(ColumnNumber, OldValue)</code> rows.</p></li><li><p><strong>Translate numbers → field names</strong><br/>Join to <code>MetadataSchema.Attribute</code> with <code>ColumnNumber</code>.<br/>➜ we learn <code>TargetFieldName</code>, data type, whether it’s an Option-Set, a GUID, etc.</p></li><li><p><strong>Stash into #Atrib</strong> (one row per field that changed).</p></li><li><p><strong>Generate dynamic SELECTs</strong> (<code>#QueryStore</code>)</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT &lt;field&gt; FROM &lt;entity table&gt;
+WHERE  &lt;PK&gt; = &#39;&lt;objectId&gt;&#39;
+</pre>
+</div></div><p>They will later fetch the <strong>current</strong> value (the “new” side).</p></li><li><p><strong>Copy everything into </strong><code>#AtribStore</code> together with audit meta (user, time, action).</p></li></ol><p><em>Why a cursor?</em><br/>We <em>could</em> rewrite in set-based XML, but (a) CRM 4/2011 audit blobs are short, in-row strings, so a cursor is fast enough; (b) SQL 2008 has no native split function; (c) dynamic SQL must be executed row-by-row anyway.</p><hr/><h2 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-4Resolvingdatatypestosomethinghumansread(Sections16–20)">4 Resolving data types to something humans read (Sections 16–20)</h2><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="843eac76-ddf5-46ee-86fe-d7ae7e8c6b45" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Problem</p></th><th class="confluenceTh"><p>Mini-solution</p></th><th class="confluenceTh"><p>SQL 08 feature</p></th></tr><tr><td class="confluenceTd"><p><code>OldValue = 'contact,B2E5-…'</code></p></td><td class="confluenceTd"><p>Parse left part as table, right part as GUID → mark <code>IsGUID=1</code>.</p></td><td class="confluenceTd"><p><code>CHARINDEX</code>, <code>TRY_CAST</code></p></td></tr><tr><td class="confluenceTd"><p>Option-Set integers</p></td><td class="confluenceTd"><p>Join to <code>StringMap</code> to swap code → text.</p></td><td class="confluenceTd"><p>Regular <code>JOIN</code></p></td></tr><tr><td class="confluenceTd"><p>Boolean bits</p></td><td class="confluenceTd"><p>Replace <code>'True'/'False'</code> → <code>'Yes'/'No'</code>.</p></td><td class="confluenceTd"><p>Simple <code>UPDATE</code></p></td></tr><tr><td class="confluenceTd"><p>“Which column should I display from the lookup table?”</p></td><td class="confluenceTd"><p>Rank <code>Name</code>, <code>FullName</code>, <code>Description</code>, etc. with <code>ROW_NUMBER()</code>.</p></td><td class="confluenceTd"><p>Window function (<code>ROW_NUMBER</code>)</p></td></tr></tbody></table></div><hr/><h2 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-5FromGUID/Textblobstorealnewvalues(Section19+22+23)">5 From GUID/Text blobs to <em>real</em> new values (Section 19 + 22 + 23)</h2><ol start="1"><li><p><strong>Run all dynamic SELECTs</strong> in <code>#QueryStore</code> → collect <strong>current value</strong>.<br/><em>Cursor #2 iterates the prepared commands.</em></p></li><li><p><strong>If a field is a GUID</strong><br/>build a <strong>new</strong> dynamic query to fetch its friendly name.</p></li><li><p><strong>Execute</strong> those GUID queries (cursors #3 and #4) and overwrite<br/><code>OldValue</code> / <code>CurrentValue</code> with the text result.</p></li></ol><blockquote><p>🎓 <strong>Lesson:</strong> SQL Server 2008 can’t parametrise the <em>column</em> part of a query, so we must build text and <code>EXEC()</code> it.</p></blockquote><hr/><h2 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-6Deduplicatingtothesingle“Old→New”row(Section25)">6 Deduplicating to the single “Old → New” row (Section 25)</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">LEAD(OldValue) OVER (PARTITION BY Name,FieldName ORDER BY CreatedOn)
+</pre>
+</div></div><ul><li><p>The window function looks <em>forward</em> one row to pull the next OldValue,<br/>which is effectively the <strong>New</strong> value for the previous row.</p></li><li><p>If there is no later row (the most recent change) we fall back to the<br/>“current” value we fetched from the live table.</p></li></ul><p>Result: one tidy row with <strong>OldValue</strong> and <strong>NewValue</strong> side-by-side, per change.</p><hr/><h2 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-7Datalineagesummary">7 Data lineage summary</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">Audit.Raw
+   │  (mask  +  old blob)
+   ▼
+#temp         ← primary-key stitched in
+   ▼ (cursor split)
+#Atrib        ← still raw per-field
+   ▼
+#AtribStore   ← +metadata, +IsGUID/IsStringMap flags
+   ├─► StringMap        (option-set text)
+   ├─► Dynamic SELECT   (new value)
+   └─► Lookup table(s)  (GUID → name)
+   ▼
+#Result1      ← with English labels
+   ▼ (window)
+#FinalResult  ← one row per true change
+   ▼
+Final SELECT  ← joins to Account/Contact for business context
+</pre>
+</div></div><hr/><h2 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-8KeySQLServer2008techniquesinplay">8 Key SQL Server 2008 techniques in play</h2><ul><li><p>Session-scoped <em>temp-tables</em> (<code>#</code>) + <strong>table variables</strong> (<code>@Tab</code>)<br/>for flexible scratch space.</p></li><li><p><strong>Dynamic T-SQL</strong> with <code>EXEC (@sql)</code> when the <em>column list</em> itself is dynamic.</p></li><li><p><strong>Cursors</strong> as a practical necessity for dynamic SQL per row.</p></li><li><p><strong>Window functions</strong> (<code>ROW_NUMBER</code>, <code>LEAD</code>) – introduced in SQL 2005, so fully available.</p></li><li><p>Extensive use of <strong>system catalog views</strong> (<code>MetadataSchema</code>, <code>INFORMATION_SCHEMA</code>) to stay <strong>data-driven</strong> – no hard-coding of PKs or labels.</p></li><li><p><strong>Collation awareness</strong> – <code>COLLATE DATABASE_DEFAULT</code> every time we compare CRM logical names to audit text.</p></li></ul><hr/><h2 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-9Whythedesignstillworkstoday">9 Why the design still works today</h2><ul><li><p>The CRM audit table hasn’t changed format since 4.0 – string blobs are fixed.</p></li><li><p>The script relies only on T-SQL 2005–2008 features → runs on anything later.</p></li><li><p>All “what fields do we care about?” logic is in the <code>CTE</code> in Section 7 – just add or remove ColumnNumbers there.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-📝Homework">📝 Homework</h3><ol start="1"><li><p>Replace the cursor in Section 15 with an XML shredding solution and benchmark.</p></li><li><p>Add a new Option-Set column (e.g., <code>dsl_AddressType</code>) to the <code>CTE</code> in Section 7 and verify it flows through to the final report.</p></li></ol><p>Happy querying!</p><p /><hr/><h2 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-🛠Section15—“TheCursorEngine”">🛠 Section 15 — “The Cursor Engine”</h2><p><em>(Exploding one Audit blob into many tidy rows)</em></p><p>Below is a <strong>line-by-line (or block-by-block) tour</strong> of Section 15, so you can see <strong>what every variable, query and </strong><code>TRUNCATE</code><strong> is doing.</strong></p><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-15.0Whydoweneedacursoratall?">15.0 Why do we need a cursor at all?</h3><ul><li><p>Each record in <code>#temp</code> still looks like this:</p></li></ul><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="2efafbb5-961e-48b1-8398-4fcf9549c096" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>ObjectId</p></th><th class="confluenceTh"><p>AttributeMask</p></th><th class="confluenceTh"><p>ChangeData</p></th></tr><tr><td class="confluenceTd"><p><code>{…}</code></p></td><td class="confluenceTd"><p><code>{10057,10059}</code></p></td><td class="confluenceTd"><p><code>NZ~NZL</code></p></td></tr></tbody></table></div><ul><li><p>The mask and the value string are <strong>comma-</strong> and <strong>tilde-delimited</strong> snapshots of <em>many</em> columns that changed at the same instant.</p></li><li><p>We must <strong>split</strong> them, map the <em>ColumnNumbers</em> to <em>real field names</em>, and—later—run a <em>dynamic</em> <code>SELECT</code> for the <strong>new</strong> value of each field.</p></li><li><p>Because SQL Server 2008 doesn’t offer <code>STRING_SPLIT()</code> nor table-valued parameters for dynamic column names, a <strong>row-by-row cursor</strong> is the simplest safe choice.</p></li></ul><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-15.1Declarations&amp;scratchtables">15.1 Declarations &amp; scratch tables</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">DECLARE @table         VARCHAR(MAX);   -- physical table name (e.g. AccountBase)
+DECLARE @reporttable   VARCHAR(MAX);   -- alias ( = @table )
+DECLARE @val           VARCHAR(MAX);   -- PK value of the record we’re dissecting
+DECLARE @Atrib         VARCHAR(MAX);   -- raw mask string  “10057,10059”
+DECLARE @OldVal        VARCHAR(MAX);   -- raw old-value string “NZ~NZL”
+DECLARE @PrimaryCol    VARCHAR(MAX);   -- name of PK column   (AccountId, ContactId …)
+DECLARE @OTC           BIGINT;         -- ObjectTypeCode
+</pre>
+</div></div><blockquote><p><strong>Why two table variables (</strong><code>#Mask</code><strong>, </strong><code>#Vals</code><strong>)?</strong><br/>We need to keep positional order: index 1 in <code>#Mask</code> must match index 1 in <code>#Vals</code>.</p></blockquote><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-15.2Outercursordriver">15.2 Outer cursor driver</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT @temprc = COUNT(*) FROM #temp;  -- how many audit rows?
+WHILE @outeri &lt;= @temprc
+</pre>
+</div></div><p><em>The loop processes <strong>one audit row</strong> per iteration.</em></p><p>Inside the loop we immediately:</p><ol start="1"><li><p><strong>Reset scratch tables</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">TRUNCATE TABLE #Atrib;
+TRUNCATE TABLE #Mask;
+TRUNCATE TABLE #Vals;
+</pre>
+</div></div></li><li><p><strong>Load variables for </strong><em><strong>this</strong></em><strong> row</strong></p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SELECT TOP 1
+       @table       = TableName,
+       @val         = ObjectId,
+       @Atrib       = AttributeMask,
+       @OldVal      = ChangeData,
+       @OTC         = ObjectTypeCode,
+       @reporttable = TableName,
+       @PrimaryCol  = PrimaryColName
+FROM   #temp
+WHERE  ID = @outeri;     -- ← pointer of the outer loop
+</pre>
+</div></div></li></ol><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-15.3Splitthestrings→#Mask&amp;#Vals">15.3 Split the strings → #Mask &amp; #Vals</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SET @Insert = &#39;INSERT INTO #Mask (Item)
+              VALUES (&#39;&#39;&#39; + REPLACE(@Atrib, &#39;,&#39;, &#39;&#39;&#39;),(&#39;&#39;&#39;) + &#39;&#39;&#39;);&#39;;
+EXEC (@Insert);
+
+SET @Insert = &#39;INSERT INTO #Vals (Item)
+              VALUES (&#39;&#39;&#39; + REPLACE(@OldVal, &#39;~&#39;, &#39;&#39;&#39;),(&#39;&#39;&#39;) + &#39;&#39;&#39;);&#39;;
+EXEC (@Insert);
+</pre>
+</div></div><ul><li><p><strong>Trick:</strong> build one giant <code>VALUES</code> list and execute it.</p></li><li><p>After this step:</p></li></ul><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="3dbb922b-06eb-418b-894d-ce9a24461e92" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>#Mask</p></th><th class="confluenceTh"><p>#Vals</p></th></tr><tr><td class="confluenceTd"><p>10057</p></td><td class="confluenceTd"><p>NZ</p></td></tr><tr><td class="confluenceTd"><p>10059</p></td><td class="confluenceTd"><p>NZL</p></td></tr></tbody></table></div><blockquote><p><em>We’ve kept row order by relying on the identity column </em><code>ID</code><em> that SQL adds automatically.</em></p></blockquote><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-15.4Build#Atrib—1rowperchangedfield">15.4 Build <strong>#Atrib</strong> — 1 row per changed field</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">INSERT #Atrib (PrimaryColValue, TargetFieldNo, TableName, PrimaryColName,
+               TargetFieldName, OldValue,
+               IsStringMap, IsGUID,
+               ReferenceTableName, ReferenceTableOTC,
+               TableOTC, DataType)
+SELECT DISTINCT
+       @val,
+       m.Item,                 -- ColumnNumber
+       @reporttable,
+       @PrimaryCol,
+       ar.Name,                -- real column name
+       v.Item,                 -- old value
+       CASE WHEN ar.OptionSetId IS NULL THEN 0 ELSE 1 END,  -- drop-down?
+       CASE WHEN ar.ReferencedEntityObjectTypeCode = 0
+            THEN NULL ELSE 1 END,                           -- GUID lookup?
+       en1.LogicalName,                                     -- lookup table
+       ar.ReferencedEntityObjectTypeCode,
+       @OTC,
+       ar.AttributeLogicalTypeId
+FROM   #Mask m
+LEFT   JOIN #Vals               v  ON m.ID = v.ID
+JOIN   MetadataSchema.Attribute ar ON ar.ColumnNumber = CAST(m.Item AS BIGINT)
+JOIN   MetadataSchema.Entity    en ON ar.EntityId = en.EntityId
+                                   AND en.ObjectTypeCode = @OTC
+LEFT  JOIN MetadataSchema.Entity en1 ON ar.ReferencedEntityObjectTypeCode = en1.ObjectTypeCode;
+</pre>
+</div></div><ul><li><p><strong>Outcome</strong>: we have, for example,</p></li></ul><div class="table-wrap"><table data-table-width="760" data-layout="default" data-local-id="56c9a7af-f896-412a-8ed5-a46eaa26ab3a" class="confluenceTable"><tbody><tr><th class="confluenceTh"><p>Field</p></th><th class="confluenceTh"><p>OldValue</p></th><th class="confluenceTh"><p>IsStringMap</p></th><th class="confluenceTh"><p>IsGUID</p></th><th class="confluenceTh"><p>RefTable</p></th></tr><tr><td class="confluenceTd"><p><code>dsl_CountryOfBirthId</code></p></td><td class="confluenceTd"><p>NZ</p></td><td class="confluenceTd"><p>1</p></td><td class="confluenceTd"><p>0</p></td><td class="confluenceTd"><p>—</p></td></tr><tr><td class="confluenceTd"><p><code>dsl_CountryofCitizenshipId</code></p></td><td class="confluenceTd"><p>NZL</p></td><td class="confluenceTd"><p>1</p></td><td class="confluenceTd"><p>0</p></td><td class="confluenceTd"><p>—</p></td></tr></tbody></table></div><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-15.5PreparethedynamicSELECTfornewvalues">15.5 Prepare the <em>dynamic SELECT</em> for <strong>new values</strong></h3><p>For <em>each</em> row just loaded into <code>#Atrib</code> we:</p><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">WHILE @i &lt;= @count
+BEGIN
+    SELECT @colm = TargetFieldName FROM #Atrib WHERE ID = @i;
+
+    SET @s = &#39;SELECT &#39; + @colm +
+             &#39; FROM &#39; + @reporttable +
+             &#39; WHERE &#39; + @PrimaryCol + &#39; = &#39;&#39;&#39; + @val + &#39;&#39;&#39;&#39;;
+
+    INSERT #QueryStore
+    SELECT @val,         -- ObjectId
+           @colm,        -- column we will select
+           @s,           -- full SQL text
+           NULL;         -- placeholder for value later
+
+    SET @i = @i + 1;
+END;
+</pre>
+</div></div><p><em>Why store it instead of executing now?</em><br/>Because we also create <em>other</em> rows later (e.g., from a second Audit row on the same object) and we want to <strong>batch-resolve</strong> all new values in Section 19 using one cursor.</p><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-15.6Persisteverythingto#AtribStore">15.6 Persist everything to <strong>#AtribStore</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">INSERT INTO #AtribStore
+SELECT a.TableOTC,
+       a.TableName,
+       a.PrimaryColName,
+       a.PrimaryColValue,
+       a.TargetFieldNo,
+       a.TargetFieldName,
+       a.OldValue,
+       a.CurrentValue,         -- NULL for now
+       a.IsStringMap,
+       a.IsGUID,
+       a.DataType,
+       a.ReferenceTableName,
+       NULL, NULL,             -- PK &amp; NameCol to be filled later
+       a.ReferenceTableOTC,
+       t.CreatedOnNZ,
+       t.UserIdName,
+       t.Action,
+       NULL, NULL              -- dynamic GUID SQL placeholders
+FROM   #temp   t
+JOIN   #Atrib  a ON t.ObjectId = a.PrimaryColValue
+WHERE  t.ID    = @outeri;
+</pre>
+</div></div><p><code>#AtribStore</code> is now the <strong>master staging table</strong> for the rest of the script.</p><hr/><h3 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-15.7Advancetheouterpointer">15.7 Advance the outer pointer</h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">SET @outeri = @outeri + 1;
+</pre>
+</div></div><p>…and the loop begins again for the next Audit row until all have been processed.</p><hr/><h2 id="QIChangeinCircumtance(CIC)AuditreportTechnotes-RecapofSection15inonesentence">Recap of Section 15 in one sentence</h2><blockquote><p><em>The cursor walks each Audit record, explodes its “what changed?” blobs into tidy per-field rows, decorates them with metadata, builds the SQL needed to fetch their new values, and collects the whole lot in #AtribStore for later polishing.</em></p></blockquote>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

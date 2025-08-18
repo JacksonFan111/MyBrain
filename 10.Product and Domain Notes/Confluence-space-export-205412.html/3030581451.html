@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : AML + AI project Mock up</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : AML + AI project Mock up
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 20-02-25
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>Below is the complete system architecture for the AML MVP with integrated front-end and back-end components. This design combines our FastAPI microservices for data ingestion and LLM query handling with a Node.js–powered user interface that enables drag-and-drop CSV uploads and interactive query submissions.</p><hr/><h2 id="AML+AIprojectMockup-FullSystemArchitectureOverview">Full System Architecture Overview</h2><h3 id="AML+AIprojectMockup-1.MicroservicesLayer(BackEnd)">1. <strong>Microservices Layer (Back End)</strong></h3><h4 id="AML+AIprojectMockup-A.IngestionService(FastAPI)">A. <strong>Ingestion Service (FastAPI)</strong></h4><ul><li><p><strong>Functionality:</strong></p><ul><li><p>Accepts CSV files via a REST API endpoint (<code>/ingest_csv/</code>).</p></li><li><p>Uses Pandas to read and preprocess the CSV data (e.g., drops missing values).</p></li><li><p>Returns a JSON representation of the cleaned data.</p></li></ul></li><li><p><strong>Deployment:</strong></p><ul><li><p>Containerized with Docker.</p></li><li><p>Listens on port <strong>8000</strong>.</p></li></ul></li></ul><h4 id="AML+AIprojectMockup-B.QueryService(FastAPI)">B. <strong>Query Service (FastAPI)</strong></h4><ul><li><p><strong>Functionality:</strong></p><ul><li><p>Provides a query endpoint (<code>/query/</code>) that accepts a user query string.</p></li><li><p>Calls the locally deployed DeepSeek R1 free tier via Ollama (using the <code>ollama.chat()</code> function).</p></li><li><p>Returns the model’s response in JSON format.</p></li></ul></li><li><p><strong>Deployment:</strong></p><ul><li><p>Containerized with Docker.</p></li><li><p>Listens on port <strong>8001</strong>.</p></li></ul></li></ul><h3 id="AML+AIprojectMockup-2.OrchestrationLayer">2. <strong>Orchestration Layer</strong></h3><ul><li><p><strong>Docker Compose / Kubernetes:</strong></p><ul><li><p>Both FastAPI microservices are orchestrated using Docker Compose.</p></li><li><p>The <code>docker-compose.yml</code> file defines two services: ingestion and query.</p></li><li><p>Each service is built from its respective directory and exposed on its designated port.</p></li></ul></li></ul><h3 id="AML+AIprojectMockup-3.Front-EndLayer(UserInterface)">3. <strong>Front-End Layer (User Interface)</strong></h3><h4 id="AML+AIprojectMockup-A.Node.jsExpressServer">A. <strong>Node.js Express Server</strong></h4><ul><li><p><strong>Functionality:</strong></p><ul><li><p>Acts as a proxy and static file server.</p></li><li><p>Serves the front-end application from the “public” folder.</p></li></ul></li><li><p><strong>Deployment:</strong></p><ul><li><p>Runs on Node.js on a specified port (e.g., <strong>3000</strong>).</p></li></ul></li></ul><h4 id="AML+AIprojectMockup-B.InteractiveUI(HTML+D3.js)">B. <strong>Interactive UI (HTML + D3.js)</strong></h4><ul><li><p><strong>Components:</strong></p><ul><li><p><strong>Drag-and-Drop Area:</strong></p><ul><li><p>Uses D3.js to create an interactive drop zone for CSV file uploads.</p></li><li><p>Allows file selection either by dragging or clicking a button.</p></li></ul></li><li><p><strong>File Upload Handling:</strong></p><ul><li><p>When a file is dropped/selected, the UI makes an AJAX call (using Fetch API) to the ingestion service at <code>http://localhost:8000/ingest_csv/</code>.</p></li></ul></li><li><p><strong>Query Input Field:</strong></p><ul><li><p>Provides a text input for users to enter queries.</p></li><li><p>On submission, the front end sends the query to the query service at <code>http://localhost:8001/query/</code>.</p></li></ul></li><li><p><strong>Response Display:</strong></p><ul><li><p>Displays the processed CSV or the LLM-generated response within a styled container.</p></li></ul></li></ul></li></ul><h3 id="AML+AIprojectMockup-4.Inter-ServiceCommunication">4. <strong>Inter-Service Communication</strong></h3><ul><li><p><strong>HTTP/REST:</strong></p><ul><li><p>The Node.js front end communicates with the FastAPI services using RESTful HTTP calls.</p></li></ul></li><li><p><strong>AJAX/Fetch:</strong></p><ul><li><p>Used in the front end to asynchronously upload CSV files and submit queries.</p></li></ul></li></ul><h3 id="AML+AIprojectMockup-5.Deployment&amp;ScalingConsiderations">5. <strong>Deployment &amp; Scaling Considerations</strong></h3><ul><li><p><strong>Containerization:</strong></p><ul><li><p>Each service (ingestion and query) is containerized using its own Dockerfile.</p></li><li><p>This provides isolation and easier deployment across environments.</p></li></ul></li><li><p><strong>Orchestration:</strong></p><ul><li><p>Docker Compose (or Kubernetes for larger-scale deployments) manages the lifecycle of each container.</p></li></ul></li><li><p><strong>Load Balancing:</strong></p><ul><li><p>In a production scenario, a reverse proxy (like NGINX) can be added in front of the Node.js server and FastAPI services to manage load balancing, SSL termination, and rate limiting.</p></li></ul></li><li><p><strong>Local LLM Integration:</strong></p><ul><li><p>DeepSeek R1 is deployed via Ollama on the same host.</p></li><li><p>The query service uses the Ollama Python package to call the model.</p></li><li><p>This local hosting ensures zero API costs, low latency, and decentralized processing for domain analysis.</p></li></ul></li></ul><hr/><h2 id="AML+AIprojectMockup-DiagramoftheOverallArchitecture">Diagram of the Overall Architecture</h2><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: java; gutter: false; theme: Confluence" data-theme="Confluence">                           +---------------------------+
+                           |   User&#39;s Browser (UI)     |
+                           |  (Drag &amp; Drop, Query UI)  |
+                           +------------+--------------+
+                                        |
+                                        | HTTP (AJAX/Fetch)
+                                        v
+                           +---------------------------+
+                           |  Node.js Express Server   |
+                           |   (Serves static files,  |
+                           |   API proxy if needed)    |
+                           +------------+--------------+
+                                        |
+            ---------------------------------------------------
+            |                                                 |
+            v                                                 v
++---------------------------+                     +---------------------------+
+| Ingestion Service (FastAPI)|                    |  Query Service (FastAPI)  |
+| - CSV Upload &amp; Processing  |                    | - Query DeepSeek R1 via   |
+| - Runs on port 8000        |                    |   Ollama (e.g., deepseek-  |
+|                          |                    |   r1:1.5b)                |
++---------------------------+                     +---------------------------+
+            |                                                 |
+            ---------------------------------------------------
+                                        |
+                                        v
+                           +---------------------------+
+                           |  Local LLM via Ollama     |
+                           | (DeepSeek R1 free tier)   |
+                           |  Accessible at port 11434 |
+                           +---------------------------+
+</pre>
+</div></div><hr/><h2 id="AML+AIprojectMockup-Summary">Summary</h2><ul><li><p><strong>Back End:</strong> Two FastAPI microservices (ingestion and query) handle data processing and LLM interaction.</p></li><li><p><strong>Orchestration:</strong> Docker Compose orchestrates service deployment.</p></li><li><p><strong>Front End:</strong> A Node.js Express server delivers a D3.js-enhanced interactive UI for file uploads and query submissions.</p></li><li><p><strong>Local AI Integration:</strong> The query service leverages the Ollama Python package to access DeepSeek R1 locally, ensuring fast, cost-free, and decentralized processing.</p></li><li><p><strong>Scalability:</strong> This design is modular—each microservice can be scaled independently, and additional front-end features (like drag-and-drop) can be added without modifying the core back-end.</p></li></ul><p>This comprehensive architecture provides a robust, decentralized, and scalable solution for AML processing using free, open-source AI models and interactive web technologies.</p>
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>

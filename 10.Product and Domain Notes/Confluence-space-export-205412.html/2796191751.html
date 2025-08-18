@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Jackson Fan : 18.7 Breaking Down the CRS Final Output Script: A Guide for Beginners</title>
+        <link rel="stylesheet" href="styles/site.css" type="text/css" />
+        <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+
+    <body class="theme-default aui-theme-default">
+        <div id="page">
+            <div id="main" class="aui-page-panel">
+                <div id="main-header">
+                    <div id="breadcrumb-section">
+                        <ol id="breadcrumbs">
+                            <li class="first">
+                                <span><a href="index.html">Jackson Fan</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="JF-Space-Overview_2554888272.html">JF Space Overview</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="4.-Service-Portal-Related_2555510852.html">4. Service Portal Related</a></span>
+                            </li>
+                                                    <li>
+                                <span><a href="2762113156.html">18. Rebuild FATCA/CRS step 1 - 10</a></span>
+                            </li>
+                                                </ol>
+                    </div>
+                    <h1 id="title-heading" class="pagetitle">
+                                                <span id="title-text">
+                            Jackson Fan : 18.7 Breaking Down the CRS Final Output Script: A Guide for Beginners
+                        </span>
+                    </h1>
+                </div>
+
+                <div id="content" class="view">
+                    <div class="page-metadata">
+                            
+        
+    
+        
+    
+        
+        
+            Created by <span class='author'> Jackson Fan</span>, last modified on 24-10-24
+                        </div>
+                    <div id="main-content" class="wiki-content group">
+                    <p>As an experienced tax auditor, I understand the complexities involved in CRS (Common Reporting Standard) reporting and the challenges new professionals may face when dealing with large SQL scripts. The script you've provided is designed to prepare and output data for CRS reporting, specifically focusing on the income details and final data selection for reporting purposes.</p><p>In this guide, I'll break down the script step by step, add detailed comments, and explain the logic behind each section. This should help you grasp the intricacies of the code and provide you with insights to assist new beginners in the field.</p><hr/><h2 id="id-18.7BreakingDowntheCRSFinalOutputScript:AGuideforBeginners-OverviewoftheScript">Overview of the Script</h2><p>The script primarily performs the following tasks:</p><ol start="1"><li><p><strong>Fetches and processes account income details</strong> by portfolio number.</p></li><li><p><strong>Aggregates income details</strong> such as interest, balance, and dividends.</p></li><li><p><strong>Prepares the final CRS data selection</strong>, ensuring it adheres to reporting requirements.</p></li><li><p><strong>Outputs the final data into a staging table</strong> for submission.</p></li></ol><hr/><h2 id="id-18.7BreakingDowntheCRSFinalOutputScript:AGuideforBeginners-DetailedBreakdown">Detailed Breakdown</h2><h3 id="id-18.7BreakingDowntheCRSFinalOutputScript:AGuideforBeginners-Step8:FetchingAccountIncomeDetails"><strong>Step 8: Fetching Account Income Details</strong></h3><h4 id="id-18.7BreakingDowntheCRSFinalOutputScript:AGuideforBeginners-Purpose:"><strong>Purpose:</strong></h4><ul><li><p>To retrieve income details (interest, balance, dividends) for each portfolio.</p></li><li><p>To ensure the data is accurate and ready for CRS reporting.</p></li></ul><h4 id="id-18.7BreakingDowntheCRSFinalOutputScript:AGuideforBeginners-CodeBreakdown:"><strong>Code Breakdown:</strong></h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Step 8: Bring in the Account Income Details by Each Portfolio Number.
+-- The data for TINs has become column-based for the CRS set.
+
+-- Drop temporary table if it exists
+IF OBJECT_ID(&#39;tempdb..##CRSAccountDetails&#39;) IS NOT NULL
+    DROP TABLE ##CRSAccountDetails;
+
+-- Bring in the Income details
+WITH cte_income AS (
+    -- Set A: Income details for &#39;Cash Management&#39; portfolios
+    SELECT
+        tm.AccountNumber AS PortfolioNo,
+        c.PortfolioServiceLevelName,
+        CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.[TotalCMGross] + tm.[TotalTDInterestGross] + tm.[TotalTDAI]), 0)) AS Interest,
+        CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.[TotalTDIncAI] + tm.[TotalCMBalance]), 0)) AS Balance,
+        CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.[TotalCSLDivGross]), 0)) AS Dividend
+    FROM
+        (
+            -- Remove duplicates
+            SELECT DISTINCT
+                fpd.PortfolioNo,
+                fpd.PortfolioServiceLevelName
+            FROM [SQLUAT].[DataServices].FATCA.Stage_CRSPivotedData_jf fpd
+        ) c
+    JOIN [SQLCIP].Dataservices.[dbo].[tmpHoldingsPreload] tm ON
+        tm.AccountNumber COLLATE DATABASE_DEFAULT = c.[PortfolioNo] COLLATE DATABASE_DEFAULT
+        AND c.PortfolioServiceLevelName = &#39;Cash Management&#39; -- Only include &#39;Cash Management&#39; data
+    GROUP BY
+        tm.AccountNumber,
+        c.PortfolioServiceLevelName
+
+    UNION
+
+    -- Set B: Income details for portfolios not in specified service levels
+    SELECT
+        tm.AccountNumber AS PortfolioNo,
+        c.PortfolioServiceLevelName,
+        -- Interest calculation
+        CASE
+            WHEN c.PortfolioServiceLevelName NOT IN (&#39;Cash Management&#39;, &#39;Craigs Kiwisaver&#39;, &#39;Quaystreet Kiwisaver Scheme&#39;, &#39;mySTART&#39;, &#39;SuperSTART&#39;, &#39;Craigs Super&#39;)
+                THEN CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.[TotalCSLIntGross]), 0))
+            ELSE CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.[TotalSTARTIntGross]), 0))
+        END AS Interest,
+        -- Balance calculation
+        CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.TotalHolding), 0)) AS Balance,
+        -- Dividend calculation
+        CASE
+            WHEN c.PortfolioServiceLevelName NOT IN (&#39;Cash Management&#39;, ...)
+                THEN CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.[TotalSTARTDivGross]), 0))
+            ELSE CONVERT(NUMERIC(20, 0), ROUND(SUM(tm.[TotalSTARTDivGross]), 0))
+        END AS Dividend
+    FROM
+        (
+            SELECT DISTINCT
+                PortfolioNo,
+                PortfolioServiceLevelName
+            FROM [SQLUAT].[DataServices].FATCA.Stage_CRSPivotedData_jf fpd
+        ) c
+    JOIN [SQLCIP].Dataservices.[dbo].[tmpHoldingsPreload] tm ON
+        tm.AccountNumber COLLATE DATABASE_DEFAULT = c.[PortfolioNo] COLLATE DATABASE_DEFAULT
+        AND tm.ServiceLevelShortName COLLATE DATABASE_DEFAULT = c.PortfolioServiceLevelName COLLATE DATABASE_DEFAULT
+    GROUP BY
+        tm.AccountNumber,
+        c.PortfolioServiceLevelName
+)</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Temporary Table:</strong> We drop and recreate <code>##CRSAccountDetails</code> to store the income details.</p></li><li><p><strong>CTE (</strong><code>cte_income</code>): Combines two sets of income data:</p><ul><li><p><strong>Set A:</strong> For portfolios under 'Cash Management'.</p></li><li><p><strong>Set B:</strong> For portfolios not under specified service levels.</p></li></ul></li><li><p><strong>Calculations:</strong></p><ul><li><p><strong>Interest, Balance, Dividend:</strong> Calculated differently based on the portfolio service level.</p></li></ul></li><li><p><strong>Joins:</strong></p><ul><li><p><strong>Joining with </strong><code>tmpHoldingsPreload</code>: To fetch income details.</p></li><li><p><strong>Collation Handling:</strong> Ensures string comparisons are consistent.</p></li></ul></li></ul><hr/><h3 id="id-18.7BreakingDowntheCRSFinalOutputScript:AGuideforBeginners-FetchingandPreparingAccountDetails"><strong>Fetching and Preparing Account Details</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">SELECT
+    fpd.AccountID AS &#39;ee_uniqueID&#39;,
+    fpd.IndividualId AS &#39;IndividualId&#39;,
+    fpd.TradingEntityType,
+    CONVERT(VARCHAR, &#39;2025-03-31&#39;, 101) AS &#39;actiondate&#39;,
+    fpd.Regime AS &#39;regime_id&#39;,
+    fpd.[PortfolioNo] AS &#39;Account Number&#39;,
+    fpd.PortfolioServiceLevelName,
+    -- Determining Reporting Entity Type based on service level
+    CASE
+        WHEN fpd.PortfolioServiceLevelName = &#39;Cash Management&#39; THEN &#39;CCM&#39;
+        WHEN fpd.PortfolioServiceLevelName = &#39;myStart&#39; THEN &#39;CIP&#39;
+        WHEN fpd.PortfolioServiceLevelName IN (&#39;PAS&#39;, &#39;IAS&#39;, ...) THEN &#39;CSL&#39;
+        WHEN fpd.PortfolioServiceLevelName = &#39;Craigs Super&#39; THEN &#39;CS&#39;
+        WHEN fpd.PortfolioServiceLevelName = &#39;superStart&#39; THEN &#39;SS&#39;
+        ELSE &#39;Other&#39;
+    END AS ReportingEntityType,
+    &#39;NZD&#39; AS &#39;currency&#39;, -- All holdings are in NZD
+    -- Calculating balance based on closure status
+    CASE
+        WHEN (fpd.ClosureDate != &#39;&#39; OR fpd.ClosureDate IS NOT NULL) AND fpd.PortfolioServiceStatus NOT IN (&#39;Open&#39;, &#39;Pending closure&#39;)
+            THEN 0
+        ELSE ISNULL(ROUND(i.balance, 2), 0)
+    END AS &#39;balance&#39;,
+    ISNULL(i.dividend, 0) AS &#39;dividends&#39;,
+    ISNULL(i.interest, 0) AS &#39;interest&#39;,
+    -- Aggregate income details
+    ai.agg_balance AS &#39;Aggregate Account Balance&#39;,
+    ai.agg_interest AS &#39;Aggregate Account Interest&#39;,
+    ai.agg_dividends AS &#39;Aggregate Account Dividends&#39;,
+    -- Non-Reportable flag
+    CASE
+        WHEN i.balance + i.dividend + i.interest &lt;&gt; 0 THEN 0
+        ELSE 1
+    END AS &#39;Non Reportable&#39;,
+    -- Undocumented Account Determination
+    CASE
+        WHEN fpd.Regime IN (&#39;CRS&#39;, &#39;FATCA_CRS&#39;) AND fpd.CRSCert != &#39;Documented&#39; AND fpd.[dsl_inceptiondate] &gt; &#39;2017-7-1&#39; AND ISNULL(CONVERT(NUMERIC(20, 2), i.balance, 2), 0) &gt; 250000 AND fpd.[TradingEntityType] NOT IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;)
+            THEN &#39;True&#39;
+        WHEN fpd.Regime IN (&#39;CRS&#39;, &#39;FATCA_CRS&#39;) AND fpd.CRSCert != &#39;Documented&#39; AND fpd.[dsl_inceptiondate] &gt; &#39;2017-7-1&#39; AND fpd.[TradingEntityType] IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;)
+            THEN &#39;True&#39;
+        ELSE &#39;&#39;
+    END AS &#39;Undocumented&#39;,
+    -- Closure Date Handling
+    ISNULL(CASE
+               WHEN fpd.ClosureDate IS NOT NULL AND fpd.PortfolioServiceStatus NOT IN (&#39;Open&#39;, &#39;Pending closure&#39;)
+                   THEN CONVERT(VARCHAR, fpd.ClosureDate, 101)
+               ELSE NULL
+           END, &#39;&#39;) AS &#39;Closure Date&#39;,
+    fpd.[dsl_inceptiondate] AS &#39;InceptionDate&#39;,
+    fpd.[CRSCert]
+INTO ##CRSAccountDetails
+FROM [SQLUAT].[DataServices].FATCA.Stage_CRSPivotedData_jf fpd
+LEFT JOIN cte_income i ON
+    i.PortfolioNo COLLATE DATABASE_DEFAULT = fpd.PortfolioNo COLLATE DATABASE_DEFAULT
+    AND i.PortfolioServiceLevelName = fpd.PortfolioServiceLevelName
+LEFT JOIN (
+    SELECT
+        PortfolioNo,
+        SUM(balance) AS agg_balance,
+        SUM(interest) AS agg_interest,
+        SUM(dividend) AS agg_dividends
+    FROM cte_income
+    GROUP BY PortfolioNo
+) ai ON ai.PortfolioNo COLLATE DATABASE_DEFAULT = fpd.PortfolioNo COLLATE DATABASE_DEFAULT</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Joining Income Data:</strong></p><ul><li><p>The script joins <code>cte_income</code> to fetch individual income details.</p></li><li><p>Aggregated income (<code>ai</code>) provides total balances and interests for portfolios.</p></li></ul></li><li><p><strong>Calculations and Flags:</strong></p><ul><li><p><strong>Balance:</strong> Set to 0 if the account is closed.</p></li><li><p><strong>Non-Reportable Flag:</strong> Indicates if the account should be reported.</p></li><li><p><strong>Undocumented Accounts:</strong> Identifies accounts that lack proper documentation based on specified criteria.</p></li></ul></li><li><p><strong>Closure Date Handling:</strong> Formats the closure date if applicable.</p></li></ul><hr/><h3 id="id-18.7BreakingDowntheCRSFinalOutputScript:AGuideforBeginners-Step9:PreparingtheFinalCRSDataSelection"><strong>Step 9: Preparing the Final CRS Data Selection</strong></h3><h4 id="id-18.7BreakingDowntheCRSFinalOutputScript:AGuideforBeginners-Purpose:.1"><strong>Purpose:</strong></h4><ul><li><p>To consolidate and prepare the final data set for CRS reporting.</p></li><li><p>To ensure data integrity and compliance with reporting standards.</p></li></ul><h4 id="id-18.7BreakingDowntheCRSFinalOutputScript:AGuideforBeginners-CodeBreakdown:.1"><strong>Code Breakdown:</strong></h4><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Drop temporary table if it exists
+IF OBJECT_ID(&#39;tempdb..##crsfinalselect&#39;) IS NOT NULL
+    DROP TABLE ##crsfinalselect;
+
+-- Final CRS Data Select with Simplified Logic
+SELECT
+    -- 1. Operation and Reporting Details
+    &#39;N&#39; AS &#39;Operation Type&#39;, -- &#39;N&#39; for New File
+    &#39;NZ&#39; AS &#39;Reporting Jurisdiction&#39;, -- New Zealand
+    -- Create a unique Recipient ID by concatenating AccountID and PortfolioNo
+    (CONVERT(VARCHAR(MAX), ah.[AccountID]) + CONVERT(VARCHAR(MAX), ah.[PortfolioNo])) AS &#39;Recipient ID&#39;,
+    
+    -- 2. Reportable Account Type (CRS Type)
+    CASE
+        WHEN cp.[AccountType] IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;) AND cp.TradingEntityType NOT IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;)
+            THEN &#39;4&#39; -- Passive Non-Financial Entity
+        WHEN ah.[AccountType] IN (&#39;Single TIN Individual&#39;, &#39;Multiple TINs Individual&#39;) AND ah.TradingEntityType IN (&#39;Individual&#39;, &#39;Joint&#39;, &#39;Minor Under 18 yrs&#39;)
+            THEN &#39;2&#39; -- CRS Reportable Person (Individual)
+        ELSE &#39;ERROR&#39; -- Handle unexpected cases
+    END AS &#39;Reportable Account Type&#39;,
+    
+    -- 3. Filer / Sponsored Entity Information
+    CAST(ad.ReportingEntityType AS VARCHAR(10)) + &#39;_CRS&#39; AS &#39;Filer / Sponsored Entity Short Name&#39;,
+    
+    -- 4. Account Number Details
+    ad.[Account Number] AS &#39;Account Number&#39;,
+    ad.[Account Number Type] AS &#39;Account Number Type&#39;,
+    
+    -- 5. Portfolio Service Level Information
+    ad.PortfolioServiceLevelName AS &#39;PortfolioServiceLevelName&#39;,
+    ad.ReportingEntityType,
+    
+    -- 6. Account Descriptions and Statuses
+    ad.Undocumented AS &#39;Account Description-Undocumented&#39;,
+    CASE
+        WHEN ISDATE(ad.[Closure Date]) = 1 THEN
+            CASE
+                WHEN CONVERT(DATETIME, ad.[Closure Date]) &lt; GETDATE() THEN &#39;True&#39;
+                ELSE &#39;&#39;
+            END
+        ELSE &#39;&#39;
+    END AS &#39;Account Description-Closed&#39;,
+    ad.[Dormant Account] AS &#39;Account Description-Dormant&#39;,
+    
+    -- 7. Account Holder Information and TINs
+    CASE
+        WHEN cp.[AccountType] IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;) THEN cp.[EntityTaxCodeCountryISOShort]
+        ELSE ah.TaxCountry1
+    END AS &#39;Account Holder Tax Jurisdiction&#39;,
+    ISNULL(ah.TaxCountry2, &#39;&#39;) AS &#39;Account Holder Tax Jurisdiction 2&#39;,
+    -- Additional Tax Jurisdictions...
+
+    -- 8. Account Holder IN Type
+    CASE
+        WHEN ah.AccountType IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;) THEN &#39;TIN&#39;
+        ELSE &#39;&#39;
+    END AS &#39;Account Holder IN Type&#39;,
+    
+    -- 9. Issued By Country Codes
+    CASE
+        WHEN cp.[AccountType] IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;) THEN cp.[EntityTaxCodeCountryISOShort]
+        ELSE ah.TaxCountry1
+    END AS &#39;Account Holder IN Issued By Country Code&#39;,
+    -- Additional Issued By Country Codes...
+    
+    -- 10. Account Holder Organization Details
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Name Type (Direct Individuals and Organizations)&#39;,
+    CASE
+        WHEN ah.AccountType IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;) THEN ah.[EntityName]
+        ELSE &#39;&#39;
+    END AS &#39;Account Holder Organization Name&#39;,
+    -- Additional organization fields...
+    
+    -- 11. Account Holder Personal Details
+    ah.FirstName AS &#39;Account Holder First Name&#39;,
+    ah.MiddleName AS &#39;Account Holder Middle Name&#39;,
+    ah.LastName AS &#39;Account Holder Last Name&#39;,
+    -- Additional personal details...
+    
+    -- 12. Account Holder Address Details
+    ISNULL(ah.[Res Country Code], &#39;&#39;) AS &#39;Account Holder Address Country&#39;,
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Account Holder Address Type&#39;,
+    -- Concatenate address lines into &#39;Account Holder Address Free&#39;
+    ah.[ResidentialAddressLine1] + &#39; &#39; + ah.[ResidentialAddressLine2] + &#39; &#39; + ah.[ResidentialAddressLine3] + &#39; &#39; + ah.[ResidentialCity] + &#39; &#39; + ah.[ResidentialPostalCode] AS &#39;Account Holder Address Free&#39;,
+    -- Additional address fields...
+    
+    -- 13. Controlling Person Information
+    ISNULL(cp.[CP Value], &#39;&#39;) AS &#39;Controlling person Type&#39;,
+    -- 14. Controlling Person Tax Details
+    CASE
+        WHEN ISNULL(cp.TaxCountry1, &#39;&#39;) = &#39;&#39; THEN ISNULL(cp.[Res Country Code], &#39;&#39;)
+        ELSE ISNULL(cp.TaxCountry1, &#39;&#39;)
+    END AS &#39;Controlling person Tax Country Code&#39;,
+    -- Additional Controlling Person fields...
+    
+    -- 15. Controlling Person Personal Details
+    ISNULL(cp.FirstName, &#39;&#39;) AS &#39;Controlling Person First Name&#39;,
+    ISNULL(cp.MiddleName, &#39;&#39;) AS &#39;Controlling Person Middle Name&#39;,
+    ISNULL(cp.LastName, &#39;&#39;) AS &#39;Controlling Person Last Name&#39;,
+    -- Additional personal details...
+    
+    -- 16. Financial Information
+    CASE WHEN ad.balance &lt;= 0 THEN 0 ELSE ad.balance END AS &#39;Account Balance&#39;,
+    ad.currency AS &#39;Account Currency&#39;,
+    CASE WHEN ad.interest &lt;= 0 THEN 0 ELSE ad.interest END AS &#39;Interest&#39;,
+    ad.currency AS &#39;Interest Currency Code&#39;,
+    CASE WHEN ad.dividends &lt;= 0 THEN 0 ELSE ad.dividends END AS &#39;Dividends&#39;,
+    ad.currency AS &#39;Dividends Currency Code&#39;,
+    -- Additional financial fields...
+    
+    -- 17. Other Required Information
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Other&#39;,
+    -- Additional fields...
+    
+    -- 18. Custom Fields
+    CONVERT(VARCHAR(50), &#39;&#39;) AS &#39;Custom 1&#39;,
+    -- Additional custom fields...
+INTO ##crsfinalselect
+FROM ##CRSAccountDetails ad
+LEFT JOIN FATCA.Stage_CRSPivotedData_jf ah ON
+    ad.[ee_uniqueID] = ah.[AccountID] AND
+    ad.IndividualId = ah.IndividualId AND
+    ad.[Account Number] = ah.[PortfolioNo] AND
+    ad.PortfolioServiceLevelName = ah.PortfolioServiceLevelName
+LEFT JOIN FATCA.Stage_CRSPivotedData_jf cp ON
+    ad.[ee_uniqueID] = cp.[AccountID] AND
+    ad.IndividualId = cp.IndividualId AND
+    ad.[Account Number] = cp.[PortfolioNo] AND
+    ad.PortfolioServiceLevelName = cp.PortfolioServiceLevelName AND
+    cp.AccountType IN (&#39;Layered Entity&#39;, &#39;Normal Entity&#39;)
+WHERE
+    ad.[Account Number] NOT LIKE &#39;%dummy%&#39; AND
+    ad.[Account Number] NOT LIKE &#39;OO%&#39; AND
+    ad.[Account Number] NOT LIKE &#39;OM%&#39; AND
+    (CAST(ad.balance AS INT) + CAST(ad.interest AS INT) + CAST(ad.dividends AS INT) &lt;&gt; 0)</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Data Selection:</strong></p><ul><li><p>The script selects and prepares the final data set for CRS reporting.</p></li></ul></li><li><p><strong>Joins:</strong></p><ul><li><p><strong>Account Holder (</strong><code>ah</code>): Brings in details for both individuals and entities.</p></li><li><p><strong>Controlling Person (</strong><code>cp</code>): Brings in controlling person details for entities.</p></li></ul></li><li><p><strong>Fields and Calculations:</strong></p><ul><li><p><strong>Reportable Account Type:</strong> Determines if the account is individual or entity.</p></li><li><p><strong>Financial Information:</strong> Ensures negative or zero values are handled correctly.</p></li></ul></li><li><p><strong>Filtering:</strong></p><ul><li><p>Excludes test or house accounts.</p></li><li><p>Excludes accounts with no financial activity.</p></li></ul></li></ul><hr/><h3 id="id-18.7BreakingDowntheCRSFinalOutputScript:AGuideforBeginners-DataCleansingandUpdates"><strong>Data Cleansing and Updates</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Updating fields to handle duplicates and missing data
+UPDATE ##crsfinalselect
+  SET [Account Holder Tax Jurisdiction 4] = &#39;&#39;
+WHERE [Account Holder Tax Jurisdiction 4] = [Account Holder Tax Jurisdiction 5];
+
+-- Additional UPDATE statements to clean data...
+
+-- The purpose of these updates is to ensure data integrity by removing duplicates and filling in missing information.</pre>
+</div></div><hr/><h3 id="id-18.7BreakingDowntheCRSFinalOutputScript:AGuideforBeginners-FinalOutputandDataInsertion"><strong>Final Output and Data Insertion</strong></h3><div class="code panel pdl" style="border-width: 1px;"><div class="codeContent panelContent pdl">
+<pre class="syntaxhighlighter-pre" data-syntaxhighlighter-params="brush: sql; gutter: false; theme: Confluence" data-theme="Confluence">-- Insert CRS Data into Final Table for Submission
+SELECT
+    &#39;2025&#39; AS ReportingYear,
+    GETDATE() AS LastUpdated,
+    ReportingEntityType,
+    [Operation Type],
+    [Reporting Jurisdiction],
+    NEWID() AS [Recipient ID],
+    [Reportable Account Type],
+    [Filer / Sponsored Entity Short Name],
+    [Account Number],
+    [Account Number Type],
+    [Account Description-Undocumented],
+    [Account Description-Closed],
+    [Account Description-Dormant],
+    -- Account Holder Section
+    [Account Holder Tax Jurisdiction],
+    -- Additional fields...
+    FATCA.CleanAccents([Account Holder Last Name]) AS [Account Holder Last Name],
+    -- Controlling Person Section
+    [Controlling person Type],
+    -- Additional fields...
+    FATCA.CleanAccents([Controlling Person Last Name]) AS [Controlling Person Last Name],
+    -- Finance Information Section
+    [Account Balance],
+    [Account Currency],
+    [Interest],
+    [Interest Currency Code],
+    [Dividends],
+    [Dividends Currency Code],
+    -- Additional fields...
+INTO [FATCA].[CRS_Final_Output_AccountHolders_ControllingPerson_Financeinfo_jf]
+FROM ##crsfinalselect</pre>
+</div></div><p><strong>Explanation:</strong></p><ul><li><p><strong>Data Insertion:</strong></p><ul><li><p>Inserts the prepared data into the final table for CRS reporting.</p></li></ul></li><li><p><strong>Data Cleaning:</strong></p><ul><li><p>Uses <code>FATCA.CleanAccents</code> function to clean special characters from names.</p></li></ul></li><li><p><strong>Final Output:</strong></p><ul><li><p>The final table contains all required fields for CRS reporting.</p></li></ul></li></ul><p />
+                    </div>
+
+                    
+                                                      
+                </div>             </div> 
+            <div id="footer" role="contentinfo">
+                <section class="footer-body">
+                    <p>Document generated by Confluence on 18-08-25 20:53</p>
+                    <div id="footer-logo"><a href="http://www.atlassian.com/">Atlassian</a></div>
+                </section>
+            </div>
+        </div>     </body>
+</html>
