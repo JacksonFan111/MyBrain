@@ -147,7 +147,7 @@ This document is a navigable knowledge index for the exported Confluence space. 
 - Unlisted Funds vs Direct Securities – tech docs → [Unlisted-Funds-Vs.-Direct-Securities-Tech-Docs-V-0.1_3108635010.html](Confluence-space-export-205412.html/Unlisted-Funds-Vs.-Direct-Securities-Tech-Docs-V-0.1_3108635010.html)
 - AML + AI project mock up → [3030581451.html](Confluence-space-export-205412.html/3030581451.html)
 - Liquidity Risk Management — requirements confirmation → [Confirmation-of-Requirements-for-Liquidity-Risk-Management-Report-Enhancement_3187441673.html](Confluence-space-export-205412.html/Confirmation-of-Requirements-for-Liquidity-Risk-Management-Report-Enhancement_3187441673.html)
-- CIP Risk Dashboard – technical doc v0.1 → [CIP-Risk-Dahboard-Technical-Doc-V0.1_3217424649.html](Confluence-space-export-205412.html/CIP-Risk-Dahboard-Technical-Doc-V0.1_3217424649.html)
+- CIP Risk Dashboard – technical doc v0.1 → [CIP-Risk-Dahboard-Technical-Doc-V-0.1_3217424649.html](Confluence-space-export-205412.html/CIP-Risk-Dahboard-Technical-Doc-V-0.1_3217424649.html)
 - Various FATCA/CRS redesign logs (Jan 2025) → [2937356623.html](Confluence-space-export-205412.html/2937356623.html), [16.01.2025---USP_03-code-redeisgned-for-AH_CP_AD_2938732561.html](Confluence-space-export-205412.html/16.01.2025---USP_03-code-redeisgned-for-AH_CP_AD_2938732561.html), [16.01.2025---Re-Documented-USP_01_2907537455.html](Confluence-space-export-205412.html/16.01.2025---Re-Documented-USP_01_2907537455.html), [16.01.2025---redocumented-USP_02_2946596884.html](Confluence-space-export-205412.html/16.01.2025---redocumented-USP_02_2946596884.html), [2946891782.html](Confluence-space-export-205412.html/2946891782.html)
 - How‑to articles (misc tips) → [How-to-articles_2568487020.html](Confluence-space-export-205412.html/How-to-articles_2568487020.html)
 - Bugs/fixes logs (Dec 2024) → [2903670826.html](Confluence-space-export-205412.html/2903670826.html), [2907635742.html](Confluence-space-export-205412.html/2907635742.html), [2912419859.html](Confluence-space-export-205412.html/2912419859.html)
@@ -159,3 +159,11 @@ Notes
 - This index is derived from the export’s “Available Pages” list. Refer to each linked HTML for authoritative content, diagrams, and detailed procedures.
 - Export footer indicates generation on 2025-08-18 (Confluence time).
 
+### Local deep‑dive markdowns (added)
+- `synapse-devops.md` — Azure Synapse framework and CI/CD runbook
+- `aloha-rds.md` — ALOHA RDS catalog and historical tables
+- `ace-operations.md` — ACE schema audit and order scheduler handover
+- `ssrs-rls.md` — SSRS multi-parameter RLS implementation
+- `dax-indirect-filtering.md` — DAX virtual relationships and TREATAS
+- `circuit-breaker.md` — ChangedServiceLevels logic and refactoring
+- `citi-csl-crm.md` — CITI → CSL → CRM bridge/staging for analytics
