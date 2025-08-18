@@ -212,6 +212,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const layoutSelect = document.getElementById('layoutSelect');
   const enrichBtn = document.getElementById('enrichBtn');
   const linkBtn = document.getElementById('linkBtn');
+  const rulesBtn = document.getElementById('rulesBtn');
 
   function applyVisibility(){
     const showHtml = toggleHtml.checked; const showMd = toggleMd.checked;
@@ -298,6 +299,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     cy.style().selector('edge.sim').style({ 'line-style': 'dotted', 'opacity': 0.5 }).update();
     cy.layout(layoutOptions(layoutSelect.value || 'fcose')).run();
+  });
+
+  // Apply custom rules.json: tags and cross-links
+  rulesBtn.addEventListener('click', async () => {
+    try {
+      const res = await fetch('rules.json');
+      const rules = await res.json();
+      const tagRules = rules.tagRules || [];
+      const linkRules = rules.linkRules || [];
+
+      const applyTagRules = (n) => {
+        const label = (n.data('label')||'');
+        const href = (n.data('url')||'');
+        let tags = new Set((n.data('tags')||'').split(',').filter(Boolean));
+        tagRules.forEach(r => {
+          const m = r.match||{};
+          const labelOk = m.label ? new RegExp(m.label, 'i').test(label) : true;
+          const hrefOk = m.href ? new RegExp(m.href, 'i').test(href) : true;
+          if (labelOk && hrefOk) (r.addTags||[]).forEach(t => tags.add(t));
+        });
+        n.data('tags', Array.from(tags).join(','));
+      };
+
+      cy.nodes().forEach(n => { if (n.data('type') !== 'topic') applyTagRules(n); });
+
+      linkRules.forEach(r => {
+        const topicId = r.linkToTopic;
+        const tags = new Set(r.whenTags||[]);
+        cy.nodes().forEach(n => {
+          if (n.data('type') === 'topic') return;
+          const nodeTags = new Set((n.data('tags')||'').split(',').filter(Boolean));
+          const ok = Array.from(tags).every(t => nodeTags.has(t));
+          if (!ok) return;
+          const eid = `rule_${topicId}__${n.id()}`;
+          if (cy.getElementById(eid).nonempty()) return;
+          cy.add({ data: { id: eid, source: topicId, target: n.id() }, classes: 'rule' });
+        });
+      });
+
+      cy.style().selector('edge.rule').style({ 'line-style': 'dashed', 'line-color': '#475569', 'target-arrow-color': '#475569' }).update();
+      cy.layout(layoutOptions(layoutSelect.value || 'fcose')).run();
+    } catch (e) {
+      console.warn('Failed to apply rules', e);
+    }
   });
 
   toggleHtml.addEventListener('change', applyVisibility);

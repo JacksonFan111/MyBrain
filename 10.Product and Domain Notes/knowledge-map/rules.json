@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "tagRules": [
+    { "match": { "label": ".*CRS.*|.*FATCA.*|.*IDES.*|.*USP.*" }, "addTags": ["fatca","crs","tax"] },
+    { "match": { "label": ".*Synapse.*|.*DevOps.*|.*DACPAC.*|.*ARM.*" }, "addTags": ["devops","synapse"] },
+    { "match": { "label": ".*ACE.*|.*Chelmer.*|.*Holdings.*|.*Orders.*" }, "addTags": ["ace","operations"] },
+    { "match": { "label": ".*Power BI.*|.*DAX.*|.*Measure.*|.*Subscription.*" }, "addTags": ["powerbi","dax"] },
+    { "match": { "label": ".*SSRS.*|.*Dataset.*|.*RLS.*" }, "addTags": ["ssrs"] },
+    { "match": { "label": ".*CRM.*|.*Audit.*" }, "addTags": ["crm","audit"] },
+    { "match": { "label": ".*NZXWT.*" }, "addTags": ["nzxwt"] },
+    { "match": { "label": ".*ALOHA.*|.*RDS.*" }, "addTags": ["aloha","rds"] },
+    { "match": { "href": ".*\\/18\\..*|.*\\/279\\d+.*" }, "addTags": ["fatca","crs"] }
+  ],
+  "linkRules": [
+    { "whenTags": ["fatca","crs"], "linkToTopic": "topic-crm" },
+    { "whenTags": ["ace"], "linkToTopic": "topic-circuit" },
+    { "whenTags": ["powerbi"], "linkToTopic": "topic-ace" }
+  ]
+}
+
