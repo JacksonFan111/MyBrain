@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Knowledge Map — Domain Library (2025)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" />
+    <!-- Cytoscape core -->
+    <script defer src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+    <!-- Cytoscape cose layout (modern force) -->
+    <script defer src="https://unpkg.com/cytoscape-fcose@2.2.0/cytoscape-fcose.js"></script>
+    <!-- Fuse.js for fuzzy search -->
+    <script defer src="https://unpkg.com/fuse.js@7.0.0"></script>
+    <script defer src="data.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="logo">⌁</span>
+          <div class="brand-text">
+            <h1>Knowledge Map</h1>
+            <p>Domain library — interactive (2025)</p>
+          </div>
+        </div>
+        <div class="actions">
+          <input id="search" type="search" placeholder="Search topics, files, tags… (e.g., devops, dax, crm)" />
+          <button id="resetBtn" class="btn">Reset</button>
+          <button id="exportBtn" class="btn">Export PNG</button>
+          <button id="enrichBtn" class="btn">Enrich Tags</button>
+          <button id="linkBtn" class="btn">Link Similar</button>
+          <button id="rulesBtn" class="btn">Apply Rules</button>
+        </div>
+      </header>
+
+      <main class="main">
+        <aside class="sidebar">
+          <section class="panel">
+            <h2>Filters</h2>
+            <div class="chips" id="chipBar">
+              <!-- chips populated by app.js -->
+            </div>
+            <div class="toggles">
+              <label><input id="toggleHtml" type="checkbox" checked /> Show HTML pages</label>
+              <label><input id="toggleMd" type="checkbox" checked /> Show deep‑dives (MD)</label>
+            </div>
+            <div class="select-row">
+              <label for="topicSelect">Focus topic</label>
+              <select id="topicSelect"></select>
+            </div>
+            <div class="select-row">
+              <label for="layoutSelect">Layout</label>
+              <select id="layoutSelect">
+                <option value="fcose">Force (fCoSE)</option>
+                <option value="grid">Grid</option>
+                <option value="circle">Circle</option>
+                <option value="concentric">Concentric</option>
+                <option value="breadthfirst">Tree</option>
+              </select>
+            </div>
+          </section>
+
+          <section class="panel details" id="details">
+            <h2>Details</h2>
+            <div class="detail-content">
+              <div class="hint">Click a node to see details.</div>
+            </div>
+          </section>
+        </aside>
+
+        <section class="canvas">
+          <div id="cy"></div>
+          <div class="progress" id="progress" hidden>
+            <div class="bar" id="progressBar" style="width:0%"></div>
+            <div class="label" id="progressLabel">Preparing…</div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <div>
+          <span>Data sources:</span>
+          <a href="../Confluence-space-export-205412.html/index.html" target="_blank" rel="noopener">Confluence export</a>
+          <span>·</span>
+          <span>Local deep‑dives in this folder</span>
+        </div>
+      </footer>
+    </div>
+  </body>
+  </html>
+
